@@ -12,6 +12,7 @@
     devagent coffre connecter            brancher Bitwarden sur ce PC (une fois)
     devagent coffre envoyer|recuperer    les cles : ce PC → Bitwarden, ou Bitwarden → ce PC
     devagent auto lister|lancer <projet> <nom>|historique   les automatisations
+    devagent sync [brancher [url] | etat]  l'etat des projets entre tes PC (depot prive devagent-etat)
     devagent migrer [--appliquer|--annuler --oui]   renommer ~/devpilot en ~/devagent (simulation par defaut)
 """
 import json
@@ -109,6 +110,9 @@ def main(argv=None):
     if cmd == "auto":
         from devagent import automations
         return automations.cli(rest)
+    if cmd == "sync":
+        from devagent import etat
+        return etat.cli(rest)
     if cmd == "migrer":
         from devagent import migrate
         return migrate.cli(rest)

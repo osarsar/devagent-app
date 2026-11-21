@@ -426,3 +426,24 @@ def api_bitwarden_do(action):
                        {"cles": len(out["cles"]), "hebergeurs": len(out["hebergeurs"])})
         return out
     return _guarded(go)
+
+
+# ── State of the projects, shared between the user's PCs ────────────────────
+
+@agent_bp.route("/api/agent/sync")
+def api_sync_info():
+    from . import etat
+    return jsonify(etat.info())
+
+
+@agent_bp.route("/api/agent/sync", methods=["POST"])
+def api_sync():
+    import db
+    from . import etat
+    b = _body()
+    if "auto" in b:
+        db.set_setting("etat_sync_auto", "1" if b["auto"] else "0")
+        return jsonify({"ok": True, "result": etat.info()})
+    if b.get("connect"):
+        return _guarded(lambda: etat.connect(b.get("url") or None))
+    return _guarded(etat.sync)
