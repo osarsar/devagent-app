@@ -7,7 +7,48 @@ DA.page({
     const STATE = { ok: ['fonctionne', 'ok'], a_tester: ['a tester', 'info'], absent: ['pas saisi', ''],
       en_panne: ['en panne', 'bad'], expire: ['expire', 'bad'], expire_bientot: ['expire bientot', 'warn'] };
     const pillOf = s => DA.pill((STATE[s] || [s])[0], (STATE[s] || [])[1]);
-    const head = h('div'), list = h('div', { class: 'grid' });
+    const head = h('div'), list = h('div', { class: 'grid' }), bwBox = h('div');
+    let bw = { etat: 'absent' };
+
+    /* Send the keys of this PC to Bitwarden (asks the master password; « Plus tard » skips). */
+    async function sendToBitwarden(why) {
+      if (bw.etat === 'absent' || bw.etat === 'deconnecte') return;
+      const pw = await DA.askPassword('Mot de passe maitre Bitwarden',
+        (why || 'Pour envoyer les cles de ce PC vers Bitwarden.') + ' Il n\'est pas garde.');
+      if (!pw) { toast('Cle enregistree sur ce PC seulement. Pense a l\'envoyer vers Bitwarden.'); return; }
+      const r = await api('/api/agent/bitwarden/push', { password: pw });
+      if (!r.ok) throw new Error(r.message);
+      toast(`Bitwarden a jour : ${r.result.cles.length} cle(s), ${r.result.hebergeurs.length} hebergeur(s).`, 'ok');
+      await loadBw();
+    }
+
+    async function loadBw() {
+      bw = await api('/api/agent/bitwarden');
+      const label = { absent: 'pas installe', deconnecte: 'pas connecte', verrouille: 'connecte', ouvert: 'connecte' }[bw.etat];
+      const ready = bw.etat === 'verrouille' || bw.etat === 'ouvert';
+      const push = h('button', { class: 'btn sm primary', type: 'button' }, 'Envoyer vers Bitwarden');
+      push.onclick = () => act(push, () => sendToBitwarden());
+      const pull = h('button', { class: 'btn sm', type: 'button' }, 'Recuperer de Bitwarden');
+      pull.onclick = () => act(pull, async () => {
+        const pw = await DA.askPassword('Mot de passe maitre Bitwarden', 'Pour recuperer les cles sur ce PC. Il n\'est pas garde.');
+        if (!pw) return;
+        const r = await api('/api/agent/bitwarden/pull', { password: pw });
+        if (!r.ok) throw new Error(r.message);
+        toast(`${r.result.cles.length} cle(s) et ${r.result.hebergeurs.length} hebergeur(s) recuperes. Je les teste…`, 'ok');
+        await api('/api/agent/access/test', {});
+        await load();
+      });
+      bwBox.replaceChildren(h('div', { class: 'card stack' },
+        h('div', { class: 'spread' }, h('h2', {}, 'Bitwarden — tes cles sur tous tes PC'), DA.pill(label, ready ? 'ok' : 'warn')),
+        h('p', { class: 'muted' }, 'Toutes les cles de cette page sont gardees dans une note de ton Bitwarden (« ', bw.note || '',
+          ' »). Sur un nouveau PC : tu te connectes, tu recuperes, et tout est en place. Quand tu ajoutes ou renouvelles une cle ici, ',
+          'DevAgent te demande ton mot de passe maitre et met Bitwarden a jour.'),
+        ready ? h('div', { class: 'small muted' }, `Compte ${bw.email || '?'} · dernier envoi : ${DA.when(bw.dernier_envoi) || 'jamais'}`,
+          ` · derniere recuperation : ${DA.when(bw.derniere_recuperation) || 'jamais'}`)
+          : h('div', { class: 'small' }, bw.etat === 'absent' ? 'Installe-le : ' : 'Connecte ce PC une fois, dans un terminal : ',
+            h('code', {}, bw.etat === 'absent' ? 'sudo snap install bw' : 'devagent coffre connecter')),
+        ready ? h('div', { class: 'row' }, push, pull) : null));
+    }
 
     const testAll = h('button', { class: 'btn primary', type: 'button' }, 'Tester tous les acces');
     testAll.onclick = () => act(testAll, async () => {
@@ -21,7 +62,7 @@ DA.page({
       h('p', { class: 'muted' }, 'Les cles sont chiffrees dans le coffre. L\'agent voit leur etat, jamais leur valeur. ',
         'Une cle ne se renouvelle pas toute seule : il faut ton identifiant sur la plateforme. DevAgent te dit laquelle ',
         'ne marche plus ou expire bientot, et t\'ouvre la bonne page.'),
-      head, list);
+      bwBox, head, list);
 
     function card(e) {
       const inputs = {};
@@ -42,6 +83,7 @@ DA.page({
         const r = await api('/api/agent/access/test', { key: e.key });
         if (r.ok) toast(`${e.label} : ${r.result.resume}`, r.result.tout_ok ? 'ok' : 'bad');
         await load();
+        await sendToBitwarden(`« ${e.label} » est enregistre sur ce PC. Pour que tes autres PC l'aient aussi.`);
       });
       const test = e.configured ? h('button', { class: 'btn sm', type: 'button' }, 'Tester') : null;
       if (test) test.onclick = () => act(test, async () => {
@@ -71,6 +113,7 @@ DA.page({
         if (!r || r.success === false) throw new Error((r && r.message) || 'Echec');
         toast('Compte ajoute et verifie.', 'ok');
         await load();
+        await sendToBitwarden('Le compte est enregistre sur ce PC. Pour que tes autres PC l\'aient aussi.');
       });
       return h('div', { class: 'card stack' },
         h('h3', {}, 'Ajouter un hebergeur'),
@@ -97,6 +140,7 @@ DA.page({
       const items = [...data.access].sort((a, b) => (order[a.state] ?? 9) - (order[b.state] ?? 9));
       list.replaceChildren(...items.map(card), hostingAdd());
     }
+    await loadBw();
     await load();
   }
 });

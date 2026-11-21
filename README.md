@@ -65,6 +65,22 @@ choisissant un projet, elle montre ce dont **ce projet** a besoin et ce qui manq
 informations (`acces_etat`, `acces_tester`, `projet_acces`), sans jamais voir une clé. Une clé ne se renouvelle
 pas toute seule : l'automatisation `verifier-acces` te prévient quand l'une tombe ou expire bientôt.
 
+**Bitwarden : les clés sur tous tes PC.** Toutes les clés de la page *Accès* sont gardées dans une note de ton
+Bitwarden (« DevAgent — acces »). Sur chaque PC, une seule fois : `devagent coffre connecter`. Ensuite :
+
+| Je veux… | Commande (ou bouton de la page *Accès*) |
+|---|---|
+| mettre les clés de ce PC dans Bitwarden | `devagent coffre envoyer` |
+| recevoir les clés sur un nouveau PC | `devagent coffre recuperer` |
+
+Quand tu ajoutes ou renouvelles une clé dans la page *Accès*, DevAgent demande ton mot de passe maître et met
+Bitwarden à jour. Le mot de passe n'est jamais gardé, et Bitwarden est reverrouillé après chaque opération.
+L'agent n'a aucun outil pour lire cette note.
+
+**Un nouveau PC, en entier :** installer (`pc.sh`), `devagent coffre connecter`, `devagent coffre recuperer`,
+`devagent mcp installer`. Les clés sont en place et testées ; l'état de chaque projet (feuille de route,
+serveurs, automatisations) reste propre à chaque PC.
+
 **Vercel.** Avec le token du compte : `vercel_etat` (déploiements réussis ou en erreur, domaines, enregistrements
 DNS que Vercel attend), `vercel_ajouter_domaine`, `vercel_redeployer` (après confirmation).
 
