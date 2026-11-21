@@ -65,6 +65,20 @@ cd "$APP_DIR" && exec "$PY" dashboard.py "$@"
 SCRIPT
 chmod +x "$HOME/.local/bin/devpilot"
 
+# « devagent » : le nom d'aujourd'hui. Seul, il lance l'application ; avec une commande d'agent
+# (outils, journal, approuver, auto, mcp, coffre...) il la passe à DevAgent ; le reste va à devpilot.
+cat > "$HOME/.local/bin/devagent" << 'SCRIPT'
+#!/bin/bash
+APP_DIR="$HOME/devpilot/.devpilot/app"
+case "${1:-}" in
+  ""|update|maj|publish|publier|pc|assistant|effacer|version)
+      exec "$HOME/.local/bin/devpilot" "$@" ;;
+esac
+PY="$APP_DIR/.venv/bin/python"; [ -x "$PY" ] || PY=python3
+PYTHONPATH="$APP_DIR${PYTHONPATH:+:$PYTHONPATH}" exec "$PY" -m devagent "$@"     # pas de cd : le projet est celui du dossier courant
+SCRIPT
+chmod +x "$HOME/.local/bin/devagent"
+
 cat > "$HOME/.local/bin/devpilot-watcher" << 'SCRIPT'
 #!/bin/bash
 cd "$HOME/devpilot/.devpilot/app" && exec .venv/bin/python watcher.py "$@"
@@ -114,14 +128,14 @@ PYTHONPATH="$APP_DIR" "$APP_DIR/.venv/bin/python" -c "import db; db.init_db(); p
 chmod +x "$APP_DIR/launch.sh"
 cat > "$HOME/.local/share/applications/devpilot.desktop" << EOF
 [Desktop Entry]
-Name=DevPilot
-Comment=Dev Project Manager
+Name=DevAgent
+Comment=Projets, agent et automatisations
 Exec=$APP_DIR/launch.sh
 Icon=$APP_DIR/icon.svg
 Terminal=false
 Type=Application
 Categories=Development;
-Keywords=dev;project;manager;
+Keywords=dev;project;manager;devpilot;agent;
 EOF
 update-desktop-database "$HOME/.local/share/applications" 2>/dev/null
 

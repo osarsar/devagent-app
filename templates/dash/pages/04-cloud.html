@@ -1,0 +1,44 @@
+        <!-- ════ CLOUD ════ -->
+        <div id="page-cloud" class="page">
+            <div class="flex-between mb-20">
+                <div>
+                    <div class="section-title" style="margin-bottom:4px">Cloud Sync</div>
+                    <div style="font-size:11px;color:var(--text-4)">Vue globale — GitHub + Cloudflare R2</div>
+                </div>
+                <div class="flex gap-6" id="cloud-badges"></div>
+            </div>
+
+            <!-- Connection cards -->
+            <div class="grid-2 mb-20">
+                <div class="card" id="cloud-gh-card" style="padding:16px">
+                    <div class="flex-between mb-8">
+                        <span style="font-size:13px;font-weight:700;color:var(--text-0)">GitHub</span>
+                        <span id="cloud-gh-badge"></span>
+                    </div>
+                    <div id="cloud-gh-info" style="font-size:12px;color:var(--text-3)">Chargement...</div>
+                </div>
+                <div class="card" id="cloud-r2-card" style="padding:16px">
+                    <div class="flex-between mb-8">
+                        <span style="font-size:13px;font-weight:700;color:var(--text-0)">Cloudflare R2</span>
+                        <span id="cloud-r2-badge"></span>
+                    </div>
+                    <div id="cloud-r2-info" style="font-size:12px;color:var(--text-3)">Chargement...</div>
+                </div>
+            </div>
+
+            <!-- Projects sync table -->
+            <div class="card mb-20" style="padding:16px">
+                <div class="section-title" style="margin-bottom:12px">Projets — Sync Status</div>
+                <div id="cloud-projects-table">
+                    <div class="spinner" style="width:16px;height:16px;margin:20px auto"></div>
+                </div>
+            </div>
+
+            <!-- Sync history -->
+            <div class="card" style="padding:16px">
+                <div class="section-title" style="margin-bottom:12px">Historique Sync</div>
+                <div id="cloud-history">
+                    <div class="spinner" style="width:16px;height:16px;margin:20px auto"></div>
+                </div>
+            </div>
+        </div>

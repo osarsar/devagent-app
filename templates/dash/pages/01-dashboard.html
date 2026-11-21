@@ -1,0 +1,28 @@
+        <!-- ════ DASHBOARD ════ -->
+        <div id="page-dashboard" class="page active">
+            <div id="dash-alerts"></div>
+            <div class="grid-4" id="dash-stats">
+                <div class="loading-state"><div class="spinner"></div> Chargement...</div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-label">Utilisation Disque</div>
+                    <div class="chart-container"><canvas id="chart-disk"></canvas></div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Repartition Home</div>
+                    <div class="chart-container"><canvas id="chart-home"></canvas></div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-label">Espace par Projet</div>
+                    <div class="chart-container"><canvas id="chart-projects"></canvas>
+                        <div id="chart-projects-empty" style="display:none;text-align:center;color:var(--text-4);padding:70px 0;font-size:12px">Aucun projet</div></div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Activite Recente</div>
+                    <div id="dash-events" style="max-height:250px;overflow-y:auto"></div>
+                </div>
+            </div>
+        </div>

@@ -1,0 +1,67 @@
+        <!-- ════ PROJECTS ════ -->
+        <div id="page-projects" class="page">
+            <div class="flex-between mb-12">
+                <div class="flex gap-8" style="align-items:center">
+                    <div class="section-title" style="margin-bottom:0">Projets <span class="count" id="proj-count">0</span></div>
+                    <input class="form-input" id="proj-search" oninput="renderProjectGrid()" placeholder="Rechercher..." style="width:200px;padding:5px 10px;font-size:12px">
+                </div>
+                <div class="flex gap-6">
+                    <button class="btn btn-sm" onclick="filterProjects('all')" id="f-all">Tous</button>
+                    <button class="btn btn-sm" onclick="filterProjects('active')" id="f-active">Actifs</button>
+                    <button class="btn btn-sm" onclick="filterProjects('paused')" id="f-paused">Pauses</button>
+                    <button class="btn btn-sm" onclick="filterProjects('done')" id="f-done">Termines</button>
+                    <button class="btn btn-sm btn-danger" id="btn-delete-selected" onclick="deleteSelectedProjects()" style="display:none">Retirer la selection</button>
+                    <button class="btn btn-sm" id="btn-select-mode" onclick="toggleSelectMode()">Selectionner</button>
+                    <button class="btn btn-sm" onclick="scanProjects()">&#9889; Scanner</button>
+                    <button class="btn btn-sm" id="btn-import-project" onclick="openAddProject('term')" style="display:none;border-color:var(--amber);color:var(--amber)"></button>
+                    <button class="btn btn-sm btn-primary" onclick="openAddProject('new')">+ Ajouter un projet</button>
+                    <button class="btn btn-primary btn-sm" onclick="openWizard()">+ Nouveau Client</button>
+                </div>
+            </div>
+            <div id="unregistered-banner" class="mb-12" style="display:none"></div>
+            <div id="scan-results" class="mb-20" style="display:none"></div>
+            <div class="grid-3" id="projects-grid"></div>
+
+            <!-- Project Detail Panel -->
+            <div id="project-detail" style="display:none">
+                <!-- Header -->
+                <div class="card mb-12">
+                    <div class="flex-between">
+                        <div class="section-title" id="detail-title" style="margin-bottom:0"></div>
+                        <div class="flex gap-6">
+                            <button class="btn btn-sm" id="btn-status-active" onclick="setLifecycle('active')">Actif</button>
+                            <button class="btn btn-sm" id="btn-status-paused" onclick="setLifecycle('paused')">Pause</button>
+                            <button class="btn btn-sm" id="btn-status-done" onclick="setLifecycle('done')">Termine</button>
+                            <button class="btn btn-sm" id="btn-edit">Modifier</button>
+                            <button class="btn btn-sm btn-danger" id="btn-cleanup-preview">Cleanup</button>
+                            <button class="btn btn-sm btn-danger" id="btn-delete-proj" style="border-color:rgba(239,68,68,.4)">Supprimer</button>
+                            <button class="btn btn-sm" id="btn-open-folder">Ouvrir dossier</button>
+                            <button class="btn btn-sm" id="btn-launch-console" style="display:none;background:var(--emerald);color:#fff;border-color:var(--emerald)">&#9654; Console</button>
+                            <button class="btn btn-sm" id="btn-update-console" style="display:none;background:var(--amber);color:#fff;border-color:var(--amber)">&#8635; Mettre à jour</button>
+                            <button class="btn btn-sm btn-primary" id="btn-workspace">Workspace</button>
+                        </div>
+                    </div>
+                    <!-- Project info bar -->
+                    <div id="detail-info-bar" class="mt-8"></div>
+                    <div id="detail-needs" class="mt-8"></div>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="grid-4 mb-12" id="detail-stats"></div>
+
+                <!-- Specs section (checklist + prompt) -->
+                <div id="detail-specs-section" style="display:none" class="mb-12"></div>
+
+                <!-- Git + Caches -->
+                <div class="grid-2 mb-12">
+                    <div id="detail-git"></div>
+                    <div id="detail-caches"></div>
+                </div>
+
+                <!-- Docker + Resources -->
+                <div class="grid-2">
+                    <div id="detail-docker"></div>
+                    <div id="detail-resources"></div>
+                </div>
+            </div>
+        </div>

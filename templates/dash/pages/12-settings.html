@@ -1,0 +1,95 @@
+
+        <div id="page-settings" class="page">
+            <!-- Outils de développement -->
+            <div class="card mb-20">
+                <div class="section-title">Outils de développement</div>
+                <div class="grid-2" style="margin-bottom:0">
+                    <div class="form-group"><label>Commande de l'éditeur</label><input class="form-input mono" id="set-editor-cmd" placeholder="code (VS Code) · codium · cursor · subl"></div>
+                    <div class="form-group"><label>Commande de Claude</label><input class="form-input mono" id="set-claude-cmd" placeholder="claude"></div>
+                </div>
+                <div style="font-size:11px;color:var(--text-4);margin-bottom:10px">Utilisées par l'onglet « Développer » de chaque projet. Vide = valeur par défaut.</div>
+                <button class="btn btn-primary btn-sm" onclick="saveDevTools()">Enregistrer</button>
+            </div>
+            <!-- GitHub -->
+            <div class="card mb-20">
+                <div class="flex-between mb-12">
+                    <div class="section-title" style="margin-bottom:0">GitHub</div>
+                    <span id="gh-status"></span>
+                </div>
+                <div class="grid-2" style="margin-bottom:0">
+                    <div>
+                        <div class="form-group"><label>Username GitHub</label><input class="form-input" id="set-gh-user" placeholder="ton-username"></div>
+                        <div class="form-group"><label>Personal Access Token</label><input class="form-input" id="set-gh-token" type="password" placeholder="ghp_xxxxxxxxxxxx" style="font-family:monospace"></div>
+                        <div style="font-size:10px;color:var(--text-4);margin-bottom:12px">
+                            Cree un token : GitHub > Settings > Developer settings > Personal access tokens > Tokens (classic) > Generate new token (repo scope)
+                        </div>
+                        <div class="flex gap-6">
+                            <button class="btn btn-primary btn-sm" onclick="saveGitHub()">Sauvegarder</button>
+                            <button class="btn btn-sm" onclick="testGitHub()">Tester la connexion</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="card-label">Repos GitHub</div>
+                        <div id="gh-repos" style="max-height:200px;overflow-y:auto"><span style="color:var(--text-4);font-size:12px">Configure ton token pour voir tes repos</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cloudflare R2 -->
+            <div class="card mb-20">
+                <div class="flex-between mb-12">
+                    <div class="section-title" style="margin-bottom:0">Cloudflare R2</div>
+                    <span id="r2-status"></span>
+                </div>
+                <div class="grid-2" style="margin-bottom:0">
+                    <div>
+                        <div class="form-group"><label>Account ID</label><input class="form-input" id="set-r2-account" placeholder="votre-account-id" style="font-family:monospace"></div>
+                        <div class="form-group"><label>Access Key ID</label><input class="form-input" id="set-r2-access-key" type="password" placeholder="R2 Access Key" style="font-family:monospace"></div>
+                        <div class="form-group"><label>Secret Access Key</label><input class="form-input" id="set-r2-secret-key" type="password" placeholder="R2 Secret Key" style="font-family:monospace"></div>
+                        <div class="form-group"><label>Bucket par defaut</label><input class="form-input" id="set-r2-bucket" placeholder="devpilot-storage"></div>
+                        <div style="font-size:10px;color:var(--text-4);margin-bottom:12px">
+                            Cloudflare Dashboard > R2 > Manage R2 API Tokens > Create API Token
+                        </div>
+                        <div class="flex gap-6">
+                            <button class="btn btn-primary btn-sm" onclick="saveR2()">Sauvegarder</button>
+                            <button class="btn btn-sm" onclick="testR2()">Tester la connexion</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="card-label">Buckets R2</div>
+                        <div id="r2-buckets" style="max-height:200px;overflow-y:auto"><span style="color:var(--text-4);font-size:12px">Configurez les identifiants R2 pour voir vos buckets</span></div>
+                        <div id="r2-create-bucket" style="display:none;margin-top:12px">
+                            <div class="flex gap-6">
+                                <input class="form-input" id="r2-new-bucket" placeholder="nom-du-bucket" style="flex:1;font-size:11px">
+                                <button class="btn btn-xs btn-primary" onclick="createR2Bucket()">Creer</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="section-title">Surveillance</div>
+                    <div class="form-group"><label>Dossiers a scanner (separes par virgule)</label><input class="form-input" id="set-scan" placeholder="~/Desktop"></div>
+                    <div class="form-group"><label>Surveiller Downloads</label><select class="form-input" id="set-dl"><option value="1">Oui</option><option value="0">Non</option></select></div>
+                    <div class="form-group"><label>Surveiller Desktop</label><select class="form-input" id="set-desk"><option value="1">Oui</option><option value="0">Non</option></select></div>
+                    <div class="form-group"><label>Surveiller Docker</label><select class="form-input" id="set-docker"><option value="1">Oui</option><option value="0">Non</option></select></div>
+                    <div class="form-group"><label>Expiration temporaires (jours)</label><input class="form-input" id="set-expire" type="number" value="7"></div>
+                    <div class="form-group"><label>Notifications</label><select class="form-input" id="set-notify"><option value="1">Activees</option><option value="0">Desactivees</option></select></div>
+                    <button class="btn btn-primary btn-sm" onclick="saveSettings()">Sauvegarder</button>
+                </div>
+                <div class="card">
+                    <div class="section-title">Regles auto-detect</div>
+                    <div id="rules-list" class="mb-12"></div>
+                    <div class="section-title mt-12">Watcher Service</div>
+                    <div class="flex gap-6 mb-8" style="flex-wrap:wrap">
+                        <button class="btn btn-sm" onclick="watcherCmd('status')">Status</button>
+                        <button class="btn btn-sm" onclick="watcherCmd('restart')">Restart</button>
+                        <button class="btn btn-sm" onclick="watcherCmd('stop')">Stop</button>
+                        <button class="btn btn-sm" onclick="watcherCmd('start')">Start</button>
+                    </div>
+                    <pre id="watcher-output" class="mono" style="font-size:10px;color:var(--text-3);white-space:pre-wrap;max-height:180px;overflow:auto;background:var(--bg-0);padding:10px;border-radius:var(--radius-xs);border:1px solid var(--border-0)"></pre>
+                </div>
+            </div>
+        </div>
