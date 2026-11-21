@@ -1,5 +1,5 @@
 #!/bin/bash
-# DevPilot Launcher — kill old instance, start fresh
+# DevAgent Launcher — kill old instance, start fresh
 APP_DIR="$HOME/devpilot/.devpilot/app"
 LOG="$HOME/devpilot/.devpilot/data/dashboard.log"
 # stop the old instance politely first: it then stops the consoles and

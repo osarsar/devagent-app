@@ -1,4 +1,4 @@
-"""DevPilot — Cloud integration API routes (Flask Blueprint)."""
+"""DevAgent — Cloud integration API routes (Flask Blueprint)."""
 
 import os
 import re
@@ -509,7 +509,7 @@ def _mask_config(cfg):
     return masked
 
 
-# The hosting platforms DevPilot knows. The keys stay lowercase: the DNS
+# The hosting platforms DevAgent knows. The keys stay lowercase: the DNS
 # records (dnscheck.EXPECTED_FOR_PLATFORM), the dashboards (host_urls /
 # token_urls) and the UI are all keyed on them. The aliases cover what the
 # hand-typed "Plateforme" field used to accept.

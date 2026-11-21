@@ -1,4 +1,4 @@
-"""DevPilot — the connections of a client site: domain, professional email.
+"""DevAgent — the connections of a client site: domain, professional email.
 
 Each one is a component of the project (DB) mirrored, without secrets, into
 .devpilot/connections.json (the folder is the reference: a re-imported
@@ -227,7 +227,7 @@ def verify_domain(pid):
         raise ProjectError("Pas de domaine enregistre pour ce projet")
     exp = expected_dns(pid)
     if not exp["expected"]:
-        raise ProjectError("Ajoute d'abord l'hebergement (serveur ou plateforme) : DevPilot saura alors ou le domaine doit pointer")
+        raise ProjectError("Ajoute d'abord l'hebergement (serveur ou plateforme) : DevAgent saura alors ou le domaine doit pointer")
     res = dnscheck.check_domain(dom["domain"], exp["expected"])
     save(pid, "domain", {"dns_verified": bool(res.get("ok")), "dns_checked_at": _now(), "dns_result": res})
     return res

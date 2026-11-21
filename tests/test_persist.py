@@ -1,4 +1,4 @@
-"""Sessions persistantes : elles survivent à un redémarrage de DevPilot (tmux), et
+"""Sessions persistantes : elles survivent à un redémarrage de DevAgent (tmux), et
 « Fermer » / « Fermer le projet » les arrêtent pour de bon."""
 import importlib
 import os
@@ -86,11 +86,11 @@ def test_survit_au_redemarrage_de_devpilot(projet):
     sess.write(f"python3 -m http.server {port} --bind 127.0.0.1\r".encode())
     assert attendre(lambda: ouvert(port)), texte(sess)[-300:]
 
-    app._stop_everything_on_exit()                                          # DevPilot s'arrête (SIGTERM)
+    app._stop_everything_on_exit()                                          # DevAgent s'arrête (SIGTERM)
     assert attendre(lambda: not sess.alive)                                 # notre client est parti…
     assert persist.exists(sid) and ouvert(port)                             # …la session et le serveur restent
 
-    app2 = charger(); c2 = app2.app.test_client()                           # DevPilot redémarre
+    app2 = charger(); c2 = app2.app.test_client()                           # DevAgent redémarre
     assert sid in app2._term_sessions
     l = c2.get(f"/api/terminal/sessions?pid={pid}").get_json()
     assert [(x["sid"], x["label"], x["repo"], x["persistent"]) for x in l] == [(sid, "serveur", "md-backend", True)]

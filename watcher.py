@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""DevPilot Watcher — Project-aware filesystem, Docker, and port monitoring."""
+"""DevAgent Watcher — Project-aware filesystem, Docker, and port monitoring."""
 
 import os
 import sys
@@ -38,7 +38,7 @@ def notify(title, body, icon="dialog-information", urgency="normal"):
     try:
         subprocess.Popen(
             ["notify-send", f"--icon={icon}", f"--urgency={urgency}",
-             "--app-name=DevPilot", title, body],
+             "--app-name=DevAgent", title, body],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
     except FileNotFoundError:
@@ -518,7 +518,7 @@ def main():
     expiry_thread.start()
     print("[devpilot] Expiry checker started")
 
-    notify("DevPilot actif", "Surveillance fichiers, Docker, ports", icon="security-high")
+    notify("DevAgent actif", "Surveillance fichiers, Docker, ports", icon="security-high")
 
     def shutdown(sig, frame):
         print("\n[devpilot] Shutting down...")

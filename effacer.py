@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""DevPilot — effacer de CE PC tout ce qui touche à DevPilot et à tes projets.
+"""DevAgent — effacer de CE PC tout ce qui touche à DevAgent et à tes projets.
 
     devpilot effacer               inventaire → questions → confirmation tapée → effacement
     devpilot effacer --simulation  la même chose, mais RIEN n'est effacé (ce qui serait fait)
@@ -11,18 +11,18 @@ Sécurité :
   - inventaire d'abord, RIEN n'est effacé avant la confirmation finale tapée ;
   - le travail qui n'est QUE sur ce PC (fichiers non commités, commits jamais poussés, stash)
     est signalé dépôt par dépôt, et ce projet n'est jamais coché par défaut ;
-  - sauvegardes proposées AVANT (données DevPilot chiffrées, et celles des projets) ;
+  - sauvegardes proposées AVANT (données DevAgent chiffrées, et celles des projets) ;
   - jamais rien hors de ton dossier personnel, jamais un dossier racine (~/.ssh, ~/.config…) en
     entier ; un lien est retiré sans suivre sa cible ; les secrets sont écrasés avant d'être effacés ;
   - un projet peut déclarer ce qu'il a installé ailleurs sur le PC : fichier `effacer-poste.sh`
-    à la racine d'un de ses dépôts (protocole plus bas) — DevPilot le pose en question, comme le reste.
+    à la racine d'un de ses dépôts (protocole plus bas) — DevAgent le pose en question, comme le reste.
 
 Protocole `effacer-poste.sh` (dans un dépôt d'un projet) :
   bash effacer-poste.sh liste        → une ligne JSON par élément :
       {"id": "...", "titre": "...", "detail": "...", "chemins": ["~/..."], "secret": false,
        "action": false, "defaut": true, "avant": false}
-      action=true → DevPilot appelle « bash effacer-poste.sh faire <id> » (avant les effacements
-      si avant=true : sauvegarde, révocation d'une clé…) ; chemins → effacés par DevPilot.
+      action=true → DevAgent appelle « bash effacer-poste.sh faire <id> » (avant les effacements
+      si avant=true : sauvegarde, révocation d'une clé…) ; chemins → effacés par DevAgent.
   bash effacer-poste.sh verifier     → avertissements (une ligne chacun), affichés à l'inventaire
 """
 from __future__ import annotations
@@ -331,7 +331,7 @@ def crochets(racine: Path):
 
 
 def projets_enregistres():
-    """Les projets connus de DevPilot (certains peuvent vivre hors de ~/devpilot/projects)."""
+    """Les projets connus de DevAgent (certains peuvent vivre hors de ~/devpilot/projects)."""
     out = []
     try:
         con = sqlite3.connect(ESPACE / "data" / "devpilot.db")
@@ -353,7 +353,7 @@ def inventaire():
     donnees = ESPACE / "data"
     if (donnees / "devpilot.db").exists():
         elements.append(Element(
-            id="export", titre="Sauvegarder les données DevPilot AVANT (archive chiffrée, hors de ce qui est effacé)",
+            id="export", titre="Sauvegarder les données DevAgent AVANT (archive chiffrée, hors de ce qui est effacé)",
             detail="projets, notes, étapes, réglages — tape une phrase secrète ; garde l'archive (copie-la dans ton cloud)",
             avant=True, defaut=True, action=action_export(donnees)))
     for nom, racine in projets_enregistres():
@@ -387,17 +387,17 @@ def inventaire():
         elements.append(Element(id=f"projet:{nom}", titre=f"Le projet « {nom} »",
                                 detail=f"{str(racine).replace(str(HOME), '~')} · {humain(taille([racine]))} · {len(repos)} dépôt(s)",
                                 chemins=[racine], risque=risque, defaut=not risque, action=action_processus(racine)))
-    # DevPilot lui-même
+    # DevAgent lui-même
     appli = [ESPACE, HOME / ".config" / "devpilot", HOME / ".local" / "bin" / "devpilot", HOME / ".local" / "bin" / "devpilot-watcher",
              HOME / ".local" / "share" / "applications" / "devpilot.desktop",
              HOME / ".config" / "systemd" / "user" / "devpilot-watcher.service", HOME / ".config" / "autostart" / "devpilot.desktop"]
     appli = [p for p in appli if p.exists() or p.is_symlink()]
     if appli:
-        elements.append(Element(id="devpilot", titre="DevPilot lui-même (programme, données, commandes, icône, service)",
+        elements.append(Element(id="devpilot", titre="DevAgent lui-même (programme, données, commandes, icône, service)",
                                 detail=", ".join(str(p).replace(str(HOME), "~") for p in appli), chemins=appli,
                                 action=action_arret_devpilot()))
     if (HOME / ".ssh" / "devpilot").exists():
-        elements.append(Element(id="cles-devpilot", titre="Les clés SSH créées par DevPilot pour tes serveurs (~/.ssh/devpilot)",
+        elements.append(Element(id="cles-devpilot", titre="Les clés SSH créées par DevAgent pour tes serveurs (~/.ssh/devpilot)",
                                 chemins=[HOME / ".ssh" / "devpilot"], secret=True,
                                 detail="sans elles, ce PC n'entre plus sur ces serveurs (une nouvelle clé se crée à la reconstruction)"))
     for outil, cmd, quoi in (("gh", ["gh", "auth", "logout", "--hostname", "github.com"], "GitHub CLI (gh)"),
@@ -413,7 +413,7 @@ def action_export(donnees: Path):
     def faire(journal):
         dest = HOME / f"devpilot-donnees-{time.strftime('%Y%m%d-%H%M')}.tar.gz.gpg"
         if SIMULATION:
-            journal.append(f"· sauvegarderait les données DevPilot → {dest}"); return
+            journal.append(f"· sauvegarderait les données DevAgent → {dest}"); return
         # La phrase est demandée ICI, dans ton terminal : laissée à gpg, elle passait par sa fenêtre
         # « pinentry », qui n'atteint pas ce terminal → « Timeout » (vécu le 2026-10-05).
         phrase = phrase_secrete()
@@ -429,9 +429,9 @@ def action_export(donnees: Path):
         if rc.returncode != 0:
             journal.append("    " + (rc.stderr or "").strip()[-200:])
         rc = rc.returncode
-        journal.append(f"✓ données DevPilot sauvegardées : {dest} (garde-la !)\n"
+        journal.append(f"✓ données DevAgent sauvegardées : {dest} (garde-la !)\n"
                        f"    pour la relire : gpg -d {dest.name} | tar -xz" if rc == 0 and dest.exists()
-                       else "✗ sauvegarde des données DevPilot ÉCHOUÉE")
+                       else "✗ sauvegarde des données DevAgent ÉCHOUÉE")
         if rc != 0:
             raise SystemExit("arrêt : la sauvegarde a échoué, RIEN n'a été effacé")
     return faire
@@ -455,11 +455,11 @@ def phrase_secrete():
 def action_arret_devpilot():
     def faire(journal):
         if SIMULATION:
-            journal.append("· arrêterait DevPilot, son service et ses sessions tmux"); return
+            journal.append("· arrêterait DevAgent, son service et ses sessions tmux"); return
         sh(["systemctl", "--user", "disable", "--now", "devpilot-watcher.service"])
         sh(["tmux", "-L", os.environ.get("DEVPILOT_TMUX_SOCKET", "devpilot"), "kill-server"])
         sh(["fuser", "-k", "-TERM", f"{os.environ.get('DEVPILOT_PORT', '5555')}/tcp"])
-        journal.append("✓ DevPilot arrêté (service, sessions, serveur)")
+        journal.append("✓ DevAgent arrêté (service, sessions, serveur)")
     return faire
 
 
@@ -475,7 +475,7 @@ def action_commande(cmd, ok):
 # ── déroulé ─────────────────────────────────────────────────────────────────
 
 def afficher(elements, avertissements):
-    print(f"\n{G}Ce qui touche à DevPilot et à tes projets sur ce PC ({socket.gethostname()}){N}\n")
+    print(f"\n{G}Ce qui touche à DevAgent et à tes projets sur ce PC ({socket.gethostname()}){N}\n")
     for i, e in enumerate(elements, 1):
         marque = f"{R}⚠ {N}" if e.risque else ("🔑 " if e.secret else "")
         print(f"  {i:>2}. {marque}{e.titre}")
@@ -551,14 +551,14 @@ def executer(elements):
     for l in journal:
         print("  " + l)
     if not SIMULATION:
-        print(f"\n{G}Pour tout reconstruire plus tard{N} : la section « PC vierge » du README de DevPilot\n"
+        print(f"\n{G}Pour tout reconstruire plus tard{N} : la section « PC vierge » du README de DevAgent\n"
               "  https://github.com/osarsar/devagent-app#2-pc-vierge--installer-devpilot\n"
               "  puis l'assistant de chaque projet.")
     return journal
 
 
 def lance_depuis_devpilot():
-    """Lancé dans un terminal DevPilot (tmux de DevPilot, ou enfant du serveur) ? Arrêter DevPilot
+    """Lancé dans un terminal DevAgent (tmux de DevAgent, ou enfant du serveur) ? Arrêter DevAgent
     tuerait ce programme au milieu de l'effacement."""
     if "/devpilot" in os.environ.get("TMUX", "").split(",")[0]:
         return True
@@ -576,19 +576,19 @@ def lance_depuis_devpilot():
 
 def main(argv=None):
     global SIMULATION
-    ap = argparse.ArgumentParser(description="Effacer de ce PC tout ce qui touche à DevPilot et à tes projets")
+    ap = argparse.ArgumentParser(description="Effacer de ce PC tout ce qui touche à DevAgent et à tes projets")
     ap.add_argument("--simulation", action="store_true", help="tout montrer, ne rien effacer")
     a = ap.parse_args(argv)
     SIMULATION = a.simulation
     if not SIMULATION and lance_depuis_devpilot():
-        print(f"{R}✗ Lance-moi depuis un terminal NORMAL (pas un terminal de DevPilot) :{N} arrêter DevPilot "
+        print(f"{R}✗ Lance-moi depuis un terminal NORMAL (pas un terminal de DevAgent) :{N} arrêter DevAgent "
               "pendant l'effacement me couperait au milieu.\n  Ouvre un terminal (Ctrl+Alt+T) et tape : devpilot effacer")
         return 2
-    print(f"{G}DevPilot — effacer ce PC{N}" + (f"  {J}(SIMULATION : rien ne sera effacé){N}" if SIMULATION else ""))
+    print(f"{G}DevAgent — effacer ce PC{N}" + (f"  {J}(SIMULATION : rien ne sera effacé){N}" if SIMULATION else ""))
     print("Inventaire en cours (dépôts, docker, raccourcis)…")
     elements, avertissements = inventaire()
     if not elements:
-        print("Rien de DevPilot sur ce PC."); return 0
+        print("Rien de DevAgent sur ce PC."); return 0
     afficher(elements, avertissements)
     choisir(elements)
     if not confirmer(elements):

@@ -1,4 +1,4 @@
-"""DevPilot — hosting accounts (Vercel, Netlify, Railway...) and their link to a project.
+"""DevAgent — hosting accounts (Vercel, Netlify, Railway...) and their link to a project.
 
 The accounts are one setting, ``hosting_accounts`` (a JSON list, stored encrypted:
 each account holds its API token). This module is the only place that reads or

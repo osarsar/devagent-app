@@ -108,7 +108,7 @@ def test_kill_tree_reaches_children_in_their_own_process_group(PO, procs, tmp_pa
 def test_terminal_sessions_count_as_project_processes(P, PO, home, procs):
     p = P.create("site")
     port = free_port()
-    # a "terminal": bash that launches a server (like typing `python -m http.server` in DevPilot)
+    # a "terminal": bash that launches a server (like typing `python -m http.server` in DevAgent)
     bash = subprocess.Popen(["bash", "-c", f"python3 -m http.server {port} --bind 127.0.0.1 & wait"],
                             cwd=str(home), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
     procs.append(bash)

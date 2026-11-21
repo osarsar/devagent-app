@@ -1,7 +1,7 @@
-"""DevPilot — a project made of several repos of one GitHub organisation
+"""DevAgent — a project made of several repos of one GitHub organisation
 (e.g. MarocDefender: md_console, md_infra, 5 services, landing...).
 
-The project is linked to the ORGANISATION. DevPilot lists its repos, finds
+The project is linked to the ORGANISATION. DevAgent lists its repos, finds
 where each one is already cloned inside the project folder (by its origin,
 at any depth: md_infra/marocdefender/md-backend is md_backend), shows their
 state, clones a missing one on request, and pulls all clean ones at once.
@@ -32,7 +32,7 @@ def parse_org(text):
 # ── GitHub side ─────────────────────────────────────────────────────────────
 
 def list_repos(org):
-    """Repos of an organisation (or user) via gh; falls back to the API with the DevPilot token."""
+    """Repos of an organisation (or user) via gh; falls back to the API with the DevAgent token."""
     try:
         r = subprocess.run(["gh", "repo", "list", org, "--limit", "200", "--json",
                             "name,description,defaultBranchRef,isPrivate,isArchived,sshUrl,url"],

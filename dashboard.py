@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""DevPilot — Developer Project Manager."""
+"""DevAgent — Developer Project Manager."""
 
 import os
 import subprocess
@@ -142,7 +142,7 @@ def terminal_test():
     return """<!DOCTYPE html>
 <html><head>
 <meta charset="UTF-8">
-<title>DevPilot Terminal Test</title>
+<title>DevAgent Terminal Test</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
@@ -522,7 +522,7 @@ def api_open_terminal(pid):
 
     data = request.json or {}
     mode = data.get("mode", "bash")  # "bash" or "claude"
-    title = f"DevPilot — {project['name']}"
+    title = f"DevAgent — {project['name']}"
 
     if mode == "claude":
         # Launch claude in the project dir
@@ -752,7 +752,7 @@ def _write_claude_md(project_path, project, specs):
     dp = _ensure_devpilot_dir(project_path)
     wd = specs.get("wizard_data", {}) if specs else {}
 
-    lines = [P.DEVPILOT_MARK, f"# {project['name']} — DevPilot Context\n"]
+    lines = [P.DEVPILOT_MARK, f"# {project['name']} — DevAgent Context\n"]
     if wd.get("client_name"):
         lines.append(f"Client: {wd['client_name']}")
     if wd.get("site_type"):
@@ -833,7 +833,7 @@ def _write_claude_md(project_path, project, specs):
             if cfg.get("domain"): conn_lines.append(f"- Domaine: {cfg['domain']}")
             # Token hint for Claude (account_id reference, not the actual token)
             if cfg.get("account_id"):
-                conn_lines.append(f"- Token: configure dans DevPilot (compte {account_name})")
+                conn_lines.append(f"- Token: configure dans DevAgent (compte {account_name})")
             conn_lines.append("")
             has_connections = True
 
@@ -925,7 +925,7 @@ def _write_claude_md(project_path, project, specs):
     lines.append("Sans ces outils, quand tu crees un repo GitHub, connectes une base de donnees, ou deploies :")
     lines.append("1. Ecris les infos dans `.devpilot/connections.json`")
     lines.append('2. Format: {"github":{"url":"..."},"database":{"type":"...","host":"...","port":5432,"name":"..."},"deploy":{"url":"...","platform":"vercel"},"storage":{"bucket":"..."}}')
-    lines.append("3. DevPilot lira ce fichier automatiquement et affichera les connexions")
+    lines.append("3. DevAgent lira ce fichier automatiquement et affichera les connexions")
     lines.append("")
     lines.append("Quand l'utilisateur dit 'sauvegarde la session' ou 'save session' :")
     lines.append(f"1. Cree un fichier dans `.devpilot/sessions/` avec le format : `YYYY-MM-DD_titre.md`")
@@ -938,7 +938,7 @@ def _write_claude_md(project_path, project, specs):
 
     (dp / "CLAUDE.md").write_text("\n".join(lines), encoding="utf-8")
 
-    # Root CLAUDE.md for easy access — only if absent or written by DevPilot:
+    # Root CLAUDE.md for easy access — only if absent or written by DevAgent:
     # the repo's own CLAUDE.md is never overwritten
     root_md = Path(project_path) / "CLAUDE.md"
     if not root_md.exists() or P.is_devpilot_file(root_md):
@@ -1161,7 +1161,7 @@ class TermSession:
             argv = ["bash", "--login"]
 
         # PERSISTENT (tmux): the project terminal and the « Développer » sessions
-        # survive a DevPilot restart — DevPilot only attaches to them.
+        # survive a DevAgent restart — DevAgent only attaches to them.
         self.persistent = (persist.available() and mode in ("", "claude")
                            and (sid.startswith("proj-") or sid.startswith("dev-")))
         if self.persistent:
@@ -1178,8 +1178,8 @@ class TermSession:
             # Child: never fall back into the Flask code, whatever happens
             try:
                 os.chdir(cwd)
-                # never let the shell inherit DevPilot's sockets (port 5555...): they would
-                # outlive DevPilot and keep the port busy
+                # never let the shell inherit DevAgent's sockets (port 5555...): they would
+                # outlive DevAgent and keep the port busy
                 os.closerange(3, os.sysconf("SC_OPEN_MAX") if hasattr(os, "sysconf") else 4096)
                 os.execvpe(argv[0], argv, env)
             finally:
@@ -1262,7 +1262,7 @@ class TermSession:
         return persist.pane_pids(self.sid) if self.persistent else [self.pid]
 
     def detach_client(self):
-        """DevPilot stops: persistent sessions stay in tmux, only our client goes."""
+        """DevAgent stops: persistent sessions stay in tmux, only our client goes."""
         for sig in (signal.SIGHUP, signal.SIGKILL):
             try:
                 os.kill(self.pid, sig)
@@ -1305,7 +1305,7 @@ def _project_sessions(project):
                 or (root and P.resolve(s.cwd).is_relative_to(root))]
 
 
-_EN_SORTIE = [False]       # DevPilot is stopping: persistent sessions are detached, not killed
+_EN_SORTIE = [False]       # DevAgent is stopping: persistent sessions are detached, not killed
 
 
 def _close_project_sessions(project):
@@ -1326,7 +1326,7 @@ ports_mod.close_sessions = _close_project_sessions
 
 
 def _stop_everything_on_exit(*_):
-    """DevPilot stops: consoles it started and all terminals stop with it (setting stop_on_exit)."""
+    """DevAgent stops: consoles it started and all terminals stop with it (setting stop_on_exit)."""
     try:
         _EN_SORTIE[0] = True
         if db.get_setting("stop_on_exit", "1") != "1":
@@ -1345,13 +1345,13 @@ for _sig in (signal.SIGTERM, signal.SIGINT):
         pass
 
 
-# DevPilot's own idle shells don't block a move/delete (what runs in them does)
+# DevAgent's own idle shells don't block a move/delete (what runs in them does)
 P.ignored_pids.append(lambda: [s.pid for s in list(_term_sessions.values())])
 P.on_removed.append(_close_project_sessions)
 
 
 def _restore_sessions():
-    """At startup: the tmux sessions left by the previous DevPilot are attached again."""
+    """At startup: the tmux sessions left by the previous DevAgent are attached again."""
     if not persist.available():
         return 0
     n = 0
@@ -1508,7 +1508,7 @@ def api_terminal_session_new():
     kind = "claude" if data.get("kind") == "claude" else "terminal"
     run = None
     if data.get("start") and kind == "terminal":
-        # « ▶ Lancer » : the command comes from DevPilot's own detection, never from the request
+        # « ▶ Lancer » : the command comes from DevAgent's own detection, never from the request
         import preview
         st = (preview.previews(pid).get(repo) or {}).get("start")
         if not st:
@@ -1851,7 +1851,7 @@ if __name__ == "__main__":
         print(f"  coffre : {e}")
     from devagent import automations as _automations
     _automations.start_scheduler()                # automations run while DevAgent runs
-    print(f"\n  DevPilot -> http://localhost:{port}\n")
+    print(f"\n  DevAgent -> http://localhost:{port}\n")
     # Open browser on launch (desktop shortcut or terminal)
     if not os.environ.get("DEVPILOT_NO_BROWSER"):
         threading.Timer(1.0, lambda: webbrowser.open(f"http://localhost:{port}")).start()

@@ -1,7 +1,7 @@
-"""DevPilot — access to a server with its password (OVH and others).
+"""DevAgent — access to a server with its password (OVH and others).
 
 The provider sends a temporary password (it may be expired: it must be changed
-at first login). With it DevPilot:
+at first login). With it DevAgent:
   1. connects, and if the password is expired changes it right away (interactive
      `passwd` in a pseudo-terminal: current / new / new)
   2. installs this PC's SSH key and checks the key works

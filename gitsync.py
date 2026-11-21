@@ -1,4 +1,4 @@
-"""DevPilot — when the project folder and its GitHub repo differ.
+"""DevAgent — when the project folder and its GitHub repo differ.
 
 1. At link time (folder had its own files, the repo has code, no common history):
    compare() shows the differences, reconcile() applies the user's choice:

@@ -1,4 +1,4 @@
-"""DevPilot — checks that a client's domain, email and site are configured.
+"""DevAgent — checks that a client's domain, email and site are configured.
 
 Standard library only (no dnspython). DNS goes through `dig +short` when it
 is installed, else `socket.getaddrinfo` (A/AAAA) and `nslookup` (other types).
@@ -48,7 +48,7 @@ DNS_ATTEMPTS = _env_int("DEVPILOT_DNS_ATTEMPTS", 4)
 
 RTYPES = ("A", "AAAA", "CNAME", "MX", "NS", "TXT")
 USER_AGENT = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
-              "Chrome/124.0 Safari/537.36 DevPilot")
+              "Chrome/124.0 Safari/537.36 DevAgent")
 
 # Email provider by MX host suffix (host == suffix or host ends with "." + suffix).
 KNOWN_MX = {

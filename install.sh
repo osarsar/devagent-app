@@ -1,6 +1,6 @@
 #!/bin/bash
-# DevPilot — Installation Script
-# Installs DevPilot to ~/devpilot/.devpilot/
+# DevAgent — Installation Script
+# Installs DevAgent to ~/devpilot/.devpilot/
 
 set -e
 
@@ -11,7 +11,7 @@ DATA_DIR="$INSTALL_DIR/data"
 
 echo ""
 echo "  ╔══════════════════════════════════════╗"
-echo "  ║       DevPilot — Installation        ║"
+echo "  ║       DevAgent — Installation        ║"
 echo "  ╚══════════════════════════════════════╝"
 echo ""
 
@@ -50,12 +50,12 @@ case "${1:-}" in
                      echo "ce PC   : $(git -C "$APP_DIR" log -1 --format='%h %s (%cr)')"
                      echo "GitHub  : $(git -C "$APP_DIR" log -1 --format='%h %s (%cr)' origin/main)"
                      exit 0 ;;
-  help|-h|--help)    echo "devpilot                 lancer DevPilot"
+  help|-h|--help)    echo "devpilot                 lancer DevAgent"
                      echo "devpilot pc              l'assistant : il dit quoi faire sur ce PC et le fait"
                      echo "devpilot publish \"msg\"   publier mes modifications (tests, PR, fusion) pour tous les PC"
                      echo "devpilot update          récupérer la dernière version (tu choisis la branche, ★ main)"
                      echo "devpilot version         ce PC comparé à GitHub"
-                     echo "devpilot effacer         effacer de ce PC tout ce qui touche à DevPilot et aux projets (--simulation d'abord)"; exit 0 ;;
+                     echo "devpilot effacer         effacer de ce PC tout ce qui touche à DevAgent et aux projets (--simulation d'abord)"; exit 0 ;;
   "") ;;
   *)                 echo "✗ commande inconnue : devpilot $1"
                      echo "  les commandes : devpilot help — une commande récente manque ? devpilot update"; exit 2 ;;
@@ -100,7 +100,7 @@ echo "  [5/6] Configuration du service watcher..."
 mkdir -p "$HOME/.config/systemd/user"
 cat > "$HOME/.config/systemd/user/devpilot-watcher.service" << EOF
 [Unit]
-Description=DevPilot Watcher — File, Docker & Port monitor
+Description=DevAgent Watcher — File, Docker & Port monitor
 After=network.target docker.service
 
 [Service]
@@ -141,7 +141,7 @@ update-desktop-database "$HOME/.local/share/applications" 2>/dev/null
 
 echo ""
 echo "  ╔══════════════════════════════════════╗"
-echo "  ║      DevPilot installe !             ║"
+echo "  ║      DevAgent installe !             ║"
 echo "  ╚══════════════════════════════════════╝"
 echo ""
 echo "  Structure:"

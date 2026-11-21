@@ -1,4 +1,4 @@
-# DevPilot — rcfile of the "Import project" terminal.
+# DevAgent — rcfile of the "Import project" terminal.
 # Loads the usual shell config, then keeps the variables listed in
 # DEVPILOT_FOLLOW_CWD (comma separated, e.g. "MD_ROOT") equal to the current
 # directory before every command. So a script like reconstruct.sh installs
@@ -24,11 +24,11 @@ __dp_follow() {
 # DEBUG trap: runs before each command, so `cd x && ./script.sh` sees x
 trap '__dp_follow' DEBUG
 
-# git clone in a project folder that only holds DevPilot's own files
+# git clone in a project folder that only holds DevAgent's own files
 # (.devpilot/, its CLAUDE.md):
 #  - `git clone <url>` of a repo named like the folder → cloned straight into
 #    the folder (not projects/site/site)
-#  - `git clone <url> .` → works too (git refuses a non-empty folder: DevPilot's
+#  - `git clone <url> .` → works too (git refuses a non-empty folder: DevAgent's
 #    files step aside during the clone and come back after)
 # Anything else: plain git.
 __dp_only_devpilot() {
@@ -70,7 +70,7 @@ git() {
     if [ ${#pos[@]} -eq 1 ]; then
       local name="${pos[0]%/}"; name="${name##*/}"; name="${name##*:}"; name="${name%.git}"
       if [ "$name" = "$(basename "$PWD")" ]; then
-        echo -e "\e[2m[DevPilot] « $name » = le projet : clone directement dans ce dossier\e[0m"
+        echo -e "\e[2m[DevAgent] « $name » = le projet : clone directement dans ce dossier\e[0m"
         __dp_clone_here "$@" .; return
       fi
     fi
@@ -79,7 +79,7 @@ git() {
 }
 
 if [ -n "${DEVPILOT_TERM_TITLE:-}" ]; then
-  echo -e "\e[2m[DevPilot] ${DEVPILOT_TERM_TITLE}\e[0m"
+  echo -e "\e[2m[DevAgent] ${DEVPILOT_TERM_TITLE}\e[0m"
 else
-  echo -e "\e[2m[DevPilot] Terminal d'import — ${DEVPILOT_FOLLOW_CWD//,/, } = dossier courant\e[0m"
+  echo -e "\e[2m[DevAgent] Terminal d'import — ${DEVPILOT_FOLLOW_CWD//,/, } = dossier courant\e[0m"
 fi

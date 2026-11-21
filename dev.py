@@ -1,4 +1,4 @@
-"""DevPilot — the development side of a project.
+"""DevAgent — the development side of a project.
 
 A project may hold several git repos (MarocDefender: md_infra and, inside it,
 md-backend, md-frontend…). Developing = choosing WHERE (repo, branch), then
@@ -435,7 +435,7 @@ def open_external(pid, repo, claude=False):
     p, _ = project_root(pid)
     path = repo_path(pid, repo)
     inner = (f"{claude_cmd()}; exec bash" if claude else "exec bash")
-    title = f"DevPilot — {p['name']} · {path.name}" + (" · Claude" if claude else "")
+    title = f"DevAgent — {p['name']} · {path.name}" + (" · Claude" if claude else "")
     if shutil.which("gnome-terminal"):
         argv = ["gnome-terminal", "--title", title, "--working-directory", str(path), "--", "bash", "-lc", inner]
     elif shutil.which("konsole"):

@@ -1,5 +1,5 @@
 #!/bin/bash
-# DevPilot — publier ce que j'ai modifié sur CE PC, pour tous les autres PC.
+# DevAgent — publier ce que j'ai modifié sur CE PC, pour tous les autres PC.
 #
 #   devpilot publish "ce que j'ai changé"           tests compris (~3 min)
 #   devpilot publish "ce que j'ai changé" --sans-tests
@@ -12,7 +12,7 @@
 #   3. commite sur une branche (jamais directement sur main)
 #   4. se met à jour avec GitHub (si un autre PC a publié entre-temps)
 #   5. pousse, ouvre la PR, la fusionne dans main
-#   6. remet ce PC sur le nouveau main et redémarre DevPilot
+#   6. remet ce PC sur le nouveau main et redémarre DevAgent
 # Sur les autres PC ensuite : devpilot update
 set -u
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -159,7 +159,7 @@ git merge -q --ff-only "origin/$BASE" || ko "$BASE local a divergé — git -C $
 git branch -q -D "$BR" 2>/dev/null
 ok "ce PC est sur $BASE : $(git log -1 --format='%h %s')"
 if [ "$REDEMARRER" = 1 ]; then
-  ./update.sh >/dev/null 2>&1 && ok "DevPilot redémarré avec cette version" || echo "! redémarre-le :  devpilot update"
+  ./update.sh >/dev/null 2>&1 && ok "DevAgent redémarré avec cette version" || echo "! redémarre-le :  devpilot update"
 fi
 echo
 echo "  Publié. Sur les autres PC :  devpilot update"

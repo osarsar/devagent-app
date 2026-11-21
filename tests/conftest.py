@@ -1,4 +1,4 @@
-"""Each test gets a throwaway HOME (its own DevPilot DB, projects folder and
+"""Each test gets a throwaway HOME (its own DevAgent DB, projects folder and
 trash) and fresh db/projects modules bound to it."""
 import importlib
 import os
@@ -24,7 +24,7 @@ def home(tmp_path, monkeypatch):
     monkeypatch.delenv("XDG_DATA_HOME", raising=False)
     for k, v in GIT_ENV.items():
         monkeypatch.setenv(k, v)
-    # never the user's own DevPilot tmux server (persistent sessions)
+    # never the user's own DevAgent tmux server (persistent sessions)
     monkeypatch.setenv("DEVPILOT_TMUX_SOCKET", f"dptest-{os.getpid()}-{h.parent.name}")
     import db
     importlib.reload(db)

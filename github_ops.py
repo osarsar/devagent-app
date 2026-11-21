@@ -1,4 +1,4 @@
-"""DevPilot — GitHub API + Git CLI operations."""
+"""DevAgent — GitHub API + Git CLI operations."""
 
 import subprocess
 import os
@@ -31,7 +31,7 @@ def _github_headers(token):
     return {
         "Authorization": f"token {token}",
         "Accept": "application/vnd.github.v3+json",
-        "User-Agent": "DevPilot",
+        "User-Agent": "DevAgent",
     }
 
 

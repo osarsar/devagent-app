@@ -1,10 +1,10 @@
-"""DevPilot — what a project IS and what it NEEDS.
+"""DevAgent — what a project IS and what it NEEDS.
 
-DevPilot is the root manager: every project is here. A project has a
+DevAgent is the root manager: every project is here. A project has a
 profile (what kind of site / software it is), which gives its needs (the
 connections it must have: GitHub, hosting, domain, email, database...).
 A project may carry its own controller (e.g. MarocDefender's md_console):
-the needs that controller manages are delegated to it, DevPilot only keeps
+the needs that controller manages are delegated to it, DevAgent only keeps
 the folder, the local development and the access to the console.
 
 The profile and needs live in the project folder (.devpilot/project.json),

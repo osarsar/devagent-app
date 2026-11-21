@@ -336,6 +336,23 @@ from flask import Response, abort, send_from_directory
 WEB = _Path(__file__).resolve().parent / "web"
 
 
+def agent_pages():
+    """The agent's screens, read from the files of web/pages/ ({id, title, icon}, in order)."""
+    import re
+    out = []
+    for f in sorted((WEB / "pages").glob("*.js")):
+        head = f.read_text(encoding="utf-8")[:1500]
+        m = re.search(r"id:\s*'([^']+)',\s*title:\s*'((?:[^'\\\\]|\\\\.)*)',\s*icon:\s*'([^']*)'", head)
+        if m:
+            out.append({"id": m.group(1), "title": m.group(2).replace("\\'", "'"), "icon": m.group(3)})
+    return out
+
+
+@agent_bp.route("/api/agent/pages")
+def api_agent_pages():
+    return jsonify({"pages": agent_pages()})
+
+
 @agent_bp.route("/agent")
 def agent_page():
     html = (WEB / "agent.html").read_text(encoding="utf-8")

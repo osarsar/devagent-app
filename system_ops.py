@@ -1,4 +1,4 @@
-"""DevPilot — this PC and its projects: system, disk, caches, Docker, ports, processes, cleanup.
+"""DevAgent — this PC and its projects: system, disk, caches, Docker, ports, processes, cleanup.
 
 Moved out of dashboard.py: the routes only translate HTTP to these functions, and the agent's
 tools call them too. A function returns its answer (a dict or a list), or (answer, http_status).
@@ -161,7 +161,7 @@ def _docker_rm(kind, name):
 
 def _trash_resource_file(path, project):
     """A tracked file (download, asset...) of this project → trash. Only paths
-    DevPilot knows about: inside the project folder or recorded as its resource."""
+    DevAgent knows about: inside the project folder or recorded as its resource."""
     p = P.resolve(path)
     inside = project.get("path") and p != P.resolve(project["path"]) and p.is_relative_to(P.resolve(project["path"]))
     res = db.get_resource_by_path(path)

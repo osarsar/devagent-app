@@ -1,10 +1,10 @@
-"""DevPilot — the servers of a project (VPS / machines reached over SSH).
+"""DevAgent — the servers of a project (VPS / machines reached over SSH).
 
 A project has a list of servers, each with a role (prod, staging, gpu...):
   {id, name, role, provider, host, user, port, key_path, remote_path, urls,
    dashboard_url, test: {ok, at, hostname, os, disk, docker, path_exists}, history: [...]}
 The list lives in the project's folder (.devpilot/project.json "servers") and
-is mirrored into the "server" component for the rest of DevPilot. Only the
+is mirrored into the "server" component for the rest of DevAgent. Only the
 PATH of a key is stored, never a key. Host keys are checked (accept-new: the
 first connection records the server's identity, a change is refused).
 """
@@ -215,7 +215,7 @@ def remote_dir_expr(path):
 
 
 def test_connection(s):
-    """Connect and report what DevPilot needs to know. Never changes anything on the server."""
+    """Connect and report what DevAgent needs to know. Never changes anything on the server."""
     d = remote_dir_expr(s.get("remote_path"))
     script = ("echo __DEVPILOT__; hostname; "
               "( . /etc/os-release 2>/dev/null && echo \"$PRETTY_NAME\" ) || uname -sr; "
@@ -258,7 +258,7 @@ def explain_ssh_error(err, s):
 
 
 def terminal_argv(pid, sid):
-    """argv of the DevPilot terminal on a server: ssh, straight into the project's folder."""
+    """argv of the DevAgent terminal on a server: ssh, straight into the project's folder."""
     s = _find(list_servers(pid), sid)
     d = remote_dir_expr(s.get("remote_path"))
     remote = f"cd {d} 2>/dev/null || echo \"(dossier {s.get('remote_path') or '~'} absent : tu es dans ~)\"; exec \"${{SHELL:-bash}}\" -l"

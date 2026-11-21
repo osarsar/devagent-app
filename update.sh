@@ -1,5 +1,5 @@
 #!/bin/bash
-# DevPilot — se mettre à jour depuis GitHub (branche main), sur n'importe quel PC.
+# DevAgent — se mettre à jour depuis GitHub (branche main), sur n'importe quel PC.
 #   devpilot update              → tu choisis la branche (★ main), dépendances, commande « devpilot », redémarrage
 #   devpilot update --sans-redemarrer
 # Les sessions persistantes (tmux) survivent au redémarrage.
@@ -22,11 +22,11 @@ if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
      jeter    : git -C $APP_DIR checkout -- .   (perdu pour de bon)"
 fi
 
-# 2. la branche de DevPilot : MONTRÉE et CHOISIE (★ main si rien n'est en cours) — plus de bascule
+# 2. la branche de DevAgent : MONTRÉE et CHOISIE (★ main si rien n'est en cours) — plus de bascule
 #    forcée, ni de pull à l'aveugle sur une vieille branche. Sans clavier (publish, tests) : le ★.
 git fetch -q origin "$BRANCHE" || ko "GitHub injoignable (réseau ?) : git -C $APP_DIR fetch origin"
 AVANT=$(git rev-parse HEAD)
-bash "$APP_DIR/choisir-branches.sh" "$APP_DIR" || ko "DevPilot n'a pas pu être mis à jour sur la branche choisie (ci-dessus)"
+bash "$APP_DIR/choisir-branches.sh" "$APP_DIR" || ko "DevAgent n'a pas pu être mis à jour sur la branche choisie (ci-dessus)"
 APRES=$(git rev-parse HEAD)
 if [ "$AVANT" = "$APRES" ]; then
   ok "déjà à jour ($(git log -1 --format='%h %s'))"
@@ -55,12 +55,12 @@ case "${1:-}" in
                      echo "ce PC   : $(git -C "$APP_DIR" log -1 --format='%h %s (%cr)')"
                      echo "GitHub  : $(git -C "$APP_DIR" log -1 --format='%h %s (%cr)' origin/main)"
                      exit 0 ;;
-  help|-h|--help)    echo "devpilot                 lancer DevPilot"
+  help|-h|--help)    echo "devpilot                 lancer DevAgent"
                      echo "devpilot pc              l'assistant : il dit quoi faire sur ce PC et le fait"
                      echo "devpilot publish \"msg\"   publier mes modifications (tests, PR, fusion) pour tous les PC"
                      echo "devpilot update          récupérer la dernière version (tu choisis la branche, ★ main)"
                      echo "devpilot version         ce PC comparé à GitHub"
-                     echo "devpilot effacer         effacer de ce PC tout ce qui touche à DevPilot et aux projets (--simulation d'abord)"; exit 0 ;;
+                     echo "devpilot effacer         effacer de ce PC tout ce qui touche à DevAgent et aux projets (--simulation d'abord)"; exit 0 ;;
   "") ;;
   *)                 echo "✗ commande inconnue : devpilot $1"
                      echo "  les commandes : devpilot help — une commande récente manque ? devpilot update"; exit 2 ;;
@@ -74,6 +74,6 @@ chmod +x "$HOME/.local/bin/devpilot"
 if [ "$REDEMARRER" = 1 ]; then
   setsid ./launch.sh >/dev/null 2>&1 < /dev/null &
   for _ in $(seq 1 40); do curl -s -o /dev/null http://127.0.0.1:5555/ && break; sleep 0.5; done
-  curl -s -o /dev/null http://127.0.0.1:5555/ && ok "DevPilot redémarré : http://127.0.0.1:5555 (recharge la page)" \
-    || ko "DevPilot ne répond pas : tail -n 30 ~/devpilot/.devpilot/data/dashboard.log"
+  curl -s -o /dev/null http://127.0.0.1:5555/ && ok "DevAgent redémarré : http://127.0.0.1:5555 (recharge la page)" \
+    || ko "DevAgent ne répond pas : tail -n 30 ~/devpilot/.devpilot/data/dashboard.log"
 fi

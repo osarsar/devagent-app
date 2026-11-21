@@ -1,4 +1,4 @@
-"""DevPilot — project lifecycle routes. All the logic is in projects.py; this
+"""DevAgent — project lifecycle routes. All the logic is in projects.py; this
 file only translates HTTP to it (and runs long clones as background jobs)."""
 
 import threading

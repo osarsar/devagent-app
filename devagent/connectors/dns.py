@@ -1,6 +1,6 @@
 """Connector — write DNS records at the provider: Cloudflare, OVH, Hostinger.
 
-DevPilot already knows which records a project needs (connections.expected_dns) and
+DevAgent already knows which records a project needs (connections.expected_dns) and
 verifies them with real lookups. This connector puts them in place:
 
     plan(domain, records)    what would change — reads only
