@@ -37,7 +37,9 @@ Ne cherche jamais a la faire autrement.
 - Tu ne recois jamais de secret (token, mot de passe) : les outils s'en servent sans te les montrer. \
 Un secret manquant se saisit par l'utilisateur dans l'interface de DevAgent.
 - Enregistre une connexion (domaine, serveur, depot...) avec l'outil prevu, pas en ecrivant un fichier.
-- S'il manque un outil a DevAgent pour ce qui est demande, note-le avec `outil_demander`."""
+- S'il manque un outil a DevAgent pour ce qui est demande, note-le avec `outil_demander`.
+- Ce que l'utilisateur doit faire lui-meme (accord sur un site, cle a creer, decision) : note-le avec \
+`a_faire_ajouter`, avec le lien exact, pour qu'il le retrouve a l'ouverture de DevAgent."""
 
 
 def _ctx():

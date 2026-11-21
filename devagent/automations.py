@@ -518,6 +518,18 @@ def tick(now=None):
     return started
 
 
+_last_todo = 0.0
+
+
+def _todo_tick(every=600):
+    global _last_todo
+    if time.time() - _last_todo < every:
+        return
+    _last_todo = time.time()
+    from . import todos
+    todos.check()
+
+
 _thread = None
 _stop = threading.Event()
 
@@ -539,6 +551,10 @@ def start_scheduler(period=30):
             try:
                 from . import etat
                 etat.auto_tick()                      # the projects' state, shared with the other PCs
+            except Exception:
+                pass
+            try:
+                _todo_tick()                          # what the user was asked to do: closed when it is done
             except Exception:
                 pass
 

@@ -94,8 +94,9 @@ def api_refuse(aid):
 @agent_bp.route("/api/agent/state")
 def api_state():
     from . import mcp_install, vault
+    from . import todos
     return jsonify({"paused": guard.paused(), "tools": len(registry.all_tools()),
-                    "waiting": len(journal.approvals("attente")),
+                    "waiting": len(journal.approvals("attente")), "todos": todos.count(),
                     "vault_key": vault.key_path().exists()})
 
 
@@ -504,3 +505,66 @@ def api_tool_request(rid):
                 pass
         return {"opened": opened, "command": cmd, "brief": text}
     return _guarded(build)
+
+
+# ── « A faire par toi » ─────────────────────────────────────────────────────
+
+@agent_bp.route("/api/agent/todos")
+def api_todos():
+    from . import todos
+    closed = todos.check() if request.args.get("check", "1") == "1" else []
+    return jsonify({"closed": closed, "open": todos.items("ouverte", request.args.get("project_id", type=int)),
+                    "done": todos.items("faite")[:15]})
+
+
+@agent_bp.route("/api/agent/todos/<int:tid>", methods=["POST"])
+def api_todo(tid):
+    from . import todos
+    action = _body().get("action")
+    if action == "done":
+        return jsonify({"ok": todos.close(tid)})
+    if action == "drop":
+        return jsonify({"ok": todos.close(tid, "ecartee")})
+    if action == "reopen":
+        return jsonify({"ok": todos.reopen(tid)})
+    if action == "check":
+        return jsonify({"ok": True, "closed": todos.check(tid)})
+    return jsonify({"ok": False, "message": "action inconnue"}), 400
+
+
+# ── Tools « a l'essai » ──────────────────────────────────────────────────────
+
+@agent_bp.route("/api/agent/trial")
+def api_trial():
+    files = []
+    errors = registry.trial_errors()
+    tools = [t for t in registry.all_tools() if t.trial]
+    for f in sorted(registry.trial_dir().glob("*.py")):
+        if f.name.startswith("_"):
+            continue
+        files.append({"file": f.name, "error": errors.get(f.name, ""),
+                      "source": f.read_text(encoding="utf-8", errors="replace")[:20000],
+                      "tools": [{"name": t.name, "risk": t.risk, "description": t.description}
+                                for t in tools if t.source and _Path(t.source).name == f.name]})
+    return jsonify({"files": files})
+
+
+@agent_bp.route("/api/agent/trial/<filename>", methods=["POST"])
+def api_trial_do(filename):
+    action = _body().get("action")
+    if action == "approve":
+        def go():
+            out = registry.approve_trial(filename)
+            journal.record(guard.HUMAN, "outil_approuver", "ecriture", {"fichier": filename}, "ok", out)
+            return out
+        return _guarded(go)
+    if action == "delete":
+        f = registry.trial_dir() / filename
+        if not f.is_file() or f.parent != registry.trial_dir() or filename.startswith("_"):
+            return jsonify({"ok": False, "message": "fichier introuvable"}), 404
+        import projects as P
+        P.move_to_trash(str(f))
+        registry.load_trial()
+        journal.record(guard.HUMAN, "outil_ecarter", "ecriture", {"fichier": filename}, "ok", None)
+        return jsonify({"ok": True})
+    return jsonify({"ok": False, "message": "action inconnue"}), 400

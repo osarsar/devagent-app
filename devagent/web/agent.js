@@ -97,8 +97,10 @@ const DA = (() => {
   async function refreshState() {
     try {
       state.agent = await api('/api/agent/state');
-      const b = document.querySelector('.nav-item[data-id="confirmations"] .badge');
-      if (b) { b.textContent = state.agent.waiting; b.hidden = !state.agent.waiting; }
+      for (const [id, n] of [['confirmations', state.agent.waiting], ['afaire', state.agent.todos]]) {
+        const b = document.querySelector(`.nav-item[data-id="${id}"] .badge`);
+        if (b) { b.textContent = n; b.hidden = !n; }
+      }
       const pb = document.getElementById('pause-btn');
       pb.textContent = state.agent.paused ? '▶ Reprendre l\'agent' : '⏸ Mettre l\'agent en pause';
       pb.classList.toggle('danger', !!state.agent.paused);
@@ -126,7 +128,7 @@ const DA = (() => {
     for (const p of pages) {
       nav.append(h('a', { class: 'nav-item', href: '#' + p.id, 'data-id': p.id },
         h('span', { class: 'ico' }, p.icon || '•'), p.title,
-        p.id === 'confirmations' ? h('span', { class: 'badge', hidden: true }) : null));
+        (p.id === 'confirmations' || p.id === 'afaire') ? h('span', { class: 'badge', hidden: true }) : null));
     }
     const sel = document.getElementById('project-select');
     try { state.projects = (await api('/api/agent/projects')).projects; } catch (e) { toast(e.message, 'bad'); }
@@ -147,7 +149,8 @@ const DA = (() => {
     window.addEventListener('hashchange', () => show(location.hash.slice(1)));
     await refreshState();
     setInterval(refreshState, 8000);
-    show(location.hash.slice(1));
+    // opening DevAgent: straight to what waits for the user, when something does
+    show(location.hash.slice(1) || (state.agent.todos ? 'afaire' : state.agent.waiting ? 'confirmations' : 'chat'));
   }
 
   return { page, start, h, api, act, toast, askPassword, pill, riskPill, statusPill, when, json, approve, state,

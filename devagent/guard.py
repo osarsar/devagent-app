@@ -148,6 +148,9 @@ def call(name, args=None, actor="agent", ctx=None):
             return {"statut": "erreur", "message": str(e)}
     if tool.risk == RISK_IRREVERSIBLE:
         return _ask(tool, args, actor, _project_id(ctx, args))
+    if tool.trial:                                # not approved yet: the user sees every call, whatever it declares
+        return _ask(tool, args, actor, _project_id(ctx, args),
+                    f"outil a l'essai ({tool.risk} d'apres son auteur), pas encore approuve")
     return _run(tool, args, actor, ctx, approved=False)
 
 

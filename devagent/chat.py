@@ -37,11 +37,23 @@ la confirmer. Dis-lui clairement ce qui attend, et ne cherche pas une autre faco
 - Pour une tache qui doit se repeter (chaque nuit, toutes les 10 minutes, quand un site tombe), propose une \
 automatisation avec `automatisation_depuis_modele` ou `automatisation_proposer`. Elle reste inactive : \
 l'utilisateur l'active lui-meme.
+- Quand quelque chose doit etre fait par l'utilisateur lui-meme (un accord a donner sur un site, une cle a creer ou \
+renouveler, une decision, une commande avec sudo), ne te contente pas de le dire : note-le avec `a_faire_ajouter`, avec \
+le lien exact, pour qu'il le retrouve a l'ouverture de DevAgent. Si un outil de lecture peut constater que c'est fait, \
+donne-le comme verification.
+- Pour lire ou modifier le CODE d'un projet, tu as `claude_code` : donne-lui la tache complete. Ensuite, toi, tu \
+enchaines : `execution_demarrer` pour voir, `git_commit` et `git_synchroniser` pour envoyer, `vercel_etat` pour la mise \
+en ligne.
+- S'il te manque un outil : `outil_construire` le fait ecrire (il est utilisable aussitot, chaque appel confirme par \
+l'utilisateur). Pour une action ponctuelle, `commande_proposer` suffit.
 - S'il te manque un outil pour faire ce qui est demande, ne t'arrete pas la : propose la commande exacte avec \
 `commande_proposer` (l'utilisateur la confirme, tu lis ensuite sa sortie avec `confirmation_etat`), puis note le \
 manque avec `outil_demander`. Ne renvoie l'utilisateur vers un site que si aucune commande ne peut le faire.
 - Reponds en francais simple, court. Commence par le resultat. Dis ce que tu as fait, ce qui a echoue, \
 et la prochaine etape quand il y en a une."""
+
+# what a read-only turn (the guide) may still do: take notes for the user, change nothing else
+NOTE_TOOLS = ("a_faire_ajouter", "outil_demander")
 
 _ready_for = None
 _threads = {}
@@ -157,8 +169,10 @@ def _client():
 def api_tools(read_only=False):
     """The registry as API tool definitions — always in the same order (the prompt cache needs it).
     read_only: the tools that only look (a guide must not change anything)."""
-    return [{"name": t.name, "description": f"[{t.risk}] {t.description}", "input_schema": t.input_schema}
-            for t in registry.all_tools(max_risk="lecture" if read_only else None)]
+    tools = registry.all_tools()
+    if read_only:
+        tools = [t for t in tools if t.risk == "lecture" or t.name in NOTE_TOOLS]
+    return [{"name": t.name, "description": f"[{t.risk}] {t.description}", "input_schema": t.input_schema} for t in tools]
 
 
 def _system(project):
@@ -262,7 +276,7 @@ def _turn(cid, client=None, read_only=False):
                 for b in content:
                     if b.get("type") != "tool_use":
                         continue
-                    if read_only and registry.get(b["name"]).risk != "lecture":
+                    if read_only and registry.get(b["name"]).risk != "lecture" and b["name"] not in NOTE_TOOLS:
                         answer = {"statut": "erreur", "message": "Ce tour ne fait que regarder : aucune modification."}
                     else:
                         answer = guard.call(b["name"], b.get("input") or {}, actor="chat", ctx=ctx)
@@ -310,6 +324,9 @@ Puis dis-moi quoi faire maintenant :
 1. Une phrase : ou en est le projet.
 2. Les prochaines actions, 5 au plus, dans l'ordre ou il faut les faire. Pour chacune : ce qu'il faut faire, pourquoi maintenant, et comment — « je peux le faire si tu me le demandes » (nomme l'outil) ou « a faire par toi » (donne la page ou la commande exacte).
 3. Ce qui bloque ou risque de casser bientot (acces qui expire, site mal configure, travail non pousse), s'il y en a.
+
+Pour chaque action « a faire par toi », note-la aussi avec a_faire_ajouter (titre court, lien exact, et la \
+verification quand un outil de lecture peut constater que c'est fait) : elle restera dans la liste de l'utilisateur.
 
 N'ecris que ce qui decoule de ce que tu as lu. Si une information manque, dis laquelle."""
 
