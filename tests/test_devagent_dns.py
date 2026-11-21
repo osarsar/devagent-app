@@ -23,11 +23,11 @@ class FakeCF:
         self.log.append(("create", rec["type"], rec["fqdn"], rec["content"]))
         return rid
 
-    def replace(self, zone, rid, rec):
-        r = next(x for x in self.recs if x["id"] == rid)
+    def replace(self, zone, existing, rec):
+        r = next(x for x in self.recs if x["id"] == existing["id"])
         r.update(type=rec["type"], content=rec["content"])
         self.log.append(("replace", rec["type"], rec["fqdn"], rec["content"]))
-        return rid
+        return existing["id"]
 
 
 WANTED = [
@@ -144,14 +144,119 @@ def test_outils_dns(dns, P, monkeypatch):
     connections.set_domain(p["id"], {"domain": "exemple.ma"})
     servers.add_server(p["id"], {"name": "vps", "host": "1.2.3.4", "user": "ubuntu", "role": "prod"}, test=False)
     out = guard.call("dns_plan", {"projet": "site"}, actor="mcp")
-    assert out["statut"] == "erreur" and "token Cloudflare" in out["message"]                    # no provider
-    assert guard.call("dns_fournisseurs", actor="mcp")["resultat"] == {"cloudflare": False}
+    assert out["statut"] == "erreur" and "Aucun fournisseur DNS" in out["message"]                    # no provider
+    assert guard.call("dns_fournisseurs", actor="mcp")["resultat"] == {"cloudflare": False, "ovh": False, "hostinger": False}
     db.set_setting("dns_cloudflare_api_token", "TOK")
     cf = FakeCF()
-    monkeypatch.setattr(dns, "provider", lambda name=None: cf)
+    monkeypatch.setattr(dns, "provider", lambda name=None, domain=None: cf)
     plan = guard.call("dns_plan", {"projet": "site"}, actor="mcp")["resultat"]
     assert plan["a_faire"] == 2 and "zone_id" not in plan and "_rec" not in str(plan)
     ask = guard.call("dns_appliquer", {"projet": "site"}, actor="mcp")
     assert ask["statut"] == "confirmation_requise" and cf.log == []                              # never from the agent
     done = guard.approve(ask["confirmation"])["resultat"]
     assert done["faits"] == 2 and ("create", "A", "www.exemple.ma", "1.2.3.4") in cf.log
+
+
+# ── OVH and Hostinger: the requests, as their API descriptions say ───────────
+
+def test_ovh_signature_et_requetes(dns, monkeypatch):
+    import hashlib, json as J
+    sent = []
+    zone = {11: {"fieldType": "A", "subDomain": "", "target": "9.9.9.9"},
+            12: {"fieldType": "MX", "subDomain": "", "target": "1 mx1.mail.ovh.net."},
+            13: {"fieldType": "SPF", "subDomain": "", "target": '"v=spf1 include:mx.ovh.com ~all"'},
+            14: {"fieldType": "CNAME", "subDomain": "www", "target": "ancien.host.net."},
+            15: {"fieldType": "A", "subDomain": "wwwx", "target": "5.5.5.5"}}
+
+    class R:
+        def __init__(self, body, status=200): self._b, self.status_code = body, status; self.text = "" if body is None else J.dumps(body)
+        def json(self): return self._b
+
+    def http(self, method, url, headers, data):
+        path = url.replace(dns.OVH.BASE, "")
+        sent.append((method, path, data, dict(headers)))
+        if path == "/auth/time": return R(1_800_000_000)
+        if path == "/domain/zone/shop.exemple.ma": return R({"message": "not found"}, 404)
+        if path == "/domain/zone/exemple.ma": return R({"name": "exemple.ma"})
+        if path.startswith("/domain/zone/exemple.ma/record?subDomain="):
+            sub = path.split("=", 1)[1]
+            return R([i for i, r in zone.items() if sub in r["subDomain"]])     # « like », as the real filter
+        if method == "GET" and "/record/" in path: return R(zone[int(path.rsplit("/", 1)[1])])
+        return R({"id": 99} if method == "POST" and path.endswith("/record") else None)
+    monkeypatch.setattr(dns.OVH, "_http", http)
+    monkeypatch.setattr(dns.time, "time", lambda: 1_800_000_100)
+    o = dns.OVH("AK", "SECRET", "CK")
+    assert o.zone_id("shop.exemple.ma") == ("exemple.ma", "exemple.ma")          # found in the parent zone
+    m, path, data, hd = sent[-1]
+    assert hd["X-Ovh-Application"] == "AK" and hd["X-Ovh-Consumer"] == "CK" and hd["X-Ovh-Timestamp"] == "1800000000"
+    want = "$1$" + hashlib.sha1("+".join(["SECRET", "CK", "GET", dns.OVH.BASE + path, "", "1800000000"]).encode()).hexdigest()
+    assert hd["X-Ovh-Signature"] == want
+    assert "X-Ovh-Signature" not in sent[0][3]                                     # /auth/time is not signed
+
+    sent.clear()
+    out = dns.apply("exemple.ma", WANTED, o)
+    got = {(c["type"], c["name"]): c for c in out["changes"]}
+    assert got[("A", "exemple.ma")]["resultat"] == "remplace"
+    assert got[("A", "www.exemple.ma")]["resultat"] == "non touche (conflit)"      # a CNAME is there: type cannot change
+    assert "changer le type" in got[("A", "www.exemple.ma")]["raison"]
+    assert got[("MX", "exemple.ma")]["resultat"] == "inchange"                     # « 1 mx1.mail.ovh.net. » read as prio + host
+    assert got[("TXT", "exemple.ma")]["resultat"] == "inchange"                    # OVH's SPF type counts as the SPF record
+    assert got[("TXT", "_dmarc.exemple.ma")]["resultat"] == "cree"
+    writes = [(m, p, J.loads(d)) for m, p, d, _ in sent if m in ("POST", "PUT") and d]
+    assert ("PUT", "/domain/zone/exemple.ma/record/11", {"target": "1.2.3.4"}) in writes
+    assert ("POST", "/domain/zone/exemple.ma/record",
+            {"fieldType": "TXT", "subDomain": "_dmarc", "target": '"v=DMARC1; p=none; rua=mailto:postmaster@exemple.ma"',
+             "ttl": 3600}) in writes
+    assert sent[-1][:2] == ("POST", "/domain/zone/exemple.ma/refresh")             # applied at the end, once
+    assert out["faits"] == 2 and out["conflits"] == 1
+
+
+def test_hostinger_requetes(dns, monkeypatch):
+    calls = []
+    zone = [{"name": "@", "type": "A", "ttl": 14400, "records": [{"content": "9.9.9.9"}]},
+            {"name": "@", "type": "MX", "ttl": 14400, "records": [{"content": "5 mx1.hostinger.com."}, {"content": "10 mx2.hostinger.com."}]},
+            {"name": "www", "type": "CNAME", "ttl": 14400, "records": [{"content": "exemple.ma."}]}]
+
+    class R:
+        def __init__(self, body, status=200): self._b, self.status_code = body, status
+        def json(self): return self._b
+
+    def fake(self, method, url, timeout=0, **kw):
+        calls.append((method, url.replace(dns.Hostinger.BASE, ""), kw.get("json")))
+        return R(zone) if method == "GET" else R({"message": "ok"})
+    monkeypatch.setattr(dns.requests.Session, "request", fake)
+    h = dns.Hostinger("TOK")
+    assert h.s.headers["Authorization"] == "Bearer TOK"
+    out = dns.apply("exemple.ma", WANTED, h)
+    got = {(c["type"], c["name"]): c for c in out["changes"]}
+    assert got[("A", "exemple.ma")]["resultat"] == "remplace"
+    assert got[("A", "www.exemple.ma")]["resultat"] == "non touche (conflit)"       # CNAME there
+    assert got[("MX", "exemple.ma")]["resultat"] == "non touche (conflit)"          # Hostinger's own mail: never replaced
+    assert got[("TXT", "exemple.ma")]["resultat"] == "cree"
+    puts = [(u, b) for m, u, b in calls if m == "PUT"]
+    assert ("exemple.ma", {"overwrite": True, "zone": [{"name": "@", "type": "A", "ttl": 14400,
+                                                        "records": [{"content": "1.2.3.4"}]}]}) in puts
+    assert ("exemple.ma", {"overwrite": False, "zone": [{"name": "_dmarc", "type": "TXT", "ttl": 14400, "records": [
+        {"content": '"v=DMARC1; p=none; rua=mailto:postmaster@exemple.ma"'}]}]}) in puts
+    assert not any(m == "DELETE" for m, _, _ in calls)                               # nothing is ever deleted
+
+
+def test_le_fournisseur_est_celui_qui_a_la_zone(dns, monkeypatch, P):
+    import db
+    assert dns.configured() == {"cloudflare": False, "ovh": False, "hostinger": False}
+    with pytest.raises(P.ProjectError):
+        dns.provider()
+    db.set_setting("dns_cloudflare_api_token", "T")
+    db.set_setting("dns_hostinger_api_token", "H")
+    for k in ("dns_ovh_application_key", "dns_ovh_application_secret"):
+        db.set_setting(k, "x")
+    assert dns.configured() == {"cloudflare": True, "ovh": False, "hostinger": True}   # OVH needs its three keys
+    monkeypatch.setattr(dns.Cloudflare, "zone_id", lambda self, d: (_ for _ in ()).throw(P.ProjectError("pas ici")))
+    monkeypatch.setattr(dns.Hostinger, "zone_id", lambda self, d: ("exemple.ma", "exemple.ma"))
+    assert dns.provider(domain="exemple.ma").key == "hostinger"
+    assert dns.provider("cloudflare").key == "cloudflare"
+    with pytest.raises(P.ProjectError):
+        dns.provider("ovh")
+    import sqlite3
+    raw = dict(sqlite3.connect(str(db.DB_PATH)).execute("SELECT key, value FROM settings WHERE key LIKE 'dns_%'").fetchall())
+    assert all(v.startswith("enc:v1:") for k, v in raw.items() if k != "dns_ovh_application_key"), raw

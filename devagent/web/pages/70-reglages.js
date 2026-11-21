@@ -72,9 +72,14 @@ DA.page({
         mk('notify_smtp_user', 'Utilisateur'), mk('notify_smtp_password', 'Mot de passe', 'password'),
         mk('notify_email_from', 'Expediteur'), mk('notify_email_to', 'Destinataire')),
       h('h3', {}, 'DNS'),
-      h('p', { class: 'muted small' }, 'Avec un token Cloudflare (DNS lecture + ecriture sur la zone), l\'agent peut ecrire les ',
-        'enregistrements du domaine. Chaque ecriture attend ta confirmation, avec la liste de ce qui change.'),
-      h('div', { class: 'grid' }, mk('dns_cloudflare_api_token', 'Token API Cloudflare', 'password')),
+      h('p', { class: 'muted small' }, 'Avec tes acces chez le fournisseur DNS du domaine (Cloudflare, OVH ou Hostinger), l\'agent peut ',
+        'ecrire les enregistrements. Chaque ecriture attend ta confirmation, avec la liste de ce qui change. ',
+        'OVH : cree les trois cles sur eu.api.ovh.com/createToken avec les droits GET, POST et PUT sur /domain/zone/*.'),
+      h('div', { class: 'grid' }, mk('dns_cloudflare_api_token', 'Cloudflare — token API (DNS lecture + ecriture)', 'password'),
+        mk('dns_hostinger_api_token', 'Hostinger — token API', 'password'),
+        mk('dns_ovh_application_key', 'OVH — application key', 'password'),
+        mk('dns_ovh_application_secret', 'OVH — application secret', 'password'),
+        mk('dns_ovh_consumer_key', 'OVH — consumer key', 'password')),
       h('div', { class: 'row' }, saveN, testN)));
 
     /* Vault */

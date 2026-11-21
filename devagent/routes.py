@@ -216,7 +216,8 @@ def api_hook(token):
 
 NOTIFY_KEYS = ("notify_telegram_bot_token", "notify_telegram_chat_id", "notify_smtp_host", "notify_smtp_port",
                "notify_smtp_user", "notify_smtp_password", "notify_email_from", "notify_email_to",
-               "dns_cloudflare_api_token")
+               "dns_cloudflare_api_token", "dns_ovh_application_key", "dns_ovh_application_secret",
+               "dns_ovh_consumer_key", "dns_hostinger_api_token")
 
 
 @agent_bp.route("/api/agent/notify")

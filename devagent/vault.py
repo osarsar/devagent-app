@@ -21,7 +21,7 @@ PREFIX = "enc:v1:"
 SECRET_FIELDS = {"password", "token", "secret", "secret_key", "access_key", "api_key",
                  "connection_string", "private_key", "deploy_hook", "bot_token", "smtp_password"}
 # A setting whose name contains one of these is a secret
-_SECRET_WORDS = ("token", "secret", "password", "passphrase", "access_key", "api_key")
+_SECRET_WORDS = ("token", "secret", "password", "passphrase", "access_key", "api_key", "consumer_key")
 _SECRET_SETTINGS = {"hosting_accounts"}
 
 _fernet = None
