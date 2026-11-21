@@ -252,13 +252,3 @@ async function saveSettings() {
     toast('Parametres sauvegardes');
 }
 
-async function watcherCmd(cmd) {
-    document.getElementById('watcher-output').textContent = 'Chargement...';
-    try {
-        const r = await api('watcher/status');
-        document.getElementById('watcher-output').textContent = `Status: ${r.running ? 'ACTIF' : 'INACTIF'}\n\nCommande:\n  systemctl --user ${cmd} devpilot-watcher.service`;
-    } catch (e) {
-        document.getElementById('watcher-output').textContent = 'Erreur de connexion';
-    }
-}
-

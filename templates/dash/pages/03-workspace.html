@@ -4,8 +4,9 @@
                 <div class="section-title" id="ws-title" style="margin-bottom:0"></div>
                 <div class="flex gap-6">
                     <button class="btn btn-sm" id="ws-ctrl-btn" onclick="launchProjectConsole(wsProjectId)" style="display:none;border-color:var(--sky);color:var(--sky)"></button>
-                    <button class="btn btn-sm" onclick="go('projects')">&#8592; Retour</button>
-                    <button class="btn btn-sm" id="ws-copy-prompt" onclick="copyWsPrompt()" style="display:none">Copier Prompt</button>
+                    <button class="btn btn-sm btn-primary" onclick="wsTab('agent')" title="L'agent lit l'etat reel de ce projet et dit quoi faire">✦ Que faire maintenant ?</button>
+                    <button class="btn btn-sm" onclick="go('projects')">&#8592; Projets</button>
+                    <button class="btn btn-sm" id="ws-copy-prompt" onclick="wsCopyPrompt()" style="display:none">Copier Prompt</button>
                 </div>
             </div>
             <!-- Detect banner for projects without profile -->
@@ -31,6 +32,7 @@
                         <div class="ws-tab" onclick="wsTab('info')">Infos</div>
                         <div class="ws-tab" onclick="wsTab('prompt')">Prompt</div></div>
                     </div>
+                    <div class="ws-panel" id="ws-agent"></div>
                     <div class="ws-panel active" id="ws-dev"></div>
                     <div class="ws-panel" id="ws-roadmap"></div>
                     <div class="ws-panel" id="ws-checklist"></div>
@@ -39,6 +41,8 @@
                     <div class="ws-panel" id="ws-git"></div>
                     <div class="ws-panel" id="ws-cloud"></div>
                     <div class="ws-panel" id="ws-info"></div>
+                    <div class="ws-panel" id="ws-automatisations"></div>
+                    <div class="ws-panel" id="ws-carte"></div>
                     <div class="ws-panel" id="ws-prompt"></div>
                 </div>
                 <!-- Right: Terminal integrated + external buttons -->

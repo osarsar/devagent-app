@@ -20,21 +20,21 @@ def c(home):
 
 
 def test_page_et_fichiers(c):
-    r = c.get("/agent")
-    html = r.get_data(as_text=True)
-    assert r.status_code == 200 and "DA.start()" in html
-    for page in ("10-chat.js", "20-confirmations.js", "30-automatisations.js", "40-carte.js", "70-reglages.js"):
+    r = c.get("/agent")                                              # the agent is the app: its old address leads to it
+    assert r.status_code == 302 and r.headers["Location"].endswith("/#agent:accueil")
+    html = c.get("/").get_data(as_text=True)
+    for page in ("00-accueil.js", "10-chat.js", "20-confirmations.js", "30-automatisations.js", "40-carte.js", "70-reglages.js"):
         assert f"/agent/assets/pages/{page}" in html                 # found in the folder, not listed by hand
+    assert html.index("/agent/assets/agent.js") < html.index("/agent/assets/pages/00-accueil.js") < html.index("/ui/js/99-init.js")
+    assert 'id="da-root"' in html and "data-page=\"agent:chat\"" in html and "/ui/theme.css" in html
     assert c.get("/agent/assets/agent.js").status_code == 200
     assert c.get("/agent/assets/pages/10-chat.js").status_code == 200
     assert c.get("/agent/assets/../routes.py").status_code == 404
     assert c.get("/agent/assets/nope.js").status_code == 404
-    # the main dashboard gets the link, its template untouched
-    dash = c.get("/").get_data(as_text=True)
-    assert 'id="agent-nav"' in dash and "/ui/js/80-agent-link.js" in dash        # one menu: the agent's screens are in it
     pages = c.get("/api/agent/pages").get_json()["pages"]
-    assert [p["id"] for p in pages][:3] == ["afaire", "chat", "confirmations"] and pages[0]["title"] == "A faire par toi"
-    assert 'id="nav-dash"' in html                                               # and the dashboard's sections are in the agent's
+    assert [p["id"] for p in pages][:3] == ["accueil", "afaire", "chat"]
+    home = c.get("/api/agent/home").get_json()
+    assert {"a_faire", "confirmations", "alertes", "projets", "systeme", "sync", "activite"} <= set(home)
     # same guard as the rest of the dashboard
     assert c.get("/api/agent/tools", headers={"Host": "evil.example:5555"}).status_code == 403
     assert c.post("/api/agent/pause", json={}, headers={"Origin": "https://evil.example"}).status_code == 403

@@ -20,7 +20,7 @@ DA.page({
         toast(r.closed.length ? 'C\'est bien fait : je raye la ligne.' : 'Pas encore fait, d\'apres ce que je vois.', r.closed.length ? 'ok' : '');
         await load(false);
       });
-      const ask = h('a', { class: 'btn sm ghost', href: '#chat' }, 'En parler a l\'agent');
+      const ask = h('a', { class: 'btn sm ghost', href: '#agent:chat' }, 'En parler a l\'agent');
       return h('div', { class: 'card stack' },
         h('div', { class: 'spread' }, h('h3', {}, t.title),
           h('span', {}, t.project ? DA.pill(t.project, 'info') : null, ' ', t.check_tool ? DA.pill('verifie tout seul', 'ok') : null)),
@@ -39,7 +39,7 @@ DA.page({
       if (data.closed.length) toast(`Fait entre-temps : ${data.closed.map(c => c.titre).join(', ')}`, 'ok');
       list.replaceChildren(...(data.open.length ? data.open.map(card)
         : [h('div', { class: 'empty card' }, 'Rien a faire de ton cote. ',
-          h('a', { href: '#chat' }, 'Demande a l\'agent « que faire maintenant ? »'))]));
+          h('a', { href: '#agent:chat' }, 'Demande a l\'agent « que faire maintenant ? »'))]));
       past.replaceChildren(data.done.length ? h('table', {}, h('tbody', {}, ...data.done.map(t => h('tr', {},
         h('td', {}, t.title), h('td', { class: 'small muted' }, t.project || ''),
         h('td', { class: 'small muted' }, `${DA.when(t.done_at)} · ${t.done_by === 'verification' ? 'constate par DevAgent' : 'coche par toi'}`)))))

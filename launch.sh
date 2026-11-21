@@ -1,7 +1,8 @@
 #!/bin/bash
 # DevAgent Launcher — kill old instance, start fresh
-APP_DIR="$HOME/devpilot/.devpilot/app"
-LOG="$HOME/devpilot/.devpilot/data/dashboard.log"
+# finds itself: works from ~/devagent as from the old ~/devpilot
+APP_DIR="$(dirname "$(readlink -f "$0")")"
+LOG="$APP_DIR/../data/dashboard.log"
 # stop the old instance politely first: it then stops the consoles and
 # terminals it started (no port left busy); SIGKILL only if it hangs
 /usr/bin/fuser -k -TERM 5555/tcp 2>/dev/null

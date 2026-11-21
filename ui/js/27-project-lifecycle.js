@@ -82,7 +82,7 @@ document.addEventListener('input', e => { if (e.target && e.target.id === 'add-n
 
 function addSyncLocation() {
     const n = document.getElementById('add-name').value.trim();
-    document.getElementById('add-loc-default').textContent = '~/devpilot/projects/' + (n || '…');
+    document.getElementById('add-loc-default').textContent = PROJECTS_DIR + '/' + (n || '…');
     document.getElementById('add-loc-default').style.textDecoration = addCustom ? 'line-through' : '';
 }
 
@@ -99,7 +99,7 @@ async function addLoadUnregistered() {
     const box = document.getElementById('add-unregistered');
     const list = await api('projects/unregistered').catch(() => []);
     if (!list.length) { box.innerHTML = ''; return; }
-    box.innerHTML = `<div class="card-label">Dans ~/devpilot/projects mais pas enregistres</div>` + list.map(f => `
+    box.innerHTML = `<div class="card-label">Dans ${PROJECTS_DIR} mais pas enregistres</div>` + list.map(f => `
         <div class="flex-between" style="padding:6px 0;border-bottom:1px solid var(--border-0);font-size:12px">
             <span><b>${hx(f.name)}</b> <span style="color:var(--text-4)">${f.repos.length ? hx(f.repos.join(', ')) : 'pas de depot git'}</span></span>
             <button class="btn btn-xs btn-primary" data-path="${hx(f.path)}" onclick="addAdoptInPlace(this.dataset.path)">Enregistrer</button>
@@ -331,14 +331,14 @@ async function dupRun() {
     closeModals(); await loadProjects(); showProjectDetail(r.project.id);
 }
 
-// ── Folders in ~/devpilot/projects that DevAgent does not know ──
+// ── Folders in the projects directory that DevAgent does not know ──
 async function renderUnregisteredBanner() {
     const box = document.getElementById('unregistered-banner');
     if (!box) return;
     const list = await api('projects/unregistered').catch(() => []);
     box.style.display = list.length ? '' : 'none';
     box.innerHTML = list.length ? `<div class="alert alert-info flex-between" style="align-items:center">
-        <span>${list.length} dossier(s) dans ~/devpilot/projects ne sont pas enregistres : ${list.map(f => '<b>' + hx(f.name) + '</b>').join(', ')}</span>
+        <span>${list.length} dossier(s) dans ${PROJECTS_DIR} ne sont pas enregistres : ${list.map(f => '<b>' + hx(f.name) + '</b>').join(', ')}</span>
         <button class="btn btn-xs btn-primary" onclick="openAddProject('folder')">Voir</button></div>` : '';
 }
 
@@ -856,7 +856,7 @@ async function scanProjects() {
                     <span id="scan-selected-count" style="font-size:12px;color:var(--text-3)"></span>
                     <div class="flex gap-6" style="align-items:center">
                         <select id="scan-mode" class="form-input" style="width:auto;padding:4px 8px;font-size:12px">
-                            <option value="move">Deplacer dans ~/devpilot/projects</option>
+                            <option value="move">Deplacer dans ${PROJECTS_DIR}</option>
                             <option value="link">Garder a leur place</option>
                         </select>
                         <button class="btn btn-primary btn-sm" onclick="importSelected()">Importer la selection</button>
