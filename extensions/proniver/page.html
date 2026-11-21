@@ -1,0 +1,290 @@
+        <!-- ════ PRONIVER DOCS ════ -->
+        <div id="page-proniver" class="page">
+            <!-- Tabs -->
+            <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border-0)">
+                <button class="btn btn-sm" id="pnv-tab-entreprise" onclick="pnvSwitchTab('entreprise')" style="border-radius:var(--radius-xs) var(--radius-xs) 0 0;border-bottom:2px solid var(--violet);margin-bottom:-2px;font-weight:600">Documents d'entreprise</button>
+                <button class="btn btn-sm" id="pnv-tab-clients" onclick="pnvSwitchTab('clients')" style="border-radius:var(--radius-xs) var(--radius-xs) 0 0;margin-bottom:-2px;opacity:0.6">Documents clients</button>
+                <button class="btn btn-sm" id="pnv-tab-maquette" onclick="pnvSwitchTab('maquette')" style="border-radius:var(--radius-xs) var(--radius-xs) 0 0;margin-bottom:-2px;opacity:0.6">Maquette-appat</button>
+            </div>
+
+            <!-- ═══ TAB: ENTREPRISE ═══ -->
+            <div id="pnv-section-entreprise">
+                <div class="flex-between mb-12">
+                    <div class="section-title" style="margin-bottom:0">Documents de l'entreprise</div>
+                    <button class="btn btn-primary btn-sm" onclick="pnvGenEntreprise('all')">Tout generer</button>
+                </div>
+
+                <!-- Document cards grid -->
+                <div class="grid-2 mb-20">
+                    <!-- Carte de visite -->
+                    <div class="card" style="position:relative;overflow:hidden">
+                        <div style="position:absolute;top:0;right:0;width:50px;height:50px;background:linear-gradient(135deg,transparent 50%,var(--violet) 50%);opacity:0.1;border-radius:0 0 0 var(--radius-xs)"></div>
+                        <div class="flex-between mb-8">
+                            <div>
+                                <div style="font-size:14px;font-weight:700;color:var(--text-0)">Carte de visite</div>
+                                <div style="font-size:11px;color:var(--text-3);margin-top:2px">90 x 60 mm — recto/verso avec reperes</div>
+                            </div>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                        </div>
+                        <div class="flex gap-6">
+                            <button class="btn btn-primary btn-sm" onclick="pnvGenEntreprise('carte_visite')">Generer</button>
+                            <button class="btn btn-sm" id="pnv-btn-carte_visite" onclick="pnvPreviewEntreprise('carte_visite.pdf')" style="display:none">Voir le PDF</button>
+                            <a class="btn btn-sm" id="pnv-dl-carte_visite" href="#" style="display:none" target="_blank">Telecharger</a>
+                        </div>
+                    </div>
+
+                    <!-- Presentation commerciale -->
+                    <div class="card" style="position:relative;overflow:hidden">
+                        <div style="position:absolute;top:0;right:0;width:50px;height:50px;background:linear-gradient(135deg,transparent 50%,var(--sky));opacity:0.15;border-radius:0 0 0 var(--radius-xs)"></div>
+                        <div class="flex-between mb-8">
+                            <div>
+                                <div style="font-size:14px;font-weight:700;color:var(--text-0)">Presentation commerciale</div>
+                                <div style="font-size:11px;color:var(--text-3);margin-top:2px">One-pager — 3 promesses, 4 packs, CTA</div>
+                            </div>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--sky)" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        </div>
+                        <div class="flex gap-6">
+                            <button class="btn btn-primary btn-sm" onclick="pnvGenEntreprise('presentation')">Generer</button>
+                            <button class="btn btn-sm" id="pnv-btn-presentation" onclick="pnvPreviewEntreprise('presentation.pdf')" style="display:none">Voir le PDF</button>
+                            <a class="btn btn-sm" id="pnv-dl-presentation" href="#" style="display:none" target="_blank">Telecharger</a>
+                        </div>
+                    </div>
+
+                    <!-- Papier en-tete -->
+                    <div class="card" style="position:relative;overflow:hidden">
+                        <div style="position:absolute;top:0;right:0;width:50px;height:50px;background:linear-gradient(135deg,transparent 50%,var(--emerald));opacity:0.1;border-radius:0 0 0 var(--radius-xs)"></div>
+                        <div class="flex-between mb-8">
+                            <div>
+                                <div style="font-size:14px;font-weight:700;color:var(--text-0)">Papier en-tete</div>
+                                <div style="font-size:11px;color:var(--text-3);margin-top:2px">A4 — courrier formel, logo + bande navy</div>
+                            </div>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        </div>
+                        <div class="flex gap-6">
+                            <button class="btn btn-primary btn-sm" onclick="pnvGenEntreprise('papier_entete')">Generer</button>
+                            <button class="btn btn-sm" id="pnv-btn-papier_entete" onclick="pnvPreviewEntreprise('papier_entete.pdf')" style="display:none">Voir le PDF</button>
+                            <a class="btn btn-sm" id="pnv-dl-papier_entete" href="#" style="display:none" target="_blank">Telecharger</a>
+                        </div>
+                    </div>
+
+                    <!-- Signature email -->
+                    <div class="card" style="position:relative;overflow:hidden">
+                        <div style="position:absolute;top:0;right:0;width:50px;height:50px;background:linear-gradient(135deg,transparent 50%,var(--amber));opacity:0.1;border-radius:0 0 0 var(--radius-xs)"></div>
+                        <div class="flex-between mb-8">
+                            <div>
+                                <div style="font-size:14px;font-weight:700;color:var(--text-0)">Signature email</div>
+                                <div style="font-size:11px;color:var(--text-3);margin-top:2px">HTML — apercu + code a copier dans Gmail</div>
+                            </div>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        </div>
+                        <div class="flex gap-6">
+                            <button class="btn btn-primary btn-sm" onclick="pnvGenEntreprise('signature_email')">Generer</button>
+                            <button class="btn btn-sm" id="pnv-btn-signature_email" onclick="pnvPreviewEntreprise('signature_email.html')" style="display:none">Voir</button>
+                            <a class="btn btn-sm" id="pnv-dl-signature_email" href="#" style="display:none" target="_blank">Telecharger</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview area -->
+                <div class="card" id="pnv-preview-card" style="display:none">
+                    <div class="flex-between mb-8">
+                        <div class="card-label" style="margin:0" id="pnv-preview-title">Apercu</div>
+                        <button class="btn btn-xs" onclick="document.getElementById('pnv-preview-card').style.display='none'">Fermer</button>
+                    </div>
+                    <iframe id="pnv-preview-frame" style="width:100%;height:500px;border:1px solid var(--border-0);border-radius:var(--radius-xs);background:#fff" src="about:blank"></iframe>
+                </div>
+            </div>
+
+            <!-- ═══ TAB: CLIENTS ═══ -->
+            <div id="pnv-section-clients" style="display:none">
+                <!-- Header -->
+                <div class="flex-between mb-12">
+                    <div class="section-title" style="margin-bottom:0">Documents clients</div>
+                    <button class="btn btn-primary btn-sm" onclick="openNewClientModal()">+ Nouveau client</button>
+                </div>
+
+                <!-- Clients list -->
+                <div class="card mb-20">
+                    <div class="card-label">Clients</div>
+                    <div id="pnv-clients">
+                        <div class="loading-state"><div class="spinner"></div> Chargement...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Client detail (hidden by default) -->
+            <div id="pnv-detail" style="display:none">
+                <div class="flex-between mb-12">
+                    <div class="section-title" style="margin-bottom:0;font-size:15px" id="pnv-detail-title"></div>
+                    <button class="btn btn-sm" onclick="pnvBackToList()">← Retour</button>
+                </div>
+
+                <div class="grid-2">
+                    <!-- Left: Client info -->
+                    <div class="card">
+                        <div class="card-label">Informations client</div>
+                        <div class="grid-2" style="margin-bottom:0">
+                            <div class="form-group"><label>Etablissement</label><input class="form-input" id="pnv-nom"></div>
+                            <div class="form-group"><label>Quartier</label><input class="form-input" id="pnv-quartier"></div>
+                        </div>
+                        <div class="grid-2" style="margin-bottom:0">
+                            <div class="form-group"><label>Telephone</label><input class="form-input" id="pnv-tel"></div>
+                            <div class="form-group"><label>Instagram</label><input class="form-input" id="pnv-insta"></div>
+                        </div>
+                        <div class="grid-2" style="margin-bottom:0">
+                            <div class="form-group"><label>Avis Google</label><input class="form-input" id="pnv-avis" type="number"></div>
+                            <div class="form-group"><label>Note Google</label><input class="form-input" id="pnv-note" type="number" step="0.1"></div>
+                        </div>
+                        <div style="border-top:1px solid var(--border-0);margin:12px 0;padding-top:12px">
+                            <div class="card-label">Decideur</div>
+                        </div>
+                        <div class="grid-2" style="margin-bottom:0">
+                            <div class="form-group"><label>Prenom</label><input class="form-input" id="pnv-dprenom"></div>
+                            <div class="form-group"><label>Nom</label><input class="form-input" id="pnv-dnom"></div>
+                        </div>
+                        <div class="grid-2" style="margin-bottom:0">
+                            <div class="form-group"><label>Role</label><input class="form-input" id="pnv-drole"></div>
+                            <div class="form-group"><label>Email</label><input class="form-input" id="pnv-demail"></div>
+                        </div>
+                        <div style="border-top:1px solid var(--border-0);margin:12px 0;padding-top:12px">
+                            <div class="card-label">Commercial</div>
+                        </div>
+                        <div class="grid-2" style="margin-bottom:0">
+                            <div class="form-group"><label>Scoring</label>
+                                <select class="form-input" id="pnv-scoring"><option>A</option><option>B</option><option>C</option></select>
+                            </div>
+                            <div class="form-group"><label>Pack</label>
+                                <select class="form-input" id="pnv-pack"><option>P1</option><option value="P2" selected>P2</option><option>P3</option><option>P4</option></select>
+                            </div>
+                        </div>
+                        <div class="form-group"><label>Probleme client (dans ses mots)</label><textarea class="form-input" id="pnv-probleme" rows="2" style="resize:vertical"></textarea></div>
+                        <div class="grid-2" style="margin-bottom:0">
+                            <div class="form-group"><label>Remise %</label><input class="form-input" id="pnv-remise" type="number" value="0"></div>
+                            <div class="form-group"><label>Domaine</label><input class="form-input" id="pnv-domaine" placeholder="nom.ma"></div>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="pnvSaveClient()">Sauvegarder</button>
+                    </div>
+
+                    <!-- Right: Generate documents -->
+                    <div>
+                        <div class="card mb-20">
+                            <div class="card-label">Generer des documents</div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+                                <button class="btn btn-sm" onclick="pnvGenerate('devis')">Devis</button>
+                                <button class="btn btn-sm" onclick="pnvGenerate('facture-acompte')">Facture Acompte</button>
+                                <button class="btn btn-sm" onclick="pnvGenerate('facture-solde')">Facture Solde</button>
+                                <button class="btn btn-sm" onclick="pnvGenerate('fiche')">Fiche Qualification</button>
+                                <button class="btn btn-sm" onclick="pnvGenerate('contenu')">Fiche Contenu</button>
+                                <button class="btn btn-sm" onclick="pnvGenerate('golive')">Checklist Go-Live</button>
+                                <button class="btn btn-sm" onclick="pnvGenerate('guide')">Guide Utilisation</button>
+                                <button class="btn btn-sm" onclick="pnvGenerate('avenant')">Avenant</button>
+                                <button class="btn btn-sm" onclick="pnvGenerate('rapport')">Rapport Mensuel</button>
+                                <button class="btn btn-sm" onclick="pnvGenerate('messages')">Scripts Messages</button>
+                            </div>
+                            <button class="btn btn-primary" style="width:100%" onclick="pnvGenerate('all')">Generer TOUS les documents</button>
+                        </div>
+
+                        <div class="card">
+                            <div class="flex-between mb-8">
+                                <div class="card-label" style="margin:0">Documents generes</div>
+                                <button class="btn btn-xs" onclick="pnvLoadDocs()">Rafraichir</button>
+                            </div>
+                            <div id="pnv-docs">
+                                <span style="color:var(--text-4);font-size:11px">Aucun document genere</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ TAB: MAQUETTE-APPAT ═══ -->
+            <div id="pnv-section-maquette" style="display:none">
+                <div style="display:flex;gap:12px;margin-bottom:16px">
+                    <div style="flex:1;min-width:0;max-height:calc(100vh - 120px);overflow-y:auto;padding-right:8px">
+                        <!-- Projet -->
+                        <div class="card mb-12">
+                            <div class="card-label">Projet</div>
+                            <div class="form-group"><label>Nom</label><input class="form-input maq-input" id="maq-nom" placeholder="Nom de l'etablissement"></div>
+                            <div class="grid-2" style="margin-bottom:0">
+                                <div class="form-group"><label>Type d'activite</label>
+                                    <select class="form-input maq-input" id="maq-type">
+                                        <option>Restaurant</option><option>Cafe</option><option>Salon de coiffure</option>
+                                        <option>Salle de sport</option><option>Boulangerie</option><option>Boutique</option><option>Autre</option>
+                                    </select>
+                                </div>
+                                <div class="form-group"><label>Telephone</label><input class="form-input maq-input" id="maq-tel" placeholder="0661234567"></div>
+                            </div>
+                            <div class="grid-2" style="margin-bottom:0">
+                                <div class="form-group"><label>Quartier</label><input class="form-input maq-input" id="maq-quartier" placeholder="Maarif"></div>
+                                <div class="form-group"><label>Ville</label><input class="form-input maq-input" id="maq-ville" value="Casablanca"></div>
+                            </div>
+                            <div class="form-group"><label>Description <span style="color:var(--text-4);font-size:10px">(optionnel — zone incomplete si vide)</span></label><textarea class="form-input maq-input" id="maq-desc" rows="2" placeholder="Decrivez l'ambiance, la specialite..."></textarea></div>
+                            <div class="grid-2" style="margin-bottom:0">
+                                <div class="form-group"><label>Couleur</label><input class="form-input maq-input" id="maq-couleur1" type="color" value="#1B2A4A"></div>
+                                <div class="form-group"><label>Accent</label><input class="form-input maq-input" id="maq-couleur2" type="color" value="#D4A853"></div>
+                            </div>
+                        </div>
+                        <!-- Sections -->
+                        <div class="card mb-12">
+                            <div class="card-label">Sections visibles</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px">
+                                <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" class="maq-input" id="maq-sec-services" checked style="accent-color:var(--violet)"> Services / Menu</label>
+                                <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" class="maq-input" id="maq-sec-galerie" checked style="accent-color:var(--violet)"> Galerie</label>
+                                <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" class="maq-input" id="maq-sec-horaires" style="accent-color:var(--violet)"> Horaires</label>
+                                <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" class="maq-input" id="maq-sec-localisation" style="accent-color:var(--violet)"> Localisation</label>
+                                <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" class="maq-input" id="maq-sec-avis" checked style="accent-color:var(--violet)"> Avis Google</label>
+                                <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" class="maq-input" id="maq-sec-contact" checked style="accent-color:var(--violet)"> Contact / CTA</label>
+                            </div>
+                        </div>
+                        <!-- Services -->
+                        <div class="card mb-12" id="maq-services-card">
+                            <div class="flex-between mb-8"><div class="card-label" style="margin:0">Services / Menu</div><button class="btn btn-xs" onclick="maqAddService()">+ Ajouter</button></div>
+                            <div id="maq-services-list">
+                                <div class="maq-svc flex gap-6 mb-6"><input class="form-input maq-input" placeholder="Nom" style="flex:2" data-f="nom"><input class="form-input maq-input" placeholder="Prix" style="flex:0 0 70px;text-align:right" data-f="prix"></div>
+                            </div>
+                        </div>
+                        <!-- Photos -->
+                        <div class="card mb-12">
+                            <div class="card-label">Photos <span style="color:var(--text-4);font-weight:400">(max 6 — 1ere = hero)</span></div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px" id="maq-photos-grid"></div>
+                            <input type="file" id="maq-photo-input" accept="image/*" multiple style="display:none" onchange="maqUploadPhotos(this.files)">
+                            <button class="btn btn-xs" onclick="document.getElementById('maq-photo-input').click()">+ Photos</button>
+                        </div>
+                        <!-- Horaires -->
+                        <div class="card mb-12" id="maq-horaires-card" style="display:none">
+                            <div class="card-label">Horaires</div>
+                            <div id="maq-horaires-list" style="font-size:12px">
+                            </div>
+                        </div>
+                        <!-- Infos -->
+                        <div class="card mb-12">
+                            <div class="card-label">Infos complementaires</div>
+                            <div class="grid-2" style="margin-bottom:0">
+                                <div class="form-group"><label>Note Google</label><input class="form-input maq-input" id="maq-note" type="number" step="0.1" placeholder="4.2"></div>
+                                <div class="form-group"><label>Nb avis</label><input class="form-input maq-input" id="maq-avis" type="number" placeholder="340"></div>
+                            </div>
+                            <div class="grid-2" style="margin-bottom:0">
+                                <div class="form-group"><label>Instagram</label><input class="form-input maq-input" id="maq-instagram" placeholder="@compte"></div>
+                                <div class="form-group"><label>Adresse</label><input class="form-input maq-input" id="maq-adresse" placeholder="47 Rue..."></div>
+                            </div>
+                        </div>
+                        <!-- Actions -->
+                        <div class="flex gap-6">
+                            <button class="btn btn-primary" style="flex:1;padding:10px" onclick="maqDownloadPDF()">Telecharger PDF</button>
+                            <button class="btn" style="flex:1;padding:10px" onclick="maqSaveLink()">Copier le lien</button>
+                        </div>
+                    </div>
+                    <!-- Right: Live preview -->
+                    <div style="flex:1;min-width:0">
+                        <div class="card" style="padding:8px">
+                            <iframe id="maq-preview-frame" style="width:100%;height:calc(100vh - 180px);border:1px solid var(--border-0);border-radius:var(--radius-xs);display:block;background:#FAFAF8" srcdoc="<body style='font-family:sans-serif;color:#999;display:flex;align-items:center;justify-content:center;height:100vh;margin:0'><p>Commencez a remplir le formulaire...</p></body>"></iframe>
+                        </div>
+                        <div class="card mt-12">
+                            <div class="flex-between mb-8"><div class="card-label" style="margin:0">Maquettes</div><button class="btn btn-xs" onclick="maqLoadList()">Rafraichir</button></div>
+                            <div id="maq-list"><span style="color:var(--text-4);font-size:11px">Aucune maquette</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>

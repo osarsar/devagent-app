@@ -1,9 +1,83 @@
-# DevPilot
+# DevAgent (ex-DevPilot)
 
 Ton tableau de bord de développeur, sur ton PC (http://localhost:5555) : tes projets et leurs
 dépôts, les branches (carte dépôt → branche → main), les terminaux et sessions Claude qui
 survivent aux redémarrages, l'aperçu local de chaque dépôt (« localhost:port ↗ »), les ports,
 les serveurs, le nettoyage du disque.
+
+## DevAgent : l'agent dans DevPilot
+
+DevPilot s'appelle maintenant **DevAgent**. La commande `devpilot` marche toujours ; `devagent` est la même,
+avec les commandes de l'agent en plus. Tes projets et leur dossier `.devpilot/` ne changent pas.
+
+**Ce que l'agent fait.** Il connaît chaque projet (profil, besoins, feuille de route, dépôts), agit sur ses
+connexions (GitHub, serveurs, hébergement, domaine, email, stockage, sauvegardes, déploiement) et automatise
+ce qui se répète. Tout passe par **une seule liste d'outils** (`devagent outils`), avec trois niveaux :
+
+| Niveau | Ce que ça veut dire |
+|---|---|
+| lecture | libre |
+| ✎ écriture | faite, et écrite dans le journal |
+| ⚠ irréversible | **jamais faite par l'agent** : elle attend ta confirmation (page *Confirmations* ou `devagent approuver <n>`) |
+
+**Trois façons de s'en servir**
+
+| Où | Comment | Coût |
+|---|---|---|
+| Dans Claude Code | `devagent mcp installer` une fois, puis dans n'importe quelle session : « où en est ce projet ? » | ton abonnement Claude Code |
+| Dans l'interface | http://localhost:5555/agent → *Chat* (clé API Anthropic dans *Réglages*) | à l'usage, sur ta clé |
+| Sans IA | *Automatisations* : sauvegarde de nuit, surveillance du site, certificat… | aucun |
+
+**Les pages** (http://localhost:5555/agent) : Chat · Confirmations · Automatisations · Carte du projet ·
+Journal · Outils · Réglages.
+
+**Les commandes**
+
+| Je veux… | Commande |
+|---|---|
+| voir ce que l'agent sait faire | `devagent outils` |
+| lancer un outil à la main | `devagent appeler projet_etat` (dans le dossier d'un projet) |
+| voir ce que l'agent a fait | `devagent journal` |
+| confirmer / refuser une action en attente | `devagent confirmations` · `devagent approuver 3` · `devagent refuser 3` |
+| tout arrêter (l'agent ne fait plus que lire) | `devagent pause` · `devagent reprendre` |
+| brancher l'agent dans Claude Code | `devagent mcp installer` · `devagent mcp etat` · `devagent mcp retirer` |
+| les automatisations | `devagent auto lister` · `devagent auto activer <projet> <nom>` · `devagent auto historique` |
+| l'état du coffre | `devagent coffre etat` |
+| renommer le dossier `~/devpilot` en `~/devagent` | `devagent migrer` (simulation) · `devagent migrer --appliquer` · `devagent migrer --annuler --oui` |
+
+**Renommer le dossier.** `devagent migrer` montre d'abord ce qu'il ferait. Il refuse tant que DevAgent est
+lancé. Il renomme `~/devpilot` en `~/devagent` et **laisse `~/devpilot` comme lien** : les tâches cron, les
+serveurs lancés, les montages Docker et tes scripts continuent de marcher avec l'ancien chemin. Il met à jour
+la base, les commandes, le raccourci, le service, l'enregistrement dans Claude Code, et copie la mémoire de
+Claude Code de chaque projet sous le nouveau chemin. Un PC neuf s'installe encore dans `~/devpilot`.
+
+**Les automatisations.** Un fichier YAML par automatisation, dans le projet (`.devpilot/automations/`).
+L'agent peut en proposer une ; **elle ne tourne que si tu l'actives**, et un fichier modifié redevient
+inactif. Elles tournent tant que DevAgent est lancé. Le format est en tête de `devagent/automations.py`.
+
+**Le coffre.** Les tokens et mots de passe sont chiffrés dans la base. La clé est le fichier
+`~/.config/devagent/vault.key` : **garde-en une copie** avec tes autres clés (sans elle, les secrets sont à
+ressaisir). Revenir à une version d'avant DevAgent : `devagent coffre ouvrir` d'abord (remet les secrets en clair).
+
+**Le DNS.** Avec un token Cloudflare (Réglages), `dns_plan` montre ce qui changerait et `dns_appliquer`
+l'écrit après ta confirmation. Il ne supprime rien et ne remplace jamais des MX, SPF ou DMARC existants.
+
+**Où est le code**
+
+| Quoi | Où |
+|---|---|
+| L'agent (outils, garde, coffre, automatisations, chat, MCP) | `devagent/` |
+| Parler à une plateforme (notification, déploiement, DNS) | `devagent/connectors/` |
+| La logique du tableau de bord, hors des routes | `system_ops.py`, `cloud_ops.py`, `hosting.py`, `projects.py`… |
+| Les pages du tableau de bord | `templates/dash/pages/NN-nom.html` + `ui/js/NN-nom.js` + `ui/dashboard.css` |
+| Les pages de l'agent | `devagent/web/pages/NN-nom.js` |
+| Ce qui n'appartient qu'à un projet | `extensions/<nom>/` (ex. `extensions/proniver/`) |
+
+**Ajouter une plateforme** = un fichier dans `devagent/connectors/` + ses outils dans `devagent/tools/`.
+**Ajouter une page à l'agent** = un fichier dans `devagent/web/pages/`. **Ajouter une partie propre à un
+projet** = un dossier dans `extensions/`. Les fichiers sont trouvés dans leur dossier : rien d'autre à modifier.
+
+---
 
 > **Perdu ? Une seule commande :** `devpilot pc` — l'assistant regarde où en est ce PC, te dit
 > quoi faire et le fait (appuie sur **Entrée** pour le choix recommandé).
@@ -43,7 +117,7 @@ Ubuntu, connecté à internet. Copie-colle :
 
 ```bash
 sudo apt update && sudo apt install -y git curl
-bash <(curl -fsSL https://raw.githubusercontent.com/osarsar/devpilot-app/main/pc.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/osarsar/devagent-app/main/pc.sh)
 ```
 
 Il annonce « DevPilot n'est pas installé » → **Entrée** (installer), puis **Entrée** (le lancer).

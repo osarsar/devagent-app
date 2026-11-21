@@ -6,7 +6,9 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from contextlib import contextmanager
 
-DEVPILOT_ROOT = Path.home() / "devpilot"
+import paths
+
+DEVPILOT_ROOT = paths.root()                     # ~/devagent once migrated, else ~/devpilot
 DB_PATH = DEVPILOT_ROOT / ".devpilot" / "data" / "devpilot.db"
 
 # In-memory cache of project paths for fast lookup
@@ -625,19 +627,55 @@ def match_rules(name, resource_type="any"):
 # ═══════════════════════════════════════════════════════════════════════════
 
 def get_setting(key, default=None):
+    """A setting. Secret ones (tokens, keys) are stored encrypted (devagent.vault)
+    and come back in clear here: only server code calls this, never the agent."""
+    from devagent import vault
     with get_db() as db:
         row = db.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
-        return row["value"] if row else default
+    if not row:
+        return default
+    return vault.unseal(row["value"], default if default is not None else "")
 
 
 def set_setting(key, value):
+    from devagent import vault
+    value = str(value)
+    if vault.is_secret_setting(key):
+        value = vault.seal(value)
     with get_db() as db:
-        db.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, str(value)))
+        db.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value))
 
 
 def get_all_settings():
+    from devagent import vault
     with get_db() as db:
-        return {r["key"]: r["value"] for r in db.execute("SELECT * FROM settings").fetchall()}
+        return {r["key"]: vault.unseal(r["value"])
+                for r in db.execute("SELECT * FROM settings").fetchall()}
+
+
+def seal_stored_secrets():
+    """One-time migration, safe to run again: every secret still in clear in the
+    database (settings, connection configs) is encrypted in place."""
+    import json as _json
+    from devagent import vault
+    done = 0
+    with get_db() as db:
+        for r in db.execute("SELECT key, value FROM settings").fetchall():
+            v = r["value"]
+            if vault.is_secret_setting(r["key"]) and v and not vault.is_sealed(v):
+                db.execute("UPDATE settings SET value = ? WHERE key = ?", (vault.seal(v), r["key"]))
+                done += 1
+        for r in db.execute("SELECT project_id, component, config FROM project_components").fetchall():
+            try:
+                cfg = _json.loads(r["config"] or "{}")
+            except (ValueError, TypeError):
+                continue
+            sealed = vault.seal_config(cfg)
+            if sealed != cfg:
+                db.execute("UPDATE project_components SET config = ? WHERE project_id = ? AND component = ?",
+                           (_json.dumps(sealed), r["project_id"], r["component"]))
+                done += 1
+    return done
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -832,6 +870,16 @@ def get_r2_storage_stats(project_id=None):
 # PROJECT COMPONENTS
 # ═══════════════════════════════════════════════════════════════════════════
 
+def _seal_cfg(cfg):
+    from devagent import vault
+    return vault.seal_config(cfg)
+
+
+def _unseal_cfg(cfg):
+    from devagent import vault
+    return vault.unseal_config(cfg)
+
+
 def add_project_component(project_id, component, enabled=True, config=None, detected=False):
     import json as _json
     with get_db() as db:
@@ -840,7 +888,7 @@ def add_project_component(project_id, component, enabled=True, config=None, dete
                VALUES (?, ?, ?, ?, ?)
                ON CONFLICT(project_id, component)
                DO UPDATE SET enabled=excluded.enabled, config=excluded.config, detected=excluded.detected""",
-            (project_id, component, int(enabled), _json.dumps(config or {}), int(detected)),
+            (project_id, component, int(enabled), _json.dumps(_seal_cfg(config or {})), int(detected)),
         )
 
 
@@ -855,7 +903,7 @@ def get_project_components(project_id):
         for r in rows:
             d = dict(r)
             try:
-                d["config"] = _json.loads(d["config"])
+                d["config"] = _unseal_cfg(_json.loads(d["config"]))
             except (ValueError, TypeError):
                 d["config"] = {}
             result.append(d)
@@ -873,7 +921,7 @@ def get_project_component(project_id, component):
             return None
         d = dict(row)
         try:
-            d["config"] = _json.loads(d["config"])
+            d["config"] = _unseal_cfg(_json.loads(d["config"]))
         except (ValueError, TypeError):
             d["config"] = {}
         return d
@@ -887,7 +935,12 @@ def update_project_component(project_id, component, **kwargs):
         if k not in allowed:
             continue
         if k == "config":
-            fields[k] = _json.dumps(v) if isinstance(v, dict) else v
+            if isinstance(v, str):
+                try:
+                    v = _json.loads(v)
+                except (ValueError, TypeError):
+                    pass
+            fields[k] = _json.dumps(_seal_cfg(v)) if isinstance(v, dict) else v
         elif k in ("enabled", "detected"):
             fields[k] = int(v)
         else:

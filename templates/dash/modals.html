@@ -1,0 +1,494 @@
+<!-- Toasts -->
+<div class="toast-wrap" id="toasts"></div>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay" onclick="closeModals()"></div>
+<div class="nav-backdrop" onclick="toggleNav(false)"></div>
+
+<!-- Confirm Modal -->
+<div class="modal" id="confirm-modal">
+    <h3>Confirmation</h3>
+    <p id="confirm-msg" style="color:var(--text-2);font-size:13px;line-height:1.6"></p>
+    <div class="modal-actions">
+        <button class="btn" onclick="closeModals()">Annuler</button>
+        <button class="btn btn-danger" onclick="executeClean()">Confirmer</button>
+    </div>
+</div>
+
+<!-- Add Project Modal: one entry point, four ways -->
+<div class="modal" id="add-modal" style="width:min(680px,94vw)">
+    <h3>Ajouter un projet</h3>
+    <div class="flex gap-6 mb-12" id="add-tabs" style="flex-wrap:wrap">
+        <button class="btn btn-sm" data-tab="new" onclick="addTab('new')">Nouveau</button>
+        <button class="btn btn-sm" data-tab="folder" onclick="addTab('folder')">Dossier existant</button>
+    </div>
+
+    <!-- shared: name + location (not for "folder") -->
+    <div id="add-common">
+        <div class="form-group" id="add-url-group" style="display:none">
+            <label>URL du depot (HTTPS ou SSH)</label>
+            <input class="form-input mono" id="add-url" placeholder="git@github.com:user/repo.git" oninput="addUrlChanged()">
+        </div>
+        <div class="form-group">
+            <label>Nom du projet</label>
+            <input class="form-input mono" id="add-name" placeholder="mon-projet" oninput="addSyncLocation()">
+            <div style="font-size:10px;color:var(--text-4);margin-top:4px">Lettres, chiffres, . _ - (pas d'espace ni d'accent)</div>
+        </div>
+        <div class="form-group" id="add-branch-group" style="display:none">
+            <label>Branche (optionnel)</label>
+            <input class="form-input mono" id="add-branch" placeholder="branche par defaut du depot">
+        </div>
+        <div class="form-group">
+            <label>Emplacement</label>
+            <div class="flex gap-8" style="align-items:center;flex-wrap:wrap">
+                <span class="mono" id="add-loc-default" style="font-size:12px;color:var(--text-2)">~/devpilot/projects/…</span>
+                <button class="btn btn-xs" id="add-loc-toggle" onclick="addToggleCustom()">Choisir un autre emplacement</button>
+            </div>
+            <input class="form-input mono mt-8" id="add-loc-custom" placeholder="~/chemin/choisi/mon-projet" style="display:none">
+        </div>
+        <div class="form-group" id="add-desc-group">
+            <label>Description (optionnel)</label>
+            <input class="form-input" id="add-desc">
+        </div>
+        <div class="form-group" id="add-type-group">
+            <label>Type de projet (donne ses besoins ; modifiable plus tard)</label>
+            <select class="form-input" id="add-type"><option value="">— choisir plus tard —</option></select>
+        </div>
+        <div id="add-term-help" style="display:none;font-size:11px;color:var(--text-3);line-height:1.6">
+            Un terminal s'ouvre dans ce dossier ; lance tes commandes (git clone, reconstruct.sh...). Tout se cree la ou tu
+            les lances. Les variables <span class="mono" id="add-follow-vars">MD_ROOT</span> suivent le dossier courant ;
+            pour un autre chemin : <span class="mono">MD_ROOT=/autre/chemin ./script.sh</span>. Le terminal continue si tu fermes la fenetre.
+        </div>
+    </div>
+
+    <!-- existing folder -->
+    <div id="add-folder" style="display:none">
+        <div class="form-group">
+            <label>Chemin du dossier</label>
+            <input class="form-input mono" id="add-src" placeholder="~/Desktop/mon-projet">
+        </div>
+        <div class="form-group">
+            <label>Nom (optionnel, sinon le nom du dossier)</label>
+            <input class="form-input mono" id="add-src-name">
+        </div>
+        <div class="form-group">
+            <label>Que faire du dossier ?</label>
+            <div style="display:grid;gap:6px;font-size:12px;color:var(--text-2)">
+                <label style="cursor:pointer"><input type="radio" name="add-mode" value="move" checked style="accent-color:var(--violet)"> Le deplacer dans ~/devpilot/projects (recommande)</label>
+                <label style="cursor:pointer"><input type="radio" name="add-mode" value="copy" style="accent-color:var(--violet)"> Le copier dans ~/devpilot/projects (l'original reste)</label>
+                <label style="cursor:pointer"><input type="radio" name="add-mode" value="link" style="accent-color:var(--violet)"> Le garder a sa place actuelle</label>
+            </div>
+        </div>
+        <div id="add-unregistered" class="mt-12"></div>
+        <button class="btn btn-xs mt-8" onclick="closeModals();go('projects');scanProjects()">Scanner d'autres dossiers (Desktop...)</button>
+    </div>
+
+    <div id="add-progress" style="display:none" class="mt-12">
+        <pre id="add-log" class="mono" style="font-size:11px;color:var(--text-2);white-space:pre-wrap;max-height:220px;overflow-y:auto;background:var(--bg-0);padding:12px;border-radius:var(--radius-xs);border:1px solid var(--border-0);margin:0"></pre>
+    </div>
+    <div id="add-error" class="alert alert-critical mt-12" style="display:none;white-space:pre-wrap"></div>
+
+    <div class="modal-actions">
+        <button class="btn" onclick="closeModals()">Fermer</button>
+        <button class="btn btn-primary" id="add-submit" onclick="addSubmit()">Creer</button>
+    </div>
+</div>
+
+<!-- Delete Project Modal: inspection report first -->
+<div class="modal" id="del-modal" style="width:min(760px,94vw);max-height:92vh">
+    <h3 id="del-title">Supprimer</h3>
+    <div id="del-body"><div class="loading-state"><div class="spinner"></div> Inspection du dossier...</div></div>
+    <div id="del-files" style="display:none;border-top:1px solid var(--border-0);margin-top:14px;padding-top:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--text-0);margin-bottom:4px">Supprimer tout du PC</div>
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:8px">Tout ce qui est coche est supprime, dans cet ordre : terminaux, processus, conteneurs, reseaux,
+            volumes, images, liens et lanceurs, puis le dossier (a la corbeille, recuperable). Docker ne passe pas par la corbeille.</div>
+        <div id="del-plan"></div>
+        <div style="font-size:11px;color:var(--text-3);margin:10px 0 6px">Tape <b class="mono" id="del-expected"></b> pour confirmer.</div>
+        <div class="flex gap-8">
+            <input class="form-input mono" id="del-confirm" oninput="delCheck()" style="flex:1">
+            <button class="btn btn-danger" id="del-files-btn" disabled onclick="delRun(true)">Tout supprimer</button>
+        </div>
+        <div id="del-log" style="display:none;margin-top:10px"></div>
+    </div>
+    <div id="del-error" class="alert alert-critical mt-12" style="display:none"></div>
+    <div class="modal-actions">
+        <button class="btn" onclick="closeModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="delRun(false)">Retirer de DevAgent (garder les fichiers)</button>
+    </div>
+</div>
+
+<!-- Move / relocate / duplicate Modal -->
+<div class="modal" id="move-modal" style="width:min(620px,94vw)">
+    <h3 id="move-title">Emplacement</h3>
+    <div class="mono" id="move-current" style="font-size:11px;color:var(--text-3);margin-bottom:12px"></div>
+    <div id="move-missing" class="alert alert-warning mb-12" style="display:none">Le dossier est introuvable (deplace ou supprime hors de DevAgent). Indique ou il est maintenant, ou retire le projet.</div>
+    <div id="move-ok">
+        <div class="form-group">
+            <label>Deplacer vers</label>
+            <input class="form-input mono" id="move-dest">
+        </div>
+        <label style="display:flex;gap:8px;align-items:center;font-size:12px;color:var(--text-2);cursor:pointer;margin-bottom:10px">
+            <input type="checkbox" id="move-symlink" style="accent-color:var(--violet)"> Laisser un lien a l'ancien emplacement (les anciens chemins continuent de marcher)
+        </label>
+        <div class="modal-actions" style="margin-top:0"><button class="btn btn-primary" onclick="moveRun()">Deplacer</button></div>
+        <div style="border-top:1px solid var(--border-0);margin-top:14px;padding-top:14px">
+            <div class="form-group"><label>Dupliquer sous le nom</label>
+                <div class="flex gap-8"><input class="form-input mono" id="move-dup-name" style="flex:1"><button class="btn" onclick="dupRun()">Dupliquer</button></div>
+            </div>
+        </div>
+    </div>
+    <div id="move-relocate">
+        <div class="form-group">
+            <label>Le dossier est maintenant ici</label>
+            <div class="flex gap-8"><input class="form-input mono" id="move-reloc" style="flex:1"><button class="btn" onclick="relocRun()">Relocaliser</button></div>
+            <div style="font-size:10px;color:var(--text-4);margin-top:4px">Ne deplace rien : met seulement a jour le chemin connu par DevAgent.</div>
+        </div>
+    </div>
+    <div id="move-error" class="alert alert-critical mt-12" style="display:none;white-space:pre-wrap"></div>
+    <div class="modal-actions"><button class="btn" onclick="closeModals()">Fermer</button></div>
+</div>
+
+<!-- Folder vs GitHub: choose how to bring them together (at link time) -->
+<div class="modal" id="rec-modal" style="width:min(760px,94vw);max-height:90vh">
+    <h3>Ton dossier et GitHub sont differents</h3>
+    <div id="rec-summary" style="font-size:12px;color:var(--text-2);margin-bottom:12px"></div>
+    <div id="rec-options" style="display:grid;gap:8px;margin-bottom:12px">
+        <label class="card" style="padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:flex-start">
+            <input type="radio" name="rec-mode" value="github" onchange="recModeChanged()" style="accent-color:var(--violet);margin-top:3px">
+            <span><b>GitHub fait foi</b><br><span style="font-size:11px;color:var(--text-3)">Le dossier devient la copie du depot. Tes fichiers actuels sont sauvegardes d'abord dans .devpilot/sauvegardes/.</span></span>
+        </label>
+        <label class="card" style="padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:flex-start">
+            <input type="radio" name="rec-mode" value="local" onchange="recModeChanged()" style="accent-color:var(--violet);margin-top:3px">
+            <span><b>Mon dossier fait foi</b><br><span style="font-size:11px;color:var(--text-3)">Le code GitHub sert de base, tes fichiers sont poses par-dessus : un nouveau commit. L'historique GitHub n'est pas efface.</span></span>
+        </label>
+        <label class="card" style="padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:flex-start">
+            <input type="radio" name="rec-mode" value="merge" onchange="recModeChanged()" style="accent-color:var(--violet);margin-top:3px">
+            <span><b>Fusionner les deux</b><br><span style="font-size:11px;color:var(--text-3)">Tout est garde. Pour chaque fichier different des deux cotes, tu choisis : le mien, GitHub, ou les deux pour editer.</span></span>
+        </label>
+    </div>
+    <div id="rec-files" style="display:none;max-height:240px;overflow-y:auto;margin-bottom:10px"></div>
+    <details style="font-size:11px;color:var(--text-3)"><summary style="cursor:pointer">Voir tous les fichiers</summary><div id="rec-lists" class="mono" style="margin-top:6px;white-space:pre-wrap"></div></details>
+    <div id="rec-result" style="display:none;margin-top:12px"></div>
+    <div id="rec-error" class="alert alert-critical mt-12" style="display:none;white-space:pre-wrap"></div>
+    <div class="modal-actions">
+        <button class="btn" onclick="closeModals()">Plus tard</button>
+        <button class="btn btn-primary" id="rec-apply" onclick="recApply()" disabled>Appliquer</button>
+    </div>
+</div>
+
+<!-- Mettre à jour les dépôts d'un projet : la branche de chacun est montrée et choisie -->
+<div class="modal" id="maj-modal">
+    <div class="brm-head">
+        <h3 id="maj-title">Mettre à jour les dépôts</h3>
+        <button class="btn btn-sm" onclick="closeModals()">Fermer</button>
+    </div>
+    <div class="brm-intro">Chaque dépôt avec sa branche actuelle. <b>★</b> = ce qui sera récupéré : <b>main</b> si rien n'est en cours,
+        sinon il <b>reste sur sa branche</b> (rien ne se perd). Change le choix d'un dépôt dans sa liste, puis <b>Appliquer</b>.</div>
+    <div id="maj-body"><div class="brm-wait"><span class="dev-spin"></span> Lecture des dépôts et de GitHub…</div></div>
+    <div class="modal-actions"><button class="btn" onclick="closeModals()">Annuler</button>
+        <button class="btn btn-primary" id="maj-go" onclick="majAppliquer()" disabled>Appliquer</button></div>
+</div>
+
+<!-- Carte des branches d'un projet : dépôt → branche de travail → main -->
+<div class="modal" id="brm-modal">
+    <div class="brm-head">
+        <h3 id="brm-title">Branches</h3>
+        <button class="btn btn-sm" onclick="majOpen()" title="Récupérer depuis GitHub en choisissant la branche de chaque dépôt">⇣ Mettre à jour les dépôts</button>
+        <button class="btn btn-sm" id="brm-refresh" onclick="brmLoad(true)" title="Relit GitHub (git fetch) et les PR">Actualiser depuis GitHub</button>
+        <button class="btn btn-sm" onclick="closeModals()">Fermer</button>
+    </div>
+    <div class="brm-intro">Chaque dépôt a sa <b>branche de travail</b> : tu y fais tes changements et tu la pousses autant que tu veux.
+        <b>main</b> ne change que quand une branche y est <b>fusionnée</b> (PR), et c'est main qui part en production.</div>
+    <div class="brm-leg">
+        <span><i style="border-color:var(--blue)"></i>à fusionner</span>
+        <span><i style="border-color:var(--emerald)"></i>déjà dans main</span>
+        <span><i style="border-color:var(--text-3);border-top-style:dashed"></i>rien encore / pas de branche</span>
+    </div>
+    <div id="brm-body"><div class="brm-wait"><span class="dev-spin"></span> Lecture des dépôts…</div></div>
+</div>
+
+<!-- Server of a project: add / change -->
+<div class="modal" id="srv-modal" style="width:min(720px,94vw);max-height:92vh">
+    <h3 id="srv-title">Ajouter un serveur</h3>
+    <div id="srv-step-provider">
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:8px">Chez quel fournisseur ?</div>
+        <div id="srv-providers" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px"></div>
+        <div id="srv-sshhosts" style="margin-top:14px"></div>
+    </div>
+    <div id="srv-step-form" style="display:none">
+        <div class="flex gap-8" style="flex-wrap:wrap">
+            <div class="form-group" style="flex:2;min-width:180px"><label>Nom</label><input class="form-input" id="srv-name" placeholder="VPS prod"></div>
+            <div class="form-group" style="flex:1;min-width:120px"><label>Role</label><select class="form-input" id="srv-role"></select></div>
+            <div class="form-group" style="flex:1;min-width:120px"><label>Fournisseur</label><select class="form-input" id="srv-provider"></select></div>
+        </div>
+        <div class="flex gap-8" style="flex-wrap:wrap">
+            <div class="form-group" style="flex:3;min-width:180px"><label>Adresse (IP ou domaine)</label><input class="form-input mono" id="srv-host" placeholder="203.0.113.10"></div>
+            <div class="form-group" style="flex:2;min-width:110px"><label>Utilisateur SSH</label><input class="form-input mono" id="srv-user" placeholder="ubuntu"></div>
+            <div class="form-group" style="flex:1;min-width:70px"><label>Port</label><input class="form-input mono" id="srv-port" value="22"></div>
+        </div>
+        <div class="form-group">
+            <label>Cle SSH</label>
+            <div class="flex gap-6"><select class="form-input mono" id="srv-key" style="flex:1" onchange="srvKeyChanged()"></select>
+                <button class="btn btn-sm" onclick="srvGenerateKey()" title="Cle ed25519 dediee a ce projet, dans ~/.ssh/devpilot/">Generer une cle</button></div>
+            <div id="srv-pub" style="display:none;margin-top:6px"></div>
+        </div>
+        <div class="form-group"><label>Dossier du projet sur le serveur</label><input class="form-input mono" id="srv-path" placeholder="~/md_infra"></div>
+        <div class="form-group"><label>URLs du site (optionnel)</label><input class="form-input mono" id="srv-urls" placeholder="https://monsite.ma"></div>
+        <div id="srv-test" style="margin-top:6px"></div>
+        <div id="srv-error" class="alert alert-critical mt-8" style="display:none;white-space:pre-wrap"></div>
+    </div>
+    <div class="modal-actions">
+        <button class="btn" onclick="closeModals()">Annuler</button>
+        <button class="btn" id="srv-test-btn" onclick="srvTest()" style="display:none">Tester la connexion</button>
+        <button class="btn btn-primary" id="srv-save" onclick="srvSave()" style="display:none">Enregistrer</button>
+    </div>
+</div>
+
+<!-- Project type & needs -->
+<div class="modal" id="model-modal" style="width:min(820px,94vw);max-height:92vh">
+    <h3>Type du projet et ses besoins</h3>
+    <div style="font-size:12px;color:var(--text-3);margin-bottom:10px">Le type donne les besoins par defaut (ce que ce projet doit avoir pour etre complet). Tu peux ensuite cocher ou decocher chaque besoin.</div>
+    <div id="model-profiles" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin-bottom:14px"></div>
+    <div class="card-label">Besoins de ce projet</div>
+    <div id="model-needs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 12px"></div>
+    <div id="model-error" class="alert alert-critical mt-12" style="display:none"></div>
+    <div class="modal-actions">
+        <button class="btn" onclick="closeModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="modelSave()">Enregistrer</button>
+    </div>
+</div>
+
+<!-- The project's console / controller -->
+<div class="modal" id="ctrl-modal" style="width:min(640px,94vw)">
+    <h3>Console du projet</h3>
+    <div style="font-size:12px;color:var(--text-3);margin-bottom:10px">Un gros projet a sa propre console (comme md_console pour MarocDefender). DevAgent la lance et l'ouvre ; ce qu'elle gere n'est pas saisi dans DevAgent.</div>
+    <div class="flex gap-8" style="flex-wrap:wrap">
+        <div class="form-group" style="flex:1;min-width:160px"><label>Nom</label><input class="form-input" id="ctrl-name" placeholder="MD Console"></div>
+        <div class="form-group" style="flex:1;min-width:160px"><label>Dossier (dans le projet)</label><input class="form-input mono" id="ctrl-dir" placeholder="md_console"></div>
+    </div>
+    <div class="flex gap-8" style="flex-wrap:wrap">
+        <div class="form-group" style="flex:1;min-width:160px"><label>Commande de lancement</label><input class="form-input mono" id="ctrl-cmd" placeholder="./run.sh"></div>
+        <div class="form-group" style="flex:1;min-width:160px"><label>URL (locale)</label><input class="form-input mono" id="ctrl-url" placeholder="http://127.0.0.1:8800"></div>
+    </div>
+    <div class="form-group"><label>Ce que la console gere (delegue : pas saisi dans DevAgent)</label>
+        <div id="ctrl-manages" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:4px 10px"></div></div>
+    <div id="ctrl-error" class="alert alert-critical mt-8" style="display:none"></div>
+    <div class="modal-actions" style="justify-content:space-between">
+        <button class="btn btn-danger btn-sm" onclick="ctrlClear()">Oublier la console</button>
+        <div class="flex gap-6"><button class="btn" onclick="closeModals()">Annuler</button><button class="btn btn-primary" onclick="ctrlSave()">Enregistrer</button></div>
+    </div>
+</div>
+
+<!-- Server access with its password (OVH...) -->
+<div class="modal" id="acc-modal" style="width:min(600px,94vw)">
+    <h3 id="acc-title">Acces par mot de passe</h3>
+    <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;line-height:1.5">
+        Avec le mot de passe du serveur, DevAgent installe la cle SSH de ce PC. Choisis aussi <b>ton propre mot de passe</b> :
+        celui d'OVH expire, le tien permettra a un nouveau PC d'ajouter sa cle sans rien reconstruire.
+        <b>Aucun mot de passe n'est enregistre par DevAgent.</b>
+    </div>
+    <div class="form-group"><label id="acc-cur-label">Mot de passe actuel (recu d'OVH, ou le tien)</label>
+        <input class="form-input mono" type="password" id="acc-cur" autocomplete="off"></div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:12px;cursor:pointer;margin-bottom:8px">
+        <input type="checkbox" id="acc-change" checked onchange="accToggle()" style="accent-color:var(--violet)"> Choisir mon propre mot de passe (recommande)</label>
+    <div id="acc-new-box">
+        <div class="flex gap-8" style="flex-wrap:wrap">
+            <div class="form-group" style="flex:1;min-width:180px"><label>Nouveau mot de passe (12 caracteres min.)</label>
+                <input class="form-input mono" type="password" id="acc-new" autocomplete="new-password" oninput="accStrength()"></div>
+            <div class="form-group" style="flex:1;min-width:180px"><label>Confirmer</label>
+                <input class="form-input mono" type="password" id="acc-new2" autocomplete="new-password" oninput="accStrength()"></div>
+        </div>
+        <div id="acc-strength" style="font-size:11px;margin:-6px 0 8px"></div>
+        <label style="display:flex;gap:8px;align-items:center;font-size:12px;cursor:pointer;margin-bottom:6px">
+            <input type="checkbox" id="acc-root" style="accent-color:var(--violet)"> Mettre aussi ce mot de passe pour root</label>
+        <div style="font-size:11px;color:var(--text-4);margin-bottom:8px">Garde-le dans ton gestionnaire de mots de passe (Bitwarden...) : DevAgent ne le garde pas.</div>
+    </div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:12px;cursor:pointer">
+        <input type="checkbox" id="acc-allow" checked style="accent-color:var(--violet)"> Laisser le serveur accepter les mots de passe (pour qu'un nouveau PC puisse ajouter sa cle)</label>
+    <div id="acc-log" style="display:none;margin-top:10px"></div>
+    <div id="acc-error" class="alert alert-critical mt-8" style="display:none;white-space:pre-wrap"></div>
+    <div class="modal-actions">
+        <button class="btn" onclick="closeModals()">Fermer</button>
+        <button class="btn btn-primary" id="acc-go" onclick="accRun()">Connecter</button>
+    </div>
+</div>
+
+<!-- Import Project Modal (terminal) -->
+<div class="modal" id="import-modal" style="width:min(1100px,94vw);max-height:92vh">
+    <div class="flex-between" style="align-items:center;margin-bottom:12px">
+        <h3 style="margin:0" id="imp-title">Importer un projet</h3>
+        <span id="imp-path-label" class="mono" style="font-size:11px;color:var(--text-3)"></span>
+    </div>
+
+    <!-- Step 2: terminal -->
+    <div id="imp-step-term">
+        <div class="flex gap-6 mb-8" id="imp-hints" style="flex-wrap:wrap;align-items:center"></div>
+        <div id="imp-detect" style="font-size:11px;color:var(--text-3);margin-bottom:8px;min-height:14px"></div>
+        <div id="imp-xterm" style="height:min(560px,60vh);background:#0a0a0f;border-radius:10px;padding:6px;overflow:hidden;cursor:text"
+             onclick="if(window._imp&&window._imp.term)window._imp.term.focus()"></div>
+        <div id="imp-result" style="display:none;margin-top:10px"></div>
+        <div class="modal-actions" style="justify-content:space-between">
+            <button class="btn btn-danger btn-sm" onclick="impAbort()">Arreter le terminal</button>
+            <div class="flex gap-6">
+                <button class="btn" id="imp-paste" onclick="impPasteLink()" style="display:none" title="Sans terminal : DevAgent fait le clone">Coller un lien a la place</button>
+                <button class="btn" onclick="closeModals()" title="Le terminal continue de tourner">Reduire</button>
+                <button class="btn btn-primary" id="imp-finish" onclick="impFinish()">Terminer &amp; enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Modal -->
+<div class="modal" id="project-modal" style="min-width:520px">
+    <h3 id="project-modal-title">Nouveau projet</h3>
+
+    <!-- Manual tab -->
+    <div id="pm-manual-tab">
+        <div class="form-group"><label>Nom</label><input class="form-input" id="pm-name" placeholder="Mon Projet"></div>
+        <div class="form-group"><label>Description</label><input class="form-input" id="pm-desc" placeholder="Description"></div>
+        <div class="form-group" id="pm-path-group"><label>Chemin du projet</label><input class="form-input" id="pm-path" placeholder="~/Desktop/mon-projet" readonly>
+            <div style="font-size:10px;color:var(--text-4);margin-top:4px">Pour changer d'emplacement : « Deplacer / dupliquer » dans le detail du projet.</div></div>
+        <div class="form-group">
+            <label>Couleur</label>
+            <div class="flex gap-6 mt-8" id="color-picker"></div>
+        </div>
+        <div class="form-group"><label>Pattern auto-detect (regex)</label><input class="form-input" id="pm-pattern" placeholder="mon[-_]?projet"></div>
+        <div class="modal-actions">
+            <button class="btn" onclick="closeModals()">Annuler</button>
+            <button class="btn btn-primary" onclick="saveProject()">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- Link Modal -->
+<div class="modal" id="link-modal">
+    <h3>Lier a un projet</h3>
+    <div class="form-group"><label>Projet</label><select class="form-input" id="link-select"></select></div>
+    <div class="modal-actions">
+        <button class="btn" onclick="closeModals()">Annuler</button>
+        <button class="btn btn-primary" onclick="executeLink()">Lier</button>
+    </div>
+</div>
+
+<!-- Project Setup Wizard -->
+<div class="modal" id="wizard-modal" style="min-width:640px;max-width:700px">
+    <div class="flex-between mb-12">
+        <h3 id="wiz-title">Nouveau Projet Client</h3>
+        <span id="wiz-step-label" style="font-size:11px;color:var(--text-3)"></span>
+    </div>
+    <div id="wiz-progress" style="height:3px;background:var(--bg-4);border-radius:2px;margin-bottom:20px;overflow:hidden">
+        <div id="wiz-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--violet),var(--sky));border-radius:2px;transition:width .3s;width:12%"></div>
+    </div>
+    <div id="wiz-content"></div>
+    <div class="modal-actions" style="margin-top:16px">
+        <button class="btn" id="wiz-prev" onclick="wizPrev()" style="display:none">Precedent</button>
+        <div style="flex:1"></div>
+        <button class="btn" onclick="closeModals()">Annuler</button>
+        <button class="btn btn-primary" id="wiz-next" onclick="wizNext()">Suivant</button>
+    </div>
+</div>
+
+<!-- Wizard Result Modal -->
+<div class="modal" id="wizard-result-modal" style="min-width:700px;max-width:800px;max-height:90vh">
+    <h3>Projet pret</h3>
+    <div id="wiz-result-checklist" class="mb-12"></div>
+    <div class="card-label">Prompt Claude — copie et colle dans ton terminal</div>
+    <div style="position:relative">
+        <button class="btn btn-sm btn-primary" onclick="copyPrompt()" style="position:absolute;top:8px;right:8px;z-index:1">Copier</button>
+        <pre id="wiz-result-prompt" class="mono" style="font-size:11px;color:var(--text-1);white-space:pre-wrap;background:var(--bg-0);padding:16px;border-radius:var(--radius-xs);border:1px solid var(--border-0);max-height:400px;overflow-y:auto;line-height:1.6"></pre>
+    </div>
+    <div class="modal-actions">
+        <button class="btn" onclick="copyPrompt()">Copier le prompt</button>
+        <button class="btn btn-primary" id="wiz-finish-btn" onclick="finishWizard()">Creer le projet</button>
+    </div>
+</div>
+
+<!-- Cleanup Preview Modal -->
+<div class="modal" id="cleanup-modal" style="min-width:550px">
+    <h3>Cleanup Projet</h3>
+    <p style="color:var(--text-3);font-size:12px;margin-bottom:14px">Selectionne ce que tu veux supprimer. Les elements marques <span class="badge badge-emerald">safe</span> peuvent etre recrees.</p>
+    <div id="cleanup-items" style="max-height:400px;overflow-y:auto"></div>
+    <div class="flex-between mt-12">
+        <div>
+            <span id="cleanup-total" style="font-size:12px;color:var(--text-2)"></span>
+        </div>
+        <div class="flex gap-6">
+            <label style="font-size:11px;color:var(--text-3);display:flex;align-items:center;gap:4px">
+                <input type="checkbox" id="cleanup-set-done" style="accent-color:var(--violet)"> Marquer "Termine"
+            </label>
+        </div>
+    </div>
+    <div class="modal-actions">
+        <button class="btn" onclick="closeModals()">Annuler</button>
+        <button class="btn btn-danger" onclick="executeSelectiveCleanup()">Nettoyer la selection</button>
+    </div>
+</div>
+
+<!-- Session View Modal -->
+<div class="modal" id="session-view-modal" style="min-width:550px">
+    <div class="flex-between mb-12">
+        <h3 id="session-view-title"></h3>
+        <button class="btn btn-xs" onclick="navigator.clipboard.writeText(document.getElementById('session-view-path').textContent);toast('Path copie')">Copier path</button>
+    </div>
+    <div class="mono" id="session-view-path" style="font-size:10px;color:var(--sky);margin-bottom:12px;user-select:all"></div>
+    <pre id="session-view-content" class="mono" style="font-size:11px;color:var(--text-1);white-space:pre-wrap;background:var(--bg-0);padding:14px;border-radius:var(--radius-xs);border:1px solid var(--border-0);max-height:400px;overflow-y:auto;line-height:1.6"></pre>
+    <div class="modal-actions"><button class="btn" onclick="closeModals()">Fermer</button></div>
+</div>
+
+<!-- Link Git Modal -->
+<div class="modal" id="git-modal" style="min-width:480px">
+    <h3>Lier a GitHub</h3>
+    <p style="color:var(--text-3);font-size:12px;margin-bottom:14px">
+        Colle le lien du depot GitHub. Le dossier du projet est lie directement : ensuite pull / push marchent
+        depuis DevAgent ou n'importe quel terminal. Rien n'est ecrase ni fusionne.
+    </p>
+    <div class="form-group">
+        <label>Lien du depot</label>
+        <input class="form-input" id="git-url" placeholder="https://github.com/osarsar/mon-projet  ou  osarsar/mon-projet" style="font-family:monospace"
+               onkeydown="if(event.key==='Enter')executeLinkGit()">
+    </div>
+    <div id="git-output" style="display:none">
+        <pre id="git-log" class="mono" style="font-size:11px;color:var(--text-2);white-space:pre-wrap;background:var(--bg-0);padding:10px;border-radius:var(--radius-xs);border:1px solid var(--border-0);max-height:150px;overflow-y:auto"></pre>
+    </div>
+    <div class="modal-actions">
+        <button class="btn" onclick="closeModals()">Annuler</button>
+        <button class="btn btn-danger" id="git-replace-btn" onclick="executeLinkGit(true)" style="display:none">Remplacer le lien</button>
+        <button class="btn btn-primary" id="git-link-btn" onclick="executeLinkGit()">Lier</button>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal" id="help-modal">
+    <h3>Raccourcis clavier</h3>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:6px 24px;font-size:12px;color:var(--text-2)">
+        <span>Dashboard</span><span class="hotkey" style="background:var(--bg-3)">1</span>
+        <span>Projets</span><span class="hotkey" style="background:var(--bg-3)">2</span>
+        <span>Stockage</span><span class="hotkey" style="background:var(--bg-3)">3</span>
+        <span>Caches</span><span class="hotkey" style="background:var(--bg-3)">4</span>
+        <span>Docker</span><span class="hotkey" style="background:var(--bg-3)">5</span>
+        <span>Reseau</span><span class="hotkey" style="background:var(--bg-3)">6</span>
+        <span>Timeline</span><span class="hotkey" style="background:var(--bg-3)">7</span>
+        <span>Parametres</span><span class="hotkey" style="background:var(--bg-3)">8</span>
+        <span>Rafraichir</span><span class="hotkey" style="background:var(--bg-3)">R</span>
+        <span>Fermer modal</span><span class="hotkey" style="background:var(--bg-3)">Esc</span>
+    </div>
+</div>
+
+<!-- ═══ GUIDE OVERLAY ═══ -->
+<div class="guide-overlay" id="guide-overlay">
+    <button class="guide-close" onclick="closeGuide()">&times;</button>
+    <div class="guide-container">
+        <div class="guide-header">
+            <h2>DevAgent — Guide</h2>
+            <p>Suis ces etapes pour prendre le controle total de ton espace disque, tes caches, tes containers et tes ressources projet.</p>
+        </div>
+        <div id="guide-steps"></div>
+        <div style="text-align:center;margin-top:20px">
+            <button class="btn btn-sm" onclick="closeGuide()">Fermer le guide</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════════════════════ -->

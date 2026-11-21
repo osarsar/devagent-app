@@ -25,7 +25,7 @@ import psutil
 import db
 
 HOME = Path.home().resolve()
-DEVPILOT_ROOT = HOME / "devpilot"
+DEVPILOT_ROOT = __import__("paths").root(HOME)   # ~/devagent once migrated, else ~/devpilot
 PROJECTS_ROOT = DEVPILOT_ROOT / "projects"
 
 NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")

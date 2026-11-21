@@ -8,3 +8,8 @@ jinja2
 rich
 weasyprint
 paramiko
+pyyaml
+cryptography
+jsonschema
+anthropic
+mcp

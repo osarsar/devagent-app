@@ -1,0 +1,31 @@
+        <!-- ════ CACHES ════ -->
+        <div id="page-caches" class="page">
+            <div class="card mb-20" style="border-color: var(--border-1);">
+                <div class="flex-between" style="flex-wrap:wrap;gap:10px">
+                    <div>
+                        <span style="font-weight:700;font-size:14px;color:var(--text-0)">Actions Rapides</span>
+                        <span id="cache-summary" class="card-sub" style="margin-left:12px"></span>
+                    </div>
+                    <div class="flex gap-6" style="flex-wrap:wrap">
+                        <button class="btn btn-sm btn-danger" onclick="cleanConfirm('clear_all_pycache','Supprimer tous les __pycache__ ?')">__pycache__</button>
+                        <button class="btn btn-sm" onclick="clearAllBrowsers()">Tous navigateurs</button>
+                        <button class="btn btn-sm" onclick="cleanConfirm('pip_cache','Vider pip cache ?')">pip cache</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title">Navigateurs <span class="count" id="browser-count">0</span></div>
+            <div class="grid-4 mb-20" id="browser-cards"></div>
+
+            <div class="section-title">Caches Projets <span class="count" id="projcache-count">0</span></div>
+            <div id="project-caches" class="mb-20"></div>
+
+            <div class="section-title">Caches Globaux <span class="count" id="global-count">0</span></div>
+            <div class="grid-2 mb-20">
+                <div class="card"><div class="chart-container" style="height:220px"><canvas id="chart-gcache"></canvas></div></div>
+                <div class="card table-wrap" id="global-table"></div>
+            </div>
+
+            <div class="section-title">~/.cache <span class="count" id="syscache-count">0</span></div>
+            <div class="card table-wrap" id="syscache-table"></div>
+        </div>
