@@ -133,3 +133,19 @@ def test_outils_et_routes(two):
     assert two.etat.auto_tick(every=0) is None                              # automatic sync switched off
     c.post("/api/agent/sync", json={"auto": True})
     assert guard.call("sync_maintenant", actor="automatisation:x")["statut"] == "ok"
+
+
+def test_un_projet_supprime_quitte_l_etat_partage(two):
+    etat = two.etat
+    P = two.a.use()
+    P.create("garde"); p = P.create("a-jeter")
+    etat.connect(two.url); etat.sync()
+    assert "projets/a-jeter/project.json" in sh("git", "ls-tree", "-r", "--name-only", "main", cwd=two.bare)
+    P.on_removed.append(etat.on_project_removed)
+    P.remove(p["id"])
+    files = sh("git", "ls-tree", "-r", "--name-only", "main", cwd=two.bare)
+    assert "a-jeter" not in files and "projets/garde/project.json" in files
+    assert "a-jeter" not in sh("git", "show", "main:projets.json", cwd=two.bare)
+    P = two.b.use()
+    etat.connect(two.url)
+    assert [x["projet"] for x in etat.sync()["ailleurs"]] == ["garde"]            # the removed one is not offered any more

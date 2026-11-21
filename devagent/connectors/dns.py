@@ -363,7 +363,9 @@ def plan(domain, records, prov=None):
             cur = [e for e in here if e["type"] in SITE_TYPES]
             same = sorted((e["type"], _norm(e["type"], e["content"])) for e in cur) == \
                 sorted((w["type"], _norm(w["type"], w["content"])) for w in items)
-            if same:
+            site_ips = {_norm("A", w["content"]) for w in wanted if w["type"] == "A"}
+            same_site = bool(cur) and all(e["type"] == "A" and _norm("A", e["content"]) in site_ips for e in cur)
+            if same or same_site:           # same_site: www answers with the site's own address instead of a CNAME
                 changes += [_ch("identique", w) for w in items]
             elif not cur:
                 changes += [_ch("creer", w) for w in items]
@@ -382,7 +384,11 @@ def plan(domain, records, prov=None):
             cur = [e for e in here if e["type"] == gtype and (kind is None or _kind_of(e) == kind)]
             same = sorted((_norm(gtype, e["content"]), e.get("priority") if gtype == "MX" else None) for e in cur) == \
                 sorted((_norm(gtype, w["content"]), w.get("priority") if gtype == "MX" else None) for w in items)
-            if same:
+            have = {(_norm(gtype, e["content"]), e.get("priority") if gtype == "MX" else None) for e in cur}
+            hosts = {_norm(gtype, e["content"]) for e in cur}
+            covered = all((_norm(gtype, w["content"]), w.get("priority") if gtype == "MX" else None) in have
+                          or (gtype == "MX" and _norm(gtype, w["content"]) in hosts) for w in items)
+            if same or (cur and covered):   # everything wanted is already there (the zone may hold more)
                 changes += [_ch("identique", w) for w in items]
             elif not cur:
                 changes += [_ch("creer", w) for w in items]

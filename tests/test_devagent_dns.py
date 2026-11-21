@@ -260,3 +260,23 @@ def test_le_fournisseur_est_celui_qui_a_la_zone(dns, monkeypatch, P):
     import sqlite3
     raw = dict(sqlite3.connect(str(db.DB_PATH)).execute("SELECT key, value FROM settings WHERE key LIKE 'dns_%'").fetchall())
     assert all(v.startswith("enc:v1:") for k, v in raw.items() if k != "dns_ovh_application_key"), raw
+
+
+def test_une_zone_deja_bonne_n_est_pas_un_conflit(dns):
+    """The provider's own mail has more MX than we ask, SPF is there twice, www is an A to the site:
+    everything wanted is already served."""
+    cf = FakeCF([
+        {"name": "exemple.ma", "type": "A", "content": "1.2.3.4"},
+        {"name": "www.exemple.ma", "type": "A", "content": "1.2.3.4"},
+        {"name": "exemple.ma", "type": "MX", "content": "mx0.mail.ovh.net.", "priority": 1},
+        {"name": "exemple.ma", "type": "MX", "content": "mx1.mail.ovh.net.", "priority": 5},
+        {"name": "exemple.ma", "type": "TXT", "content": "v=spf1 include:mx.ovh.com ~all"},
+        {"name": "exemple.ma", "type": "TXT", "content": '"v=spf1 include:mx.ovh.com ~all"'},
+        {"name": "_dmarc.exemple.ma", "type": "TXT", "content": '"v=DMARC1; p=quarantine"'},
+        {"name": "_dmarc.exemple.ma", "type": "TXT", "content": '"v=DMARC1; p=none; rua=mailto:postmaster@exemple.ma"'},
+    ])
+    wanted = [{"type": "A", "name": "@", "value": "1.2.3.4"}, {"type": "CNAME", "name": "www", "value": "abc.vercel-dns-017.com"},
+              {"type": "MX", "name": "@", "value": "mx1.mail.ovh.net", "priority": 1}] + WANTED[3:]
+    p = dns.plan("exemple.ma", wanted, cf)
+    assert {c["action"] for c in p["changes"]} == {"identique"} and p["a_faire"] == 0 and p["conflits"] == 0
+    assert dns.apply("exemple.ma", wanted, cf)["faits"] == 0 and cf.log == []

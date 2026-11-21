@@ -41,6 +41,7 @@ class Tool:
     domain: str = ""
     confirm_name: bool = False      # the user types the project name to approve
     automation: bool = True         # may an automation call it?
+    precheck: object = None         # fn(args) raising ToolError: refuses a call before it is even asked
 
     @property
     def input_schema(self):
@@ -58,7 +59,7 @@ _loaded = False
 
 
 def tool(name, description, risk=RISK_READ, params=None, required=(), confirm_name=False,
-         automation=True):
+         automation=True, precheck=None):
     if risk not in RISKS:
         raise ValueError(f"niveau de risque inconnu : {risk}")
 
@@ -68,7 +69,7 @@ def tool(name, description, risk=RISK_READ, params=None, required=(), confirm_na
         _TOOLS[name] = Tool(name=name, description=description, risk=risk, fn=fn,
                             params=dict(params or {}), required=tuple(required),
                             domain=fn.__module__.rsplit(".", 1)[-1],
-                            confirm_name=confirm_name, automation=automation)
+                            confirm_name=confirm_name, automation=automation, precheck=precheck)
         return fn
     return deco
 

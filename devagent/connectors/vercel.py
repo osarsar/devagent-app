@@ -132,6 +132,23 @@ def deployments(project, limit=5):
              "erreur": d.get("errorMessage"), "inspecter": d.get("inspectorUrl")} for d in res.get("deployments") or []]
 
 
+def git_link(project):
+    """Is the Vercel project connected to a Git repository? (then each push deploys)"""
+    acct, name, team = link_of(project)
+    link = _project(acct, name, team).get("link") or {}
+    if not link:
+        return {"relie": False, "comment": f"Sur https://vercel.com/{team or acct.get('name')}/{name}/settings/git : « Connect Git "
+                "Repository », puis choisis le depot. Vercel demande l'accord de ton compte GitHub : c'est toi qui le donnes."}
+    return {"relie": True, "type": link.get("type"), "depot": f"{link.get('org')}/{link.get('repo')}",
+            "branche_de_production": link.get("productionBranch")}
+
+
+def remove_domain(project, domain):
+    acct, name, team = link_of(project)
+    _call(acct["token"], "DELETE", f"/v9/projects/{name}/domains/{domain}", team)
+    return {"retire": domain}
+
+
 def domain_config(acct, domain, team=None):
     """What Vercel wants in the DNS for this domain: {mal_configure, a, cname}."""
     c = _call(acct["token"], "GET", f"/v6/domains/{domain}/config", team)
