@@ -13,7 +13,7 @@ Branche `feat/devagent`.
 | 2 Coffre, journal, garde | Fait. Les 2 routes qui renvoyaient un secret sont supprimees ; les boutons classiques sont journalises | `devagent/vault.py`, `journal.py`, `guard.py` |
 | 3 Serveur MCP | Fait, branche dans Claude Code, teste avec une vraie session | `devagent/mcp_server.py` |
 | 4 Automatisations | Fait : horaire, intervalle, nouveau commit sur GitHub, webhook local, manuel ; 5 modeles | `devagent/automations.py` |
-| 5 Chat integre | Fait, teste avec un modele simule. **A essayer avec une vraie cle API** | `devagent/chat.py` |
+| 5 Chat integre | Fait, teste avec un modele simule et avec une vraie cle API | `devagent/chat.py` |
 | 6 Carte et interface | Fait. `dashboard.html` est decoupe : 12 pages, 18 scripts, 1 feuille de style ; Proniver est une extension | `templates/dash/`, `ui/`, `extensions/proniver/`, `devagent/carte.py`, `devagent/web/` |
 | 7 Connecteurs | Notification (Telegram, email), deploiement SSH, DNS (Cloudflare, OVH, Hostinger) | `devagent/connectors/` |
 | 8 Nom | Commande `devagent`, interface, README, depot GitHub renomme, migration du dossier prete | `install.sh`, `paths.py`, `devagent/migrate.py` |
@@ -26,8 +26,8 @@ Reste, et pourquoi :
 - **Dossier** : le depot GitHub est renomme (`osarsar/devagent-app`) et, sur ce PC, le dossier est
   `~/devagent` depuis le 2026-11-21 (`devagent migrer`) ; `~/devpilot` reste comme lien. Les deux lignes du
   crontab gardent l'ancien chemin, qui marche par le lien. Sur un autre PC : `devagent migrer --appliquer`.
-- **Chat integre** : jamais essaye avec une vraie cle API (aucune sur ce PC).
-- **Publication** : les commits sont locaux, sur `feat/devagent` ; rien n'est pousse.
+- **Chat integre** : essaye pour de vrai le 2026-11-21 (deux questions sur un projet, trois appels d'outils, reponses justes).
+- **Publication** : branche poussee, pull request n° 18 ouverte vers `main` ; a fusionner par toi.
 
 Comment le decoupage de `dashboard.html` a ete verifie : un navigateur pilote visite les 12 pages et les
 8 onglets d'un projet et releve les erreurs JavaScript — 0 avant, 0 apres, memes pages, memes onglets.
