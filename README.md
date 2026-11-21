@@ -43,6 +43,13 @@ Journal · Outils · Réglages.
 | brancher l'agent dans Claude Code | `devagent mcp installer` · `devagent mcp etat` · `devagent mcp retirer` |
 | les automatisations | `devagent auto lister` · `devagent auto activer <projet> <nom>` · `devagent auto historique` |
 | l'état du coffre | `devagent coffre etat` |
+| renommer le dossier `~/devpilot` en `~/devagent` | `devagent migrer` (simulation) · `devagent migrer --appliquer` · `devagent migrer --annuler --oui` |
+
+**Renommer le dossier.** `devagent migrer` montre d'abord ce qu'il ferait. Il refuse tant que DevAgent est
+lancé. Il renomme `~/devpilot` en `~/devagent` et **laisse `~/devpilot` comme lien** : les tâches cron, les
+serveurs lancés, les montages Docker et tes scripts continuent de marcher avec l'ancien chemin. Il met à jour
+la base, les commandes, le raccourci, le service, l'enregistrement dans Claude Code, et copie la mémoire de
+Claude Code de chaque projet sous le nouveau chemin. Un PC neuf s'installe encore dans `~/devpilot`.
 
 **Les automatisations.** Un fichier YAML par automatisation, dans le projet (`.devpilot/automations/`).
 L'agent peut en proposer une ; **elle ne tourne que si tu l'actives**, et un fichier modifié redevient
@@ -110,7 +117,7 @@ Ubuntu, connecté à internet. Copie-colle :
 
 ```bash
 sudo apt update && sudo apt install -y git curl
-bash <(curl -fsSL https://raw.githubusercontent.com/osarsar/devpilot-app/main/pc.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/osarsar/devagent-app/main/pc.sh)
 ```
 
 Il annonce « DevPilot n'est pas installé » → **Entrée** (installer), puis **Entrée** (le lancer).

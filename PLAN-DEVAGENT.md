@@ -16,15 +16,16 @@ Branche `feat/devagent`.
 | 5 Chat integre | Fait, teste avec un modele simule. **A essayer avec une vraie cle API** | `devagent/chat.py` |
 | 6 Carte et interface | Fait. `dashboard.html` est decoupe : 12 pages, 18 scripts, 1 feuille de style ; Proniver est une extension | `templates/dash/`, `ui/`, `extensions/proniver/`, `devagent/carte.py`, `devagent/web/` |
 | 7 Connecteurs | Notification (Telegram, email), deploiement SSH, DNS Cloudflare | `devagent/connectors/` |
-| 8 Nom | Commande `devagent`, interface, README | `install.sh` |
+| 8 Nom | Commande `devagent`, interface, README, depot GitHub renomme, migration du dossier prete | `install.sh`, `paths.py`, `devagent/migrate.py` |
 
 Reste, et pourquoi :
 - **DNS chez OVH ou Hostinger** : seule l'API Cloudflare a pu etre verifiee dans sa documentation. Un autre
   fournisseur = une classe de plus dans `devagent/connectors/dns.py`.
 - **Webhook GitHub entrant** : DevAgent n'ecoute que sur ce PC. Le declencheur `depot` le remplace (il regarde
   GitHub toutes les 5 minutes).
-- **Renommer le depot GitHub et le dossier `~/devpilot`** : ta decision (le dossier est dans les chemins de
-  chaque projet, de la commande et de Claude Code).
+- **Dossier `~/devpilot`** : le depot GitHub est renomme (`osarsar/devagent-app`). Pour le dossier, la
+  commande `devagent migrer` est prete et testee (avec annulation), mais elle se lance DevAgent ferme :
+  c'est a toi de la lancer, car des serveurs, Docker et des taches cron tournent dans ce dossier.
 
 Comment le decoupage de `dashboard.html` a ete verifie : un navigateur pilote visite les 12 pages et les
 8 onglets d'un projet et releve les erreurs JavaScript — 0 avant, 0 apres, memes pages, memes onglets.

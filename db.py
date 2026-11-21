@@ -6,7 +6,9 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from contextlib import contextmanager
 
-DEVPILOT_ROOT = Path.home() / "devpilot"
+import paths
+
+DEVPILOT_ROOT = paths.root()                     # ~/devagent once migrated, else ~/devpilot
 DB_PATH = DEVPILOT_ROOT / ".devpilot" / "data" / "devpilot.db"
 
 # In-memory cache of project paths for fast lookup

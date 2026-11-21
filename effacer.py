@@ -41,7 +41,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 HOME = Path(os.environ.get("HOME") or Path.home()).resolve()
-DEVPILOT = HOME / "devpilot"
+DEVPILOT = __import__("paths").root(HOME)
 ESPACE = DEVPILOT / ".devpilot"
 PROJETS = DEVPILOT / "projects"
 SIMULATION = False
@@ -552,7 +552,7 @@ def executer(elements):
         print("  " + l)
     if not SIMULATION:
         print(f"\n{G}Pour tout reconstruire plus tard{N} : la section « PC vierge » du README de DevPilot\n"
-              "  https://github.com/osarsar/devpilot-app#2-pc-vierge--installer-devpilot\n"
+              "  https://github.com/osarsar/devagent-app#2-pc-vierge--installer-devpilot\n"
               "  puis l'assistant de chaque projet.")
     return journal
 

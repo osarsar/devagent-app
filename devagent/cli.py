@@ -10,6 +10,7 @@
     devagent mcp installer|retirer|etat  brancher DevAgent dans Claude Code
     devagent coffre etat|sceller|ouvrir  les secrets chiffres
     devagent auto lister|lancer <projet> <nom>|historique   les automatisations
+    devagent migrer [--appliquer|--annuler --oui]   renommer ~/devpilot en ~/devagent (simulation par defaut)
 """
 import json
 import os
@@ -44,6 +45,9 @@ def main(argv=None):
         print(__doc__)
         return 0
     cmd, rest = argv[0], argv[1:]
+    if cmd == "migrer":                                   # before anything opens the database
+        from devagent import migrate
+        return migrate.cli(rest)
     from devagent import guard, journal, registry
 
     if cmd == "outils":
@@ -100,6 +104,9 @@ def main(argv=None):
     if cmd == "auto":
         from devagent import automations
         return automations.cli(rest)
+    if cmd == "migrer":
+        from devagent import migrate
+        return migrate.cli(rest)
     raise SystemExit(f"✗ commande inconnue : devagent {cmd}\n  devagent help")
 
 

@@ -18,9 +18,10 @@ def _claude():
     return shutil.which(cmd) or shutil.which("claude")
 
 
-def server_command():
-    py = APP / ".venv" / "bin" / "python"
-    return [str(py if py.exists() else Path(sys.executable)), str(APP / "devagent" / "mcp_server.py")]
+def server_command(app=None):
+    app = Path(app) if app else APP
+    py = app / ".venv" / "bin" / "python"
+    return [str(py if py.exists() else Path(sys.executable)), str(app / "devagent" / "mcp_server.py")]
 
 
 def _run(args, timeout=60):
@@ -42,10 +43,10 @@ def status():
             "detail": (out or err)[:600]}
 
 
-def install():
+def install(app=None):
     if status()["installed"]:
         _run(["mcp", "remove", "--scope", "user", NAME])
-    rc, out, err = _run(["mcp", "add", "--scope", "user", NAME, "--", *server_command()])
+    rc, out, err = _run(["mcp", "add", "--scope", "user", NAME, "--", *server_command(app)])
     return {"ok": rc == 0, "message": out or err, **status()}
 
 

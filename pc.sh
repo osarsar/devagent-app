@@ -2,7 +2,7 @@
 # DevPilot — l'assistant de CE PC. Il regarde où en est le PC, propose le bon mode, et le fait.
 #
 #   Nouveau PC (rien d'installé) :
-#     bash <(curl -fsSL https://raw.githubusercontent.com/osarsar/devpilot-app/main/pc.sh)
+#     bash <(curl -fsSL https://raw.githubusercontent.com/osarsar/devagent-app/main/pc.sh)
 #   PC déjà installé :
 #     devpilot pc
 #
@@ -10,7 +10,7 @@
 #         préparer ce PC pour publier · voir l'état · lancer DevPilot
 set -u
 APP="${DEVPILOT_APP:-$HOME/devpilot/.devpilot/app}"
-DEPOT="https://github.com/osarsar/devpilot-app.git"
+DEPOT="https://github.com/osarsar/devagent-app.git"
 INTERDITS="$HOME/.config/devpilot/interdits.txt"
 V="\033[32m"; R="\033[31m"; J="\033[33m"; G="\033[1m"; D="\033[2m"; N="\033[0m"
 [ -t 1 ] || { V=""; R=""; J=""; G=""; D=""; N=""; }

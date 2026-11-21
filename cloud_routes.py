@@ -17,7 +17,7 @@ from cloud_ops import _fmt, DB_LABELS, _PLATFORM_ALIASES, _NOT_A_PLATFORM, _norm
 
 cloud_bp = Blueprint("cloud", __name__)
 HOME = Path.home()
-DEVPILOT_PROJECTS = HOME / "devpilot" / "projects"
+DEVPILOT_PROJECTS = __import__("paths").root(HOME) / "projects"
 
 
 

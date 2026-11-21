@@ -82,7 +82,7 @@ def _only_from_dashboard():
         return jsonify({"error": "origine refusee"}), 403
     if request.headers.get("Sec-Fetch-Site") == "cross-site":
         return jsonify({"error": "requete cross-site refusee"}), 403
-DEVPILOT_ROOT = HOME / "devpilot"
+DEVPILOT_ROOT = __import__("paths").root(HOME)
 DEVPILOT_PROJECTS = DEVPILOT_ROOT / "projects"
 DEVPILOT_PROJECTS.mkdir(parents=True, exist_ok=True)
 
