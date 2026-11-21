@@ -406,6 +406,9 @@ def _run(project, a, trigger):
         if out["statut"] == "ok":
             why = _expectations(st, out.get("resultat"))
             if why:
+                res = out.get("resultat")
+                if isinstance(res, dict) and res.get("resume"):
+                    why = str(res["resume"])               # the tool's own words are clearer than « x != y »
                 entry.update(statut="echec", message=why)
         else:
             entry["message"] = out.get("message", "")
@@ -572,6 +575,12 @@ TEMPLATES = {
                     "minimum": {"certificat_jours_restants": 14}},
                    {"outil": "notifier", "si": "echec_nouveau",
                     "args": {"message": "Certificat de {{projet}} bientot expire : {{erreur}}"}}]},
+    "verifier-acces": {
+        "description": "Chaque matin, essaie tous les acces (tokens, cles) et previent si l'un ne marche plus ou expire bientot.",
+        "declencheur": {"type": "horaire", "a": "09:00"},
+        "etapes": [{"outil": "acces_tester", "attendu": {"tout_ok": True}},
+                   {"outil": "notifier", "si": "echec_nouveau", "args": {"message": "Acces a regler : {{erreur}}"}},
+                   {"outil": "notifier", "si": "retabli", "args": {"message": "Tous les acces fonctionnent a nouveau."}}]},
     "nouveau-commit": {
         "description": "Quand un nouveau commit arrive sur GitHub : met les depots a jour sur ce PC et previent.",
         "declencheur": {"type": "depot", "toutes": "5m"},

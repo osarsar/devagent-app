@@ -79,6 +79,21 @@ const DA = (() => {
     return out;
   }
 
+  /* Ask for a password in a small dialog (never a browser prompt: it would show the text). */
+  function askPassword(title, hint) {
+    return new Promise(resolve => {
+      const input = h('input', { class: 'input', type: 'password', autocomplete: 'off' });
+      const done = v => { back.remove(); resolve(v); };
+      const ok = h('button', { class: 'btn primary', type: 'button', onclick: () => done(input.value) }, 'Valider');
+      const no = h('button', { class: 'btn', type: 'button', onclick: () => done(null) }, 'Plus tard');
+      const back = h('div', { class: 'dialog-back' }, h('div', { class: 'card stack dialog', role: 'dialog', 'aria-modal': 'true' },
+        h('h2', {}, title), hint ? h('p', { class: 'muted small' }, hint) : null, input, h('div', { class: 'row' }, ok, no)));
+      input.addEventListener('keydown', ev => { if (ev.key === 'Enter') done(input.value); if (ev.key === 'Escape') done(null); });
+      document.body.append(back);
+      input.focus();
+    });
+  }
+
   async function refreshState() {
     try {
       state.agent = await api('/api/agent/state');
@@ -135,6 +150,6 @@ const DA = (() => {
     show(location.hash.slice(1));
   }
 
-  return { page, start, h, api, act, toast, pill, riskPill, statusPill, when, json, approve, state,
+  return { page, start, h, api, act, toast, askPassword, pill, riskPill, statusPill, when, json, approve, state,
     projectName, refreshState, show };
 })();

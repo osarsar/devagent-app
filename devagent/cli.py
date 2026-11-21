@@ -8,7 +8,9 @@
     devagent refuser <n>
     devagent pause | reprendre           l'agent et les automatisations ne font plus que lire
     devagent mcp installer|retirer|etat  brancher DevAgent dans Claude Code
-    devagent coffre etat|sceller|ouvrir  les secrets chiffres
+    devagent coffre etat|sceller|ouvrir  les secrets chiffres de ce PC
+    devagent coffre connecter            brancher Bitwarden sur ce PC (une fois)
+    devagent coffre envoyer|recuperer    les cles : ce PC → Bitwarden, ou Bitwarden → ce PC
     devagent auto lister|lancer <projet> <nom>|historique   les automatisations
     devagent migrer [--appliquer|--annuler --oui]   renommer ~/devpilot en ~/devagent (simulation par defaut)
 """
@@ -94,6 +96,9 @@ def main(argv=None):
         import db
         from devagent import vault
         sub = rest[0] if rest else "etat"
+        if sub in ("connecter", "envoyer", "recuperer", "bitwarden"):
+            from devagent import bitwarden
+            return bitwarden.cli(rest if sub != "bitwarden" else rest[1:])
         if sub == "sceller":
             print(f"{db.seal_stored_secrets()} secret(s) chiffres.")
         elif sub == "ouvrir":

@@ -366,3 +366,63 @@ def _journal_interface_writes(resp):
     except Exception:
         pass
     return resp
+
+
+# ── Access to the outside platforms ─────────────────────────────────────────
+
+@agent_bp.route("/api/agent/access")
+def api_access():
+    from . import access
+    pid = request.args.get("project_id", type=int)
+    out = {"access": access.status()}
+    for e in out["access"]:
+        e["explain"] = access.explain(e)
+    if pid:
+        try:
+            out["project"] = access.for_project(pid)
+        except Exception as e:
+            if not guard._refused(e):
+                raise
+    return jsonify(out)
+
+
+@agent_bp.route("/api/agent/access", methods=["POST"])
+def api_access_save():
+    from . import access
+    return jsonify({"saved": access.save(_body())})
+
+
+@agent_bp.route("/api/agent/access/test", methods=["POST"])
+def api_access_test():
+    from . import access
+    return _guarded(lambda: access.test(_body().get("key") or None))
+
+
+# ── Bitwarden: the keys shared between the user's PCs ───────────────────────
+# The master password arrives in the request body, is used once and never stored;
+# the journal of interface actions records the path only.
+
+@agent_bp.route("/api/agent/bitwarden")
+def api_bitwarden():
+    from . import bitwarden
+    return jsonify(bitwarden.info())
+
+
+@agent_bp.route("/api/agent/bitwarden/<action>", methods=["POST"])
+def api_bitwarden_do(action):
+    from . import bitwarden
+    if action not in ("push", "pull"):
+        return jsonify({"ok": False, "message": "action inconnue"}), 404
+    pw = _body().get("password") or ""
+
+    def go():
+        try:
+            out = bitwarden.push(pw) if action == "push" else bitwarden.pull(pw)
+        except Exception as e:
+            journal.record(guard.HUMAN, f"bitwarden_{action}", "ecriture", {}, "erreur",
+                           getattr(e, "message", None) or type(e).__name__)
+            raise
+        journal.record(guard.HUMAN, f"bitwarden_{action}", "ecriture", {}, "ok",
+                       {"cles": len(out["cles"]), "hebergeurs": len(out["hebergeurs"])})
+        return out
+    return _guarded(go)
