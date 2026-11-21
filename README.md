@@ -5,7 +5,7 @@ dépôts, les branches (carte dépôt → branche → main), les terminaux et se
 survivent aux redémarrages, l'aperçu local de chaque dépôt (« localhost:port ↗ »), les ports,
 les serveurs, le nettoyage du disque.
 
-## DevAgent : l'agent dans DevPilot
+## DevAgent : l'agent dans DevAgent
 
 DevPilot s'appelle maintenant **DevAgent**. La commande `devpilot` marche toujours ; `devagent` est la même,
 avec les commandes de l'agent en plus. Tes projets et leur dossier `.devpilot/` ne changent pas.
@@ -151,13 +151,13 @@ projet** = un dossier dans `extensions/`. Les fichiers sont trouvés dans leur d
 ## Sommaire
 
 1. [Les commandes à retenir](#1-les-commandes-à-retenir)
-2. [PC vierge : installer DevPilot](#2-pc-vierge--installer-devpilot)
-3. [Travailler sur un projet avec DevPilot](#3-travailler-sur-un-projet-avec-devpilot)
-4. [Chaque jour : récupérer / publier DevPilot](#4-chaque-jour--récupérer--publier-devpilot)
+2. [PC vierge : installer DevAgent](#2-pc-vierge--installer-devpilot)
+3. [Travailler sur un projet avec DevAgent](#3-travailler-sur-un-projet-avec-devpilot)
+4. [Chaque jour : récupérer / publier DevAgent](#4-chaque-jour--récupérer--publier-devpilot)
 5. [Préparer un PC pour publier](#5-préparer-un-pc-pour-publier)
 6. [Ça ne marche pas ?](#6-ça-ne-marche-pas-)
    — et [vider ce PC](#vider-ce-pc-tout-effacer-pour-le-reconstruire-plus-tard)
-7. [Pour développer DevPilot](#7-pour-développer-devpilot)
+7. [Pour développer DevAgent](#7-pour-développer-devpilot)
 
 ---
 
@@ -166,16 +166,16 @@ projet** = un dossier dans `extensions/`. Les fichiers sont trouvés dans leur d
 | Je veux… | Commande |
 |---|---|
 | savoir quoi faire sur ce PC | `devpilot pc` |
-| lancer DevPilot | `devpilot` (ou l'icône DevPilot) |
+| lancer DevAgent | `devpilot` (ou l'icône DevAgent) |
 | récupérer la dernière version publiée | `devpilot update` |
 | publier ce que j'ai modifié (pour tous les PC) | `devpilot publish "ce que j'ai changé"` |
 | comparer ce PC à GitHub | `devpilot version` |
 | l'aide | `devpilot help` |
-| vider ce PC de tout ce qui touche à DevPilot et aux projets | `devpilot effacer --simulation` puis `devpilot effacer` |
+| vider ce PC de tout ce qui touche à DevAgent et aux projets | `devpilot effacer --simulation` puis `devpilot effacer` |
 
 ---
 
-## 2. PC vierge : installer DevPilot
+## 2. PC vierge : installer DevAgent
 
 Ubuntu, connecté à internet. Copie-colle :
 
@@ -184,15 +184,15 @@ sudo apt update && sudo apt install -y git curl
 bash <(curl -fsSL https://raw.githubusercontent.com/osarsar/devagent-app/main/pc.sh)
 ```
 
-Il annonce « DevPilot n'est pas installé » → **Entrée** (installer), puis **Entrée** (le lancer).
-DevPilot s'ouvre sur http://localhost:5555.
+Il annonce « DevAgent n'est pas installé » → **Entrée** (installer), puis **Entrée** (le lancer).
+DevAgent s'ouvre sur http://localhost:5555.
 
 Ce qui est installé : le code dans `~/devpilot/.devpilot/app`, un environnement Python isolé
 (`.venv`), la commande `devpilot`, l'icône dans le menu. Tes projets vivent dans
 `~/devpilot/projects/`.
 
 **Sessions persistantes (recommandé)** — les terminaux et sessions Claude survivent à un
-redémarrage de DevPilot :
+redémarrage de DevAgent :
 
 ```bash
 sudo apt install -y tmux
@@ -203,7 +203,7 @@ l'assistant propose « Première mise à niveau ».
 
 ---
 
-## 3. Travailler sur un projet avec DevPilot
+## 3. Travailler sur un projet avec DevAgent
 
 Le chemin d'une modification, de l'idée à `main` — sans jamais toucher `main` directement :
 
@@ -243,7 +243,7 @@ Sous **Ouvrir ici** :
 | **Fenêtre** / **✦ Claude fenêtre** | un terminal (ou Claude) dans une fenêtre séparée |
 
 Les onglets au-dessus du terminal passent d'une session à l'autre ; **×** ferme une session.
-Avec `tmux` installé, les sessions **survivent à un redémarrage de DevPilot** (Claude qui
+Avec `tmux` installé, les sessions **survivent à un redémarrage de DevAgent** (Claude qui
 travaille, un serveur de dev qui tourne…).
 
 ### 5. Voir tes modifications en direct
@@ -296,7 +296,7 @@ depuis un autre PC), la PR (ouverte / fusionnée), et les boutons Ouvrir / Termi
 
 ---
 
-## 4. Chaque jour : récupérer / publier DevPilot
+## 4. Chaque jour : récupérer / publier DevAgent
 
 **Avant de travailler** (récupère ce qui a été publié depuis les autres PC) :
 
@@ -304,16 +304,16 @@ depuis un autre PC), la PR (ouverte / fusionnée), et les boutons Ouvrir / Termi
 devpilot update
 ```
 
-Il montre la branche de DevPilot et son état, avec le choix recommandé **★** (`main` si rien
+Il montre la branche de DevAgent et son état, avec le choix recommandé **★** (`main` si rien
 n'est en cours, sinon il reste sur sa branche) : **Entrée** pour l'accepter, **c** pour choisir.
 
-**Les dépôts de tes projets** : dans DevPilot, onglet **Développer** → **⇣ Mettre à jour** (ou
+**Les dépôts de tes projets** : dans DevAgent, onglet **Développer** → **⇣ Mettre à jour** (ou
 depuis la ⎇ Carte des branches) : chaque dépôt avec sa branche, le choix ★ pré-sélectionné, une
 liste pour en choisir une autre (sur ce PC ou sur GitHub), **Appliquer**, puis le rapport dépôt
 par dépôt. Jamais de « pull » à l'aveugle sur une vieille branche ; un dépôt avec des
 modifications non commitées ne change pas de branche.
 
-**Quand tu as modifié DevPilot** (publie pour tous les PC) :
+**Quand tu as modifié DevAgent** (publie pour tous les PC) :
 
 ```bash
 devpilot publish "Carte des branches : flèches plus lisibles"
@@ -327,7 +327,7 @@ Ce que fait `publish`, dans l'ordre — et il **s'arrête au premier problème s
 3. commite sur une branche (jamais directement sur `main`) ;
 4. se met à jour avec GitHub si un autre PC a publié entre-temps ;
 5. pousse, ouvre la PR, la fusionne dans `main` ;
-6. remet ce PC sur `main` et redémarre DevPilot.
+6. remet ce PC sur `main` et redémarre DevAgent.
 
 **Le dépôt est PUBLIC** : tout ce qui part est lisible par tous, pour toujours. C'est pour ça
 que `publish` vérifie autant.
@@ -343,7 +343,7 @@ te dit quoi taper. Corrige le fichier **sans laisser de `<<<<<<<`**, puis relanc
 
 ## 5. Préparer un PC pour publier
 
-Seulement sur un PC où tu **développes** DevPilot (pas besoin pour `update`) :
+Seulement sur un PC où tu **développes** DevAgent (pas besoin pour `update`) :
 
 ```bash
 devpilot pc
@@ -371,7 +371,7 @@ ssh -T git@github.com        # doit répondre « Hi <ton compte>! »
 | Symptôme | Que faire |
 |---|---|
 | Je ne sais pas où j'en suis | `devpilot pc` (Entrée = le choix recommandé) |
-| DevPilot ne s'ouvre pas | `devpilot update` (le relance) ; sinon `tail -30 ~/devpilot/.devpilot/data/dashboard.log` |
+| DevAgent ne s'ouvre pas | `devpilot update` (le relance) ; sinon `tail -30 ~/devpilot/.devpilot/data/dashboard.log` |
 | `update` : « modifications locales non publiées » | publie-les (`devpilot publish "…"`), ou mets-les de côté : `git -C ~/devpilot/.devpilot/app stash` |
 | `update` : « main locale a des commits absents de GitHub » | voir : `git -C ~/devpilot/.devpilot/app log --oneline origin/main..main` — puis décide avant de jeter |
 | `publish` : « fichiers NOUVEAUX » | choisis `--avec-nouveaux` ou `--sans-nouveaux` (ou ajoute-les à `.gitignore`) |
@@ -386,9 +386,9 @@ ssh -T git@github.com        # doit répondre « Hi <ton compte>! »
 
 ### Vider ce PC (tout effacer, pour le reconstruire plus tard)
 
-DevPilot est fait pour que tout soit dans le cloud (GitHub, coffre, sauvegardes) : ce PC peut
+DevAgent est fait pour que tout soit dans le cloud (GitHub, coffre, sauvegardes) : ce PC peut
 redevenir vierge, puis être reconstruit (section 2). **Depuis un terminal normal** (pas un
-terminal DevPilot) :
+terminal DevAgent) :
 
 ```bash
 devpilot effacer --simulation     # montre tout ce qui serait fait — n'efface RIEN
@@ -396,15 +396,15 @@ devpilot effacer                  # pour de vrai
 ```
 
 1. **Inventaire** : chaque projet (taille, dépôts), son Docker (conteneurs, volumes = bases
-   locales, images construites), ses liens et raccourcis, DevPilot lui-même (programme,
-   données, commande, icône, service), les clés créées par DevPilot ; plus ce que chaque projet
+   locales, images construites), ses liens et raccourcis, DevAgent lui-même (programme,
+   données, commande, icône, service), les clés créées par DevAgent ; plus ce que chaque projet
    déclare avoir installé ailleurs (fichier `effacer-poste.sh` d'un de ses dépôts).
 2. **Le travail qui n'est QUE sur ce PC** est signalé dépôt par dépôt (fichiers non commités,
    commits jamais poussés, stash) : ce projet n'est **jamais** coché par défaut. Une branche
    déjà fusionnée par une PR n'est pas comptée.
 3. **Tu choisis** : « tout » (il redemande seulement pour le travail non sauvegardé et les
    secrets) ou élément par élément.
-4. **Avant d'effacer** : sauvegarde chiffrée des données DevPilot (`~/devpilot-donnees-….tar.gz.gpg`,
+4. **Avant d'effacer** : sauvegarde chiffrée des données DevAgent (`~/devpilot-donnees-….tar.gz.gpg`,
    garde-la), et les actions déclarées par les projets (sauvegardes, retrait des clés…).
 5. **Confirmation tapée** (`EFFACER <nom-du-pc>`), puis effacement et journal.
 
@@ -414,7 +414,7 @@ sont écrasés avant d'être effacés. Les copies dans le cloud restent intactes
 
 ---
 
-## 7. Pour développer DevPilot
+## 7. Pour développer DevAgent
 
 ```bash
 cd ~/devpilot/.devpilot/app

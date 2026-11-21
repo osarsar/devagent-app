@@ -1,4 +1,4 @@
-"""DevPilot — the connections of a project as the interface shows them, hosting accounts, the cloud overview.
+"""DevAgent — the connections of a project as the interface shows them, hosting accounts, the cloud overview.
 
 Moved out of cloud_routes.py: the routes only translate HTTP to these functions, and the agent's
 tools call them too. A function returns its answer (a dict or a list), or (answer, http_status).
@@ -279,7 +279,7 @@ def get_connections(pid, data=None):
     elif deploy_url:
         # The site is declared on the platform without an API account: that is
         # already a real hosting (the domain can point to it). The token only
-        # adds deploys and logs from DevPilot.
+        # adds deploys and logs from DevAgent.
         connections.append({
             "type": "deploy",
             "label": f"Deploiement ({platform})" if platform else "Deploiement",

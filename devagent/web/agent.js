@@ -130,6 +130,16 @@ const DA = (() => {
         h('span', { class: 'ico' }, p.icon || '•'), p.title,
         (p.id === 'confirmations' || p.id === 'afaire') ? h('span', { class: 'badge', hidden: true }) : null));
     }
+    // the rest of the application, in the same menu (the dashboard lists the agent's screens too)
+    const dash = [['projects', '📁', 'Projets'], ['dashboard', '▦', 'Vue d\'ensemble'], ['sessions', '>_', 'Sessions'],
+      ['running', '▶', 'En cours'], ['storage', '🗄', 'Stockage'], ['docker', '🐳', 'Docker'], ['network', '🖧', 'Reseau'],
+      ['caches', '⚡', 'Caches'], ['cloud', '☁', 'Cloud Sync'], ['timeline', '🕘', 'Timeline'], ['settings', '⚙', 'Parametres']];
+    const navDash = document.getElementById('nav-dash');
+    for (const [id, icon, title] of dash) {
+      const a = h('a', { class: 'nav-item', href: '/#' + id }, h('span', { class: 'ico' }, icon), title);
+      if (id === 'projects') a.addEventListener('click', () => { if (state.project) a.href = '/#workspace:' + state.project; });
+      navDash.append(a);
+    }
     const sel = document.getElementById('project-select');
     try { state.projects = (await api('/api/agent/projects')).projects; } catch (e) { toast(e.message, 'bad'); }
     sel.append(h('option', { value: '' }, 'Tous les projets'));

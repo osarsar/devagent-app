@@ -381,7 +381,7 @@ def test_safe_rmtree(P, home):
     assert not cache.exists() and root.exists()
 
 
-# ── Clone progress / 14. Link git / DevPilot files ─────────────────────────
+# ── Clone progress / 14. Link git / DevAgent files ─────────────────────────
 
 def test_clone_streams_progress(P, home, remote):
     lines = []

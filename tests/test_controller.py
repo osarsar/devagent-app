@@ -186,7 +186,7 @@ def test_status_finds_a_console_started_by_hand(P, C, site):
         st = C.status(C.get(pid), root)
         assert st["running"] is True and st["pid"] == proc.pid and st["started_by_devpilot"] is False
         assert C.start(pid)["pid"] == proc.pid                        # nothing launched twice
-        off = C.stop(pid)                                             # DevPilot can still stop it
+        off = C.stop(pid)                                             # DevAgent can still stop it
         assert off["running"] is False
         assert proc.wait(timeout=5) != 0 and not answers(url)
     finally:
@@ -281,7 +281,7 @@ def test_install_hint(C):
 # ── stale instance, restart, code changed ───────────────────────────────────
 
 def test_start_replaces_a_stale_instance_of_the_same_console(P, C, home, site):
-    """An old instance holds the port but no longer answers: DevPilot replaces it instead of refusing."""
+    """An old instance holds the port but no longer answers: DevAgent replaces it instead of refusing."""
     import subprocess, socket, time, os, signal
     pid, d, port = site
     # a dead-end process bound to the port, living in the console dir (like a hung old server)

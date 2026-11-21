@@ -1,5 +1,5 @@
 #!/bin/bash
-# DevPilot — One-line setup
+# DevAgent — One-line setup
 # Usage: curl -sL https://raw.githubusercontent.com/osarsar/devagent-app/main/setup.sh | bash
 
 set -e

@@ -1,13 +1,13 @@
-"""DevPilot — sessions that survive a DevPilot restart (tmux underneath).
+"""DevAgent — sessions that survive a DevAgent restart (tmux underneath).
 
 Each persistent session (a project's terminal, the « Développer » sessions:
 terminal or Claude) runs inside its OWN tmux session, on a tmux server that
-belongs to DevPilot only (socket « devpilot », no user config). DevPilot
-just attaches to it through a PTY. When DevPilot stops or restarts, tmux
-keeps running: Claude, a dev server, a build — nothing is lost; DevPilot
+belongs to DevAgent only (socket « devpilot », no user config). DevAgent
+just attaches to it through a PTY. When DevAgent stops or restarts, tmux
+keeps running: Claude, a dev server, a build — nothing is lost; DevAgent
 re-attaches at startup.
 
-Without tmux, nothing changes: sessions live as long as DevPilot (and the UI
+Without tmux, nothing changes: sessions live as long as DevAgent (and the UI
 says how to get persistence: sudo apt install tmux).
 """
 from __future__ import annotations
@@ -22,7 +22,7 @@ PREFIX = "dp_"
 
 
 def socket_name():
-    """DevPilot's own tmux server (read each time: the tests use their own)."""
+    """DevAgent's own tmux server (read each time: the tests use their own)."""
     return os.environ.get("DEVPILOT_TMUX_SOCKET", "devpilot")
 
 
@@ -55,7 +55,7 @@ def _server_options():
 
 
 def create(sid, cwd, argv, meta, env=None, rows=40, cols=120):
-    """rows × cols : la taille du PTY de DevPilot au départ (sinon tmux re-découpe l'écran à l'attachement)."""
+    """rows × cols : la taille du PTY de DevAgent au départ (sinon tmux re-découpe l'écran à l'attachement)."""
     args = ["new-session", "-d", "-s", name(sid), "-x", str(cols), "-y", str(rows), "-c", cwd]
     for k, v in (env or {}).items():
         args += ["-e", f"{k}={v}"]
@@ -75,7 +75,7 @@ def attach_argv(sid):
 
 
 def list_sessions():
-    """[{sid, created, meta, cwd}] — what survives in tmux (also after a DevPilot restart)."""
+    """[{sid, created, meta, cwd}] — what survives in tmux (also after a DevAgent restart)."""
     rc, out, _ = _t("list-sessions", "-F", "#{session_name}\t#{session_created}\t#{pane_current_path}\t#{@dp_meta}")
     res = []
     for line in out.splitlines() if rc == 0 else []:

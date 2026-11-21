@@ -1,9 +1,9 @@
-"""DevPilot — a project's own management console ("controller").
+"""DevAgent — a project's own management console ("controller").
 
 Some projects ship their own console: a folder (e.g. ``md_console/``) with a
 ``run.sh`` or ``server.py`` and a ``config.json`` giving its port; it serves
 http://127.0.0.1:<port> and manages hosting, servers, deploys... for that
-project. DevPilot does not replace it: it finds it, starts/stops it and shows
+project. DevAgent does not replace it: it finds it, starts/stops it and shows
 its log.
 
 The controller is stored in the project's folder, .devpilot/project.json
@@ -11,9 +11,9 @@ under "controller":
   {name, dir (relative to the project, "." for root), command (e.g. ./run.sh),
    url (local http only), manages: [hosting, servers, ...], auto: bool}
 When nothing is declared, the first detected candidate with a port is used
-(``auto: True``). A console started by DevPilot records its pid in
+(``auto: True``). A console started by DevAgent records its pid in
 .devpilot/console.pid and logs to .devpilot/console.log; it runs in its own
-session, so it survives a DevPilot restart.
+session, so it survives a DevAgent restart.
 """
 
 import http.client
@@ -205,7 +205,7 @@ def _answers(url, timeout=2):
     if not url:
         return False
     try:
-        with _opener.open(urllib.request.Request(url, headers={"User-Agent": "DevPilot"}), timeout=timeout):
+        with _opener.open(urllib.request.Request(url, headers={"User-Agent": "DevAgent"}), timeout=timeout):
             return True
     except urllib.error.HTTPError:
         return True
@@ -243,7 +243,7 @@ def _pid_from_file(path):
 
 def _find_pid(url, ctrl_dir):
     """A process listening on the URL's port, else one running server.py/run.sh
-    from the console folder. Never DevPilot itself."""
+    from the console folder. Never DevAgent itself."""
     me, port = os.getpid(), _port_of(url)
     try:
         for c in psutil.net_connections(kind="inet"):
@@ -319,7 +319,7 @@ def _tail(file, n):
 
 
 def _terminate(os_pid, grace=5):
-    """SIGTERM the process group (SIGKILL after ``grace`` s). Never DevPilot's own group."""
+    """SIGTERM the process group (SIGKILL after ``grace`` s). Never DevAgent's own group."""
     if os_pid == os.getpid():
         return
     try:

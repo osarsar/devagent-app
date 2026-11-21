@@ -1,5 +1,5 @@
 #!/bin/bash
-# DevPilot — l'assistant de CE PC. Il regarde où en est le PC, propose le bon mode, et le fait.
+# DevAgent — l'assistant de CE PC. Il regarde où en est le PC, propose le bon mode, et le fait.
 #
 #   Nouveau PC (rien d'installé) :
 #     bash <(curl -fsSL https://raw.githubusercontent.com/osarsar/devagent-app/main/pc.sh)
@@ -7,7 +7,7 @@
 #     devpilot pc
 #
 # Modes : installer · première mise à niveau · mettre à jour · publier mes modifications ·
-#         préparer ce PC pour publier · voir l'état · lancer DevPilot
+#         préparer ce PC pour publier · voir l'état · lancer DevAgent
 set -u
 APP="${DEVPILOT_APP:-$HOME/devpilot/.devpilot/app}"
 DEPOT="https://github.com/osarsar/devagent-app.git"
@@ -51,9 +51,9 @@ etat() {
 }
 
 afficher() {
-  titre "DevPilot sur $(hostname -s)"
+  titre "DevAgent sur $(hostname -s)"
   if [ "$INSTALLE" = 0 ]; then
-    bof "DevPilot n'est pas installé sur ce PC"; return
+    bof "DevAgent n'est pas installé sur ce PC"; return
   fi
   [ "$GIT" = 1 ] || { ko "$APP existe mais n'est pas un dépôt git"; return; }
   echo -e "  ce PC   : ${ICI}  ${D}(branche $BR)${N}"
@@ -65,12 +65,12 @@ afficher() {
   [ "$ANCIEN" = 1 ] && bof "ancienne installation : il manque « devpilot publish / update »"
   [ "$PRET" = 1 ] && ok "prêt à publier (gh, clé SSH, liste des mots interdits)" \
                   || echo -e "  ${D}publier depuis ce PC : pas encore préparé (gh $( [ $GHOK = 1 ] && echo ok || echo non ) · clé SSH $( [ $SSHOK = 1 ] && echo ok || echo non ) · mots interdits $( [ $LISTE = 1 ] && echo ok || echo non ))${N}"
-  [ "$TOURNE" = 1 ] && ok "DevPilot tourne : http://localhost:5555" || echo -e "  ${D}DevPilot n'est pas lancé${N}"
+  [ "$TOURNE" = 1 ] && ok "DevAgent tourne : http://localhost:5555" || echo -e "  ${D}DevAgent n'est pas lancé${N}"
 }
 
 # ── les modes ───────────────────────────────────────────────────────────────
 installer() {
-  titre "Installation de DevPilot"
+  titre "Installation de DevAgent"
   local manque=""
   command -v git >/dev/null || manque="$manque git"
   command -v python3 >/dev/null || manque="$manque python3"
@@ -84,7 +84,7 @@ installer() {
   git clone -q "$DEPOT" "$APP" && ok "code récupéré" || { ko "clone impossible (réseau ?)"; return 1; }
   bash "$APP/install.sh" || { ko "installation interrompue — voir ci-dessus"; return 1; }
   bash "$APP/update.sh" --sans-redemarrer >/dev/null 2>&1   # la commande « devpilot » complète
-  ok "DevPilot installé"
+  ok "DevAgent installé"
   oui "Le lancer maintenant ?" && lancer
 }
 
@@ -152,7 +152,7 @@ preparer() {
     echo "  Mots qui ne doivent JAMAIS partir sur GitHub (dépôt public) : vraies IP des serveurs,"
     echo "  domaines clients… Un par ligne, ligne vide pour finir (copie la liste d'un autre PC) :"
     mkdir -p "$(dirname "$INTERDITS")"
-    echo "# Mots interdits sur le dépôt public DevPilot (un par ligne) — lu par devpilot publish" > "$INTERDITS"
+    echo "# Mots interdits sur le dépôt public DevAgent (un par ligne) — lu par devpilot publish" > "$INTERDITS"
     while :; do local m; m=$(demander "  > "); [ -n "$m" ] || break; echo "$m" >> "$INTERDITS"; done
     chmod 600 "$INTERDITS"; ok "liste enregistrée : $INTERDITS ($(grep -vc '^#' "$INTERDITS") mot(s))"
   else
@@ -164,7 +164,7 @@ preparer() {
 lancer() {
   ( setsid bash "$APP/launch.sh" >/dev/null 2>&1 < /dev/null & )
   for _ in $(seq 1 40); do curl -s -o /dev/null http://127.0.0.1:5555/ && break; sleep 0.5; done
-  curl -s -o /dev/null http://127.0.0.1:5555/ && ok "DevPilot : http://localhost:5555" || ko "DevPilot ne répond pas : tail ~/devpilot/.devpilot/data/dashboard.log"
+  curl -s -o /dev/null http://127.0.0.1:5555/ && ok "DevAgent : http://localhost:5555" || ko "DevAgent ne répond pas : tail ~/devpilot/.devpilot/data/dashboard.log"
   command -v xdg-open >/dev/null && xdg-open http://localhost:5555 >/dev/null 2>&1 &
 }
 
@@ -172,7 +172,7 @@ lancer() {
 etat </dev/null
 afficher
 if [ "$INSTALLE" = 0 ]; then
-  oui "Installer DevPilot sur ce PC ?" && installer; exit $?
+  oui "Installer DevAgent sur ce PC ?" && installer; exit $?
 fi
 [ "$GIT" = 1 ] || exit 1
 
@@ -190,7 +190,7 @@ lib 2 "Mettre à jour (récupérer ce qui a été publié)"
 lib 3 "Publier mes modifications (pour les autres PC)"
 lib 4 "Préparer ce PC pour publier (gh, clé SSH, mots interdits)"
 lib 5 "Voir l'état seulement"
-lib 6 "Lancer DevPilot"
+lib 6 "Lancer DevAgent"
 echo "  q) Quitter"
 C=$(demander "Ton choix [$REC] : "); C=${C:-$REC}
 case "$C" in

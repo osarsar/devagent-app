@@ -1,4 +1,4 @@
-"""Proniver Document Generator — Flask Blueprint for DevPilot."""
+"""Proniver Document Generator — Flask Blueprint for DevAgent."""
 
 import json
 import os

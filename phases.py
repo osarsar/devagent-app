@@ -1,8 +1,8 @@
-"""DevPilot — the phases of a project and what to do in each one.
+"""DevAgent — the phases of a project and what to do in each one.
 
 Every site goes through: preparation → development → hosting → go-live →
 production. Each phase has steps; which steps exist depends on the project's
-needs (model.py). DevPilot tells where the project is and what the next
+needs (model.py). DevAgent tells where the project is and what the next
 step is. Nothing blocks: a step can be done later (skipped), manual steps
 are ticked by the user, custom steps can be added, steps managed by the
 project's console are delegated, and a phase with no step disappears.
@@ -61,7 +61,7 @@ STEPS = [
     {"key": "domain",       "phase": "golive",  "need": "domain",   "manual": False, "label": "Nom de domaine du client",
      "hint": "Achete chez un registrar (OVH, Namecheap...) et enregistre ici.", "action": "domain"},
     {"key": "dns",          "phase": "golive",  "need": "domain",   "manual": False, "label": "Faire pointer le DNS vers l'hebergement",
-     "hint": "DevPilot donne les enregistrements exacts et verifie qu'ils sont en place.", "action": "domain"},
+     "hint": "DevAgent donne les enregistrements exacts et verifie qu'ils sont en place.", "action": "domain"},
     {"key": "https",        "phase": "golive",  "need": "domain",   "manual": False, "label": "Site en ligne en HTTPS",
      "hint": "Le site repond sur https://<domaine> avec un certificat valide.", "action": "domain"},
     {"key": "mx",           "phase": "golive",  "need": "email",    "manual": False, "label": "Email : MX en place (verifies)",
@@ -330,7 +330,7 @@ def mark(pid, key, done=True):
         custom["done"] = datetime.now().isoformat(timespec="seconds") if done else None
     else:
         if not STEP_BY_KEY[key]["manual"]:
-            raise ProjectError("Cette etape se verifie toute seule : fais l'action, DevPilot la verra")
+            raise ProjectError("Cette etape se verifie toute seule : fais l'action, DevAgent la verra")
         if done:
             st["manual"][key] = datetime.now().isoformat(timespec="seconds")
         else:

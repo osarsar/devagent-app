@@ -1,4 +1,4 @@
-"""DevPilot — project lifecycle: the one place that creates, registers, moves
+"""DevAgent — project lifecycle: the one place that creates, registers, moves
 and removes projects. Every route goes through here, so the rules below hold
 whatever button was clicked:
 
@@ -7,7 +7,7 @@ whatever button was clicked:
 - a project is ONE folder that may contain several git repos
 - nothing is deleted without an inspection (git, docker, processes) and the
   project name typed back; deleted files go to the system trash
-- DevPilot never overwrites something it did not create
+- DevAgent never overwrites something it did not create
 """
 
 import base64
@@ -40,7 +40,7 @@ TECH_COLORS = {
 # Called with the project dict after it is removed or moved (the dashboard
 # uses it to close the project's terminal sessions).
 on_removed = []
-# Callables returning pids to ignore in inspections: DevPilot's own idle
+# Callables returning pids to ignore in inspections: DevAgent's own idle
 # terminal shells (what runs INSIDE them still counts).
 ignored_pids = []
 
@@ -90,7 +90,7 @@ def _check_location(path, custom_location):
     if path in forbidden or any(f.is_relative_to(path) for f in forbidden):
         raise ProjectError(f"{path} ne peut pas etre un dossier de projet")
     if path.is_relative_to(DEVPILOT_ROOT / ".devpilot"):
-        raise ProjectError("Le dossier d'installation de DevPilot n'est pas un projet")
+        raise ProjectError("Le dossier d'installation de DevAgent n'est pas un projet")
     if not path.is_relative_to(HOME):
         raise ProjectError(f"{path} est hors de ton home")
     if not is_managed(path) and not custom_location:
@@ -465,7 +465,7 @@ def register(name, path, custom_location=False, description="", color=None):
     repos = find_repos(path)
     if not description and repos:
         description = "Depots : " + ", ".join(r["dir"] for r in repos)
-    known = read_manifest(path)                  # a folder that was already a DevPilot project
+    known = read_manifest(path)                  # a folder that was already a DevAgent project
     pid = db.create_project(name=name, color=color or known.get("color") or _color(path), path=str(path),
                             git_remote=repos[0]["remote"] if repos else "",
                             description=description or known.get("description", ""))
@@ -490,7 +490,7 @@ def _prepare_target(name, path, custom_location):
 
 # ── The project's space: .devpilot/ inside its folder ────────────────────────
 # Everything that belongs to a project lives in its folder. The DB is the
-# index DevPilot searches; .devpilot/ is what travels with the folder, so a
+# index DevAgent searches; .devpilot/ is what travels with the folder, so a
 # moved, copied or re-imported folder brings its project back.
 #   project.json   name, description, color, status, profile, created_at, git_remote
 #   prompt.md      the prompt
@@ -586,7 +586,7 @@ def _restore_from_space(pid, path):
 
 def create(name, path=None, custom_location=False, git_init=False, description=""):
     """New project = its folder (default ~/devpilot/projects/<name>) + its
-    DevPilot space (.devpilot/) + its registration. All or nothing."""
+    DevAgent space (.devpilot/) + its registration. All or nothing."""
     name, path = _prepare_target(name, path, custom_location)
     created = not path.exists()
     path.mkdir(parents=True, exist_ok=True)
@@ -684,7 +684,7 @@ def adopt(src, mode="move", name=None, dest=None, custom_location=False):
     return register(name, target, custom_location=True)
 
 
-# ── Git link / DevPilot files in repos ─────────────────────────────────────
+# ── Git link / DevAgent files in repos ─────────────────────────────────────
 
 DEVPILOT_MARK = "<!-- devpilot:generated -->"
 # Local files that may exist in a folder before its repo is cloned into it
@@ -709,8 +709,8 @@ def exclude_from_git(project_path, entries=(".devpilot/",)):
 
 
 def _exclude_devpilot_files(path):
-    """Keep DevPilot's own files out of the repo: .devpilot/ always, the root
-    CLAUDE.md only when DevPilot generated it (a repo's own CLAUDE.md stays tracked)."""
+    """Keep DevAgent's own files out of the repo: .devpilot/ always, the root
+    CLAUDE.md only when DevAgent generated it (a repo's own CLAUDE.md stays tracked)."""
     entries = [".devpilot/"]
     if is_devpilot_file(Path(path) / "CLAUDE.md"):
         entries.append("/CLAUDE.md")
@@ -718,7 +718,7 @@ def _exclude_devpilot_files(path):
 
 
 def is_devpilot_file(path):
-    """A CLAUDE.md DevPilot wrote itself (safe to regenerate)."""
+    """A CLAUDE.md DevAgent wrote itself (safe to regenerate)."""
     try:
         return DEVPILOT_MARK in Path(path).read_text(encoding="utf-8", errors="ignore")[:4000]
     except OSError:
@@ -891,7 +891,7 @@ def link_git(pid, url, token=None, replace=False):
                 "message": f"Lie a {web}. Ton dossier et GitHub sont differents : choisis comment les reunir. "
                            f"Rien n'a encore change dans ton dossier."}
 
-    # only DevPilot files here: the repo's content is checked out
+    # only DevAgent files here: the repo's content is checked out
     aside = []
     claude = path / "CLAUDE.md"
     if claude.exists() and is_devpilot_file(claude):
@@ -907,11 +907,11 @@ def link_git(pid, url, token=None, replace=False):
     _record_link(pid, remote)
     msg = f"Lie a {web} : code recupere dans le projet (branche {branch}). pull / push sont prets."
     if aside:
-        msg += " Le CLAUDE.md du depot est garde, celui de DevPilot est dans .devpilot/."
+        msg += " Le CLAUDE.md du depot est garde, celui de DevAgent est dans .devpilot/."
     return {"action": "cloned", "remote": remote["url"], "branch": branch, "message": msg}
 
 
-# ── Link from the terminal: the user clones, DevPilot records ─────────────
+# ── Link from the terminal: the user clones, DevAgent records ─────────────
 
 _gh_user = None
 
@@ -994,7 +994,7 @@ def rename(pid, new_name):
 
 
 def relocate(pid, new_path, custom_location=False):
-    """The folder was moved outside DevPilot: point the project to it."""
+    """The folder was moved outside DevAgent: point the project to it."""
     get(pid)
     new_path = resolve(new_path)
     if not new_path.is_dir():

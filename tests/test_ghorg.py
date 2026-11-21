@@ -134,7 +134,7 @@ def test_sync_works_on_a_nested_repo(org, md):
     assert s["branch"] == "main" and s["upstream"] == "origin/main"
 
 
-# ── Link from the terminal: `git clone` in the project folder, then DevPilot records ──
+# ── Link from the terminal: `git clone` in the project folder, then DevAgent records ──
 
 import subprocess
 from pathlib import Path
@@ -143,7 +143,7 @@ RC = Path(__file__).resolve().parent.parent / "import_rc.sh"
 
 
 def term(cwd, cmd):
-    """Run cmd the way the DevPilot terminal does (same rcfile)."""
+    """Run cmd the way the DevAgent terminal does (same rcfile)."""
     return subprocess.run(["bash", "-c", f"source {RC} >/dev/null; {cmd}"], cwd=cwd,
                           capture_output=True, text=True)
 

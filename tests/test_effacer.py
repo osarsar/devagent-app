@@ -1,4 +1,4 @@
-"""devpilot effacer : vider ce PC de tout ce qui touche à DevPilot et aux projets — sans jamais
+"""devpilot effacer : vider ce PC de tout ce qui touche à DevAgent et aux projets — sans jamais
 perdre en silence le travail qui n'est QUE sur ce PC, ni sortir du dossier personnel.
 HOME isolé ; faux gpg ; un projet « propre » (tout sur GitHub) et un projet avec du travail local."""
 import os

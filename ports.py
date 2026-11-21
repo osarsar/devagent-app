@@ -1,7 +1,7 @@
-"""DevPilot — what a project is RUNNING, and stopping it cleanly.
+"""DevAgent — what a project is RUNNING, and stopping it cleanly.
 
 A project's processes are: its console (controller.py), what was started in
-its DevPilot terminals (a dev server, a watcher...), and any process whose
+its DevAgent terminals (a dev server, a watcher...), and any process whose
 working directory is inside the project folder. They own ports. When the
 project is closed, they are stopped and the ports are freed, so the next
 start is never "address already in use" or an old version still answering.
@@ -64,7 +64,7 @@ def _descendants(pid):
 
 def kill_tree(pid, grace=5.0):
     """Stop a process and everything it started (children first), SIGTERM then SIGKILL.
-    Never touches DevPilot itself. Returns the pids that were stopped."""
+    Never touches DevAgent itself. Returns the pids that were stopped."""
     me = os.getpid()
     try:
         root = psutil.Process(pid)
@@ -90,7 +90,7 @@ def kill_tree(pid, grace=5.0):
 
 
 def _known_pids(project):
-    """pids DevPilot knows for this project: its console, its terminals and their children."""
+    """pids DevAgent knows for this project: its console, its terminals and their children."""
     pids = set()
     try:
         import controller
@@ -121,7 +121,7 @@ def project_ports(pid):
     for bpid in session_pids(project) or []:
         term_pids.add(bpid)
         term_pids.update(p.pid for p in _descendants(bpid))
-    own_ports = {l["port"] for l in listening() if l["pid"] == os.getpid()}     # DevPilot's own port(s)
+    own_ports = {l["port"] for l in listening() if l["pid"] == os.getpid()}     # DevAgent's own port(s)
     out = []
     for l in listening():
         if l["pid"] == os.getpid() or l["port"] in own_ports:
@@ -131,7 +131,7 @@ def project_ports(pid):
             continue
         source = "console" if l["pid"] == console_pid else "terminal" if l["pid"] in term_pids else "dossier"
         out.append({**l, "source": source, "url": f"http://127.0.0.1:{l['port']}",
-                    "label": {"console": "console du projet", "terminal": "lance dans un terminal DevPilot",
+                    "label": {"console": "console du projet", "terminal": "lance dans un terminal DevAgent",
                               "dossier": "lance depuis le dossier du projet"}[source]})
     docker = []
     try:
@@ -156,7 +156,7 @@ def stop_port(pid, port):
         held = next((x for x in listening() if x["port"] == port), None)
         if held:
             raise ProjectError(f"Le port {port} est tenu par « {held['name']} » (pid {held['pid']}) qui n'appartient pas "
-                               f"a ce projet : DevPilot ne l'arrete pas. Commande : kill {held['pid']}")
+                               f"a ce projet : DevAgent ne l'arrete pas. Commande : kill {held['pid']}")
         return {"port": port, "freed": True, "message": f"Le port {port} est deja libre"}
     if entry["source"] == "console":
         import controller
@@ -208,7 +208,7 @@ def close_project(pid, stop_console=True, stop_terminals=True, stop_folder=True)
 
 
 def close_all(projects):
-    """DevPilot exits: what it started follows it (consoles started by DevPilot, terminals)."""
+    """DevAgent exits: what it started follows it (consoles started by DevAgent, terminals)."""
     import controller
     for project in projects:
         try:

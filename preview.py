@@ -1,4 +1,4 @@
-"""DevPilot — « where do I see this repo running? » (local preview).
+"""DevAgent — « where do I see this repo running? » (local preview).
 
 For each repo of a project:
     running  the local addresses that serve ITS code right now:

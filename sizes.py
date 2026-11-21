@@ -1,4 +1,4 @@
-"""DevPilot — folder sizes and other slow scans, computed in the background.
+"""DevAgent — folder sizes and other slow scans, computed in the background.
 
 Pages must answer instantly. A size is read from the cache; if it is missing
 or old, ONE background `du` is started for that folder (never two at once),

@@ -1,4 +1,4 @@
-"""DevAgent — the agent layer of DevPilot.
+"""DevAgent — the agent layer of DevAgent.
 
 One list of tools (registry), one way to run them (guard), and several users of
 that list: the web interface, Claude Code through MCP, the chat, the automations.

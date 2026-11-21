@@ -1,4 +1,4 @@
-"""DevPilot — « Supprimer tout » : a project and everything that depends on its folder.
+"""DevAgent — « Supprimer tout » : a project and everything that depends on its folder.
 
 plan()    lists what belongs to the project, each item with a default choice:
   - Docker: every compose project that has a container using the folder
@@ -208,7 +208,7 @@ def execute(pid, confirm_name, choices=None):
     ch.update({k: v for k, v in (choices or {}).items() if k in ch})
     log = []
 
-    for cb in P.on_removed:                   # DevPilot's own terminals in this project
+    for cb in P.on_removed:                   # DevAgent's own terminals in this project
         try:
             cb(project)
         except Exception:
@@ -279,7 +279,7 @@ def execute(pid, confirm_name, choices=None):
         trashed = P.move_to_trash(root)
         log.append(f"dossier a la corbeille : {root}")
     P.remove(pid)
-    log.append("projet retire de DevPilot")
+    log.append("projet retire de DevAgent")
     return {"log": log, "trashed_to": trashed}
 
 

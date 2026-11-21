@@ -156,7 +156,7 @@ def test_password_login_reenabled_then_a_new_pc_adds_its_key(P, SA, box, srv, ho
     box.sh("rm -f /etc/ssh/sshd_config.d/00-devpilot.conf && kill -HUP 1")   # choice file lost → passwords off
     time.sleep(1)
     assert not can_login(box.port, MY_PW)
-    # DevPilot (with the key) re-enables password logins
+    # DevAgent (with the key) re-enables password logins
     c = SA.connect("127.0.0.1", box.port, "ubuntu", key_path=servers.list_servers(pid)[0]["key_path"])
     try:
         assert SA.password_login_state(c, MY_PW)["password_login"] is False
@@ -185,7 +185,7 @@ def test_password_choice_recorded_even_when_already_allowed(P, SA, box, srv):
 
 
 def test_password_login_state_seen_through_the_key(P, SA, box, srv):
-    """Key-only server: DevPilot sees (with its key) that passwords are refused."""
+    """Key-only server: DevAgent sees (with its key) that passwords are refused."""
     pid, sid = srv
     SA.setup_access(pid, sid, OVH_PW, allow_password_login=False)
     box.no_password_login()

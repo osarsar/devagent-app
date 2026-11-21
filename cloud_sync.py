@@ -1,4 +1,4 @@
-"""DevPilot — Cloud sync orchestration + asset classification engine."""
+"""DevAgent — Cloud sync orchestration + asset classification engine."""
 
 import os
 import json
@@ -237,7 +237,7 @@ def sync_project_to_github(project_id, message="", add_all=True):
         return {"success": False, "message": "Pas un depot Git"}
 
     if not message:
-        message = f"DevPilot sync {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        message = f"DevAgent sync {datetime.now().strftime('%Y-%m-%d %H:%M')}"
 
     # Get status before
     status = github_ops.git_status_detailed(ppath)

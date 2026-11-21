@@ -1,4 +1,4 @@
-"""DevPilot — Project profiles and component management.
+"""DevAgent — Project profiles and component management.
 
 Provides a hybrid system where projects have a profile (vitrine, SaaS, API...)
 that activates only the relevant components (git, database, storage, backup...).

@@ -1,4 +1,4 @@
-"""DevPilot — Cloudflare R2 storage operations (S3-compatible via boto3)."""
+"""DevAgent — Cloudflare R2 storage operations (S3-compatible via boto3)."""
 
 import os
 import mimetypes

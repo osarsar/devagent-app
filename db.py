@@ -1,4 +1,4 @@
-"""DevPilot — Database layer for project lifecycle management."""
+"""DevAgent — Database layer for project lifecycle management."""
 
 import sqlite3
 import os

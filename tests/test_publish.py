@@ -183,7 +183,7 @@ def assistant(m, p, reponses, app=None):
 def test_assistant_pc_non_installe(monde):
     a = monde["pc"]("pc-a")
     out = assistant(monde, a, "n\n", app=monde["tmp"] / "rien")
-    assert "n'est pas installé" in out and "Installer DevPilot" in out
+    assert "n'est pas installé" in out and "Installer DevAgent" in out
 
 
 def test_assistant_ancienne_installation_mise_a_niveau(monde):

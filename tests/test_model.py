@@ -96,7 +96,7 @@ def test_needs_managed_by_a_controller_are_delegated(P, M, home):
     assert st["hosting"]["state"] == "delegated" and "MD Console" in st["hosting"]["detail"]
     assert st["domain"]["state"] == "delegated" and st["email"]["state"] == "delegated"
     assert st["controller"]["state"] == "ok"
-    assert st["github"]["state"] == "missing"                   # not managed by the console: still DevPilot's job
+    assert st["github"]["state"] == "missing"                   # not managed by the console: still DevAgent's job
 
 
 def test_needs_without_a_type_make_it_custom(P, M, home):
