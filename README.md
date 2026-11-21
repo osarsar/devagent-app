@@ -71,6 +71,11 @@ ce qui bloque. Sans projet choisi : le point sur tous les projets. Il ne modifie
 s'en servent : `point-du-matin` (un résumé envoyé chaque matin) et `surveillance-site-expliquee` (quand le site
 tombe, l'agent cherche la cause et l'écrit dans l'alerte). Chaque appel utilise ta clé API Anthropic.
 
+**À faire par toi.** Ce que l'agent ne peut pas faire lui-même (un accord à donner sur un site, une clé à
+créer, une décision) est noté dans une liste, avec le lien exact ou la commande. DevAgent s'ouvre dessus quand
+elle n'est pas vide, et le menu en affiche le nombre. Quand un outil peut constater que c'est fait, la ligne
+est rayée toute seule (vérification toutes les 10 minutes, ou bouton « Vérifier maintenant »).
+
 **Quand il manque un outil à l'agent**, il ne reste pas bloqué : il propose la commande exacte
 (`commande_proposer`), que tu vois et confirmes ; elle tourne et il continue avec le résultat. Il note aussi le
 manque (`outil_demander`) : la page *Outils* liste ces demandes, et « Construire avec Claude Code » ouvre Claude

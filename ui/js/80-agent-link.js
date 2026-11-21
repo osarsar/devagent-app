@@ -5,9 +5,10 @@
     async function refresh() {
         try {
             const s = await (await fetch('/api/agent/state')).json();
-            badge.textContent = s.waiting;
-            badge.hidden = !s.waiting;
-            badge.title = s.waiting + ' action(s) attendent ta confirmation';
+            const n = (s.waiting || 0) + (s.todos || 0);
+            badge.textContent = n;
+            badge.hidden = !n;
+            badge.title = (s.todos || 0) + ' chose(s) a faire par toi, ' + (s.waiting || 0) + ' confirmation(s) en attente';
         } catch (e) { /* restarting */ }
     }
     refresh();

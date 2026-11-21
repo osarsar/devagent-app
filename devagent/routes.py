@@ -94,8 +94,9 @@ def api_refuse(aid):
 @agent_bp.route("/api/agent/state")
 def api_state():
     from . import mcp_install, vault
+    from . import todos
     return jsonify({"paused": guard.paused(), "tools": len(registry.all_tools()),
-                    "waiting": len(journal.approvals("attente")),
+                    "waiting": len(journal.approvals("attente")), "todos": todos.count(),
                     "vault_key": vault.key_path().exists()})
 
 
@@ -504,3 +505,28 @@ def api_tool_request(rid):
                 pass
         return {"opened": opened, "command": cmd, "brief": text}
     return _guarded(build)
+
+
+# ── « A faire par toi » ─────────────────────────────────────────────────────
+
+@agent_bp.route("/api/agent/todos")
+def api_todos():
+    from . import todos
+    closed = todos.check() if request.args.get("check", "1") == "1" else []
+    return jsonify({"closed": closed, "open": todos.items("ouverte", request.args.get("project_id", type=int)),
+                    "done": todos.items("faite")[:15]})
+
+
+@agent_bp.route("/api/agent/todos/<int:tid>", methods=["POST"])
+def api_todo(tid):
+    from . import todos
+    action = _body().get("action")
+    if action == "done":
+        return jsonify({"ok": todos.close(tid)})
+    if action == "drop":
+        return jsonify({"ok": todos.close(tid, "ecartee")})
+    if action == "reopen":
+        return jsonify({"ok": todos.reopen(tid)})
+    if action == "check":
+        return jsonify({"ok": True, "closed": todos.check(tid)})
+    return jsonify({"ok": False, "message": "action inconnue"}), 400
