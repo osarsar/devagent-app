@@ -533,6 +533,11 @@ def start_scheduler(period=30):
                 tick()
             except Exception:
                 pass
+            try:
+                from . import etat
+                etat.auto_tick()                      # the projects' state, shared with the other PCs
+            except Exception:
+                pass
 
     _thread = threading.Thread(target=loop, name="devagent-automations", daemon=True)
     _thread.start()

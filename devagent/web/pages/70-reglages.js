@@ -54,6 +54,42 @@ DA.page({
         'autres acces — DNS, stockage, hebergeurs — se reglent dans la page ', h('a', { href: '#acces' }, 'Acces'), '.'),
       h('div', {}, testN)));
 
+    /* Sync between PCs */
+    const sync = await api('/api/agent/sync');
+    const syncOut = h('div', { class: 'small' });
+    const showSync = r => {
+      const parts = [h('div', {}, r.resume)];
+      if (r.ailleurs.length) parts.push(h('div', {}, h('b', {}, 'Projets presents sur un autre PC, absents ici : '),
+        r.ailleurs.map(a => a.projet + (a.git ? ` (${a.git})` : '')).join(', '), '. Clone-les (tableau de bord → Ajouter un projet), puis resynchronise.'));
+      if (r.conflits.length) parts.push(h('div', { style: 'color:#ffb454' }, h('b', {}, 'Modifies sur deux PC : '),
+        r.conflits.map(c => c.fichier).join(', '), '. Ce PC garde sa version ; l\'autre est a cote (fichier .autre-pc).'));
+      if (r.non_envoyes.length) parts.push(h('div', { class: 'muted' }, 'Non envoyes car ils semblent contenir une cle : ', r.non_envoyes.join(', ')));
+      syncOut.replaceChildren(...parts);
+    };
+    const syncBtn = h('button', { class: 'btn primary', type: 'button' }, sync.branche ? 'Synchroniser maintenant' : 'Brancher la synchronisation');
+    syncBtn.onclick = () => act(syncBtn, async () => {
+      if (!sync.branche) {
+        if (!confirm('Creer (ou utiliser) le depot PRIVE « devagent-etat » sur ton compte GitHub et y envoyer l\'etat de tes projets ? Aucun secret ne part.')) return;
+        const c = await api('/api/agent/sync', { connect: true });
+        if (!c.ok) throw new Error(c.message);
+      }
+      const r = await api('/api/agent/sync', {});
+      if (!r.ok) throw new Error(r.message);
+      toast(r.result.resume, 'ok');
+      if (!sync.branche) { DA.show('reglages'); return; }
+      showSync(r.result);
+    });
+    const auto = h('input', { type: 'checkbox' });
+    auto.checked = sync.auto;
+    auto.addEventListener('change', () => api('/api/agent/sync', { auto: auto.checked }));
+    root.append(h('div', { class: 'card stack' },
+      h('div', { class: 'spread' }, h('h2', {}, 'Mes projets sur tous mes PC'), DA.pill(sync.branche ? 'branche' : 'non branche', sync.branche ? 'ok' : 'warn')),
+      h('p', { class: 'muted' }, 'L\'etat de chaque projet (profil, feuille de route, serveurs, connexions, automatisations, notes de session) ',
+        'est partage par un depot GitHub prive. Les cles passent par Bitwarden, pas par ici. Une automatisation n\'est active que sur le PC ou tu l\'as activee.'),
+      sync.branche ? h('div', { class: 'small muted' }, `${sync.depot} · derniere synchronisation : ${DA.when(sync.derniere_synchro) || 'jamais'}`) : null,
+      sync.branche ? h('label', { class: 'row small' }, auto, 'Synchroniser tout seul toutes les 10 minutes') : null,
+      h('div', {}, syncBtn), syncOut));
+
     /* Vault */
     const clear = vault.reglages_encore_en_clair || [];
     root.append(h('div', { class: 'card stack' },

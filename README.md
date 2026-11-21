@@ -77,9 +77,19 @@ Quand tu ajoutes ou renouvelles une clé dans la page *Accès*, DevAgent demande
 Bitwarden à jour. Le mot de passe n'est jamais gardé, et Bitwarden est reverrouillé après chaque opération.
 L'agent n'a aucun outil pour lire cette note.
 
+**Tes projets sur tous tes PC.** L'état de chaque projet (profil, feuille de route, serveurs, connexions,
+automatisations, notes de session) est partagé par un dépôt GitHub **privé**, `devagent-etat`. Une fois par PC :
+`devagent sync brancher`. Ensuite DevAgent synchronise tout seul toutes les 10 minutes (ou `devagent sync`).
+
+- modifié ici seulement → envoyé ; modifié ailleurs seulement → reçu ;
+- modifié sur deux PC → ce PC garde sa version, l'autre est posée à côté (`fichier.autre-pc`) et signalée ;
+- un projet qui existe sur un autre PC est signalé : clone-le, il reçoit son état à la synchronisation suivante ;
+- jamais envoyé : les clés (elles passent par Bitwarden), un fichier qui semble en contenir une, le résultat
+  du dernier test SSH ; **une automatisation n'est active que sur le PC où tu l'as activée**.
+
 **Un nouveau PC, en entier :** installer (`pc.sh`), `devagent coffre connecter`, `devagent coffre recuperer`,
-`devagent mcp installer`. Les clés sont en place et testées ; l'état de chaque projet (feuille de route,
-serveurs, automatisations) reste propre à chaque PC.
+`devagent sync brancher`, `devagent mcp installer`. Les clés sont en place et testées, et DevAgent sait où en
+est chaque projet. Il reste à cloner les projets que tu veux sur ce PC.
 
 **Vercel.** Avec le token du compte : `vercel_etat` (déploiements réussis ou en erreur, domaines, enregistrements
 DNS que Vercel attend), `vercel_ajouter_domaine`, `vercel_redeployer` (après confirmation).
