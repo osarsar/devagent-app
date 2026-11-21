@@ -15,17 +15,19 @@ Branche `feat/devagent`.
 | 4 Automatisations | Fait : horaire, intervalle, nouveau commit sur GitHub, webhook local, manuel ; 5 modeles | `devagent/automations.py` |
 | 5 Chat integre | Fait, teste avec un modele simule. **A essayer avec une vraie cle API** | `devagent/chat.py` |
 | 6 Carte et interface | Fait. `dashboard.html` est decoupe : 12 pages, 18 scripts, 1 feuille de style ; Proniver est une extension | `templates/dash/`, `ui/`, `extensions/proniver/`, `devagent/carte.py`, `devagent/web/` |
-| 7 Connecteurs | Notification (Telegram, email), deploiement SSH, DNS Cloudflare | `devagent/connectors/` |
+| 7 Connecteurs | Notification (Telegram, email), deploiement SSH, DNS (Cloudflare, OVH, Hostinger) | `devagent/connectors/` |
 | 8 Nom | Commande `devagent`, interface, README, depot GitHub renomme, migration du dossier prete | `install.sh`, `paths.py`, `devagent/migrate.py` |
 
 Reste, et pourquoi :
-- **DNS chez OVH ou Hostinger** : seule l'API Cloudflare a pu etre verifiee dans sa documentation. Un autre
-  fournisseur = une classe de plus dans `devagent/connectors/dns.py`.
+- **DNS** : Cloudflare, OVH et Hostinger sont ecrits d'apres leurs descriptions d'API et testes sur des
+  reponses simulees ; aucun n'a encore ete essaye sur un vrai compte.
 - **Webhook GitHub entrant** : DevAgent n'ecoute que sur ce PC. Le declencheur `depot` le remplace (il regarde
   GitHub toutes les 5 minutes).
-- **Dossier `~/devpilot`** : le depot GitHub est renomme (`osarsar/devagent-app`). Pour le dossier, la
-  commande `devagent migrer` est prete et testee (avec annulation), mais elle se lance DevAgent ferme :
-  c'est a toi de la lancer, car des serveurs, Docker et des taches cron tournent dans ce dossier.
+- **Dossier** : le depot GitHub est renomme (`osarsar/devagent-app`) et, sur ce PC, le dossier est
+  `~/devagent` depuis le 2026-11-21 (`devagent migrer`) ; `~/devpilot` reste comme lien. Les deux lignes du
+  crontab gardent l'ancien chemin, qui marche par le lien. Sur un autre PC : `devagent migrer --appliquer`.
+- **Chat integre** : jamais essaye avec une vraie cle API (aucune sur ce PC).
+- **Publication** : les commits sont locaux, sur `feat/devagent` ; rien n'est pousse.
 
 Comment le decoupage de `dashboard.html` a ete verifie : un navigateur pilote visite les 12 pages et les
 8 onglets d'un projet et releve les erreurs JavaScript — 0 avant, 0 apres, memes pages, memes onglets.
