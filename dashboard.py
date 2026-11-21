@@ -53,6 +53,9 @@ def _reply(res):
     return jsonify(res)
 
 
+from devagent import etat as _etat
+if _etat.on_project_removed not in P.on_removed:
+    P.on_removed.append(_etat.on_project_removed)   # a removed project leaves the state shared between PCs
 extensions.load(app)                      # parts that belong to one project (ex. extensions/proniver)
 APP_DIR = Path(__file__).resolve().parent
 

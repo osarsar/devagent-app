@@ -46,6 +46,10 @@ def api_approvals():
             a["preview"] = _deploy_preview(a)
         elif a["tool"] == "dns_appliquer" and a["status"] == "attente":
             a["preview"] = _dns_preview(a)
+        elif a["tool"] == "commande_proposer":
+            args = a["args"] or {}
+            a["preview"] = (f"{args.get('pourquoi', '')} — commande : {args.get('commande', '')}"
+                            + (f"  (projet {args['projet']})" if args.get("projet") else ""))
     return jsonify({"approvals": items})
 
 
@@ -447,3 +451,56 @@ def api_sync():
     if b.get("connect"):
         return _guarded(lambda: etat.connect(b.get("url") or None))
     return _guarded(etat.sync)
+
+
+# ── Guide ───────────────────────────────────────────────────────────────────
+
+@agent_bp.route("/api/agent/guide", methods=["POST"])
+def api_guide():
+    """« Que faire maintenant ? » — a read-only conversation on the project (or on all of them)."""
+    from . import chat
+    out = chat.guide(_body().get("project_id") or None)
+    return (jsonify(out), 200 if out.get("ok") else 400)
+
+
+# ── Missing tools ───────────────────────────────────────────────────────────
+
+@agent_bp.route("/api/agent/tool-requests")
+def api_tool_requests():
+    from .tools import manque
+    return jsonify({"requests": manque.requests(request.args.get("status", "ouverte") or None)})
+
+
+@agent_bp.route("/api/agent/tool-requests/<int:rid>", methods=["POST"])
+def api_tool_request(rid):
+    """{status: faite | ouverte}  or  {build: true} → opens Claude Code in DevAgent's own code with the brief."""
+    import shlex
+    import shutil
+    import subprocess
+    from .tools import manque
+    b = _body()
+    if b.get("status") in ("faite", "ouverte", "ecartee"):
+        return jsonify({"ok": manque.set_status(rid, b["status"])})
+
+    def build():
+        import dev
+        text = manque.brief(rid)
+        app_dir = WEB.parent.parent
+        f = app_dir.parent / "data" / f"demande-outil-{rid}.md"
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(text, encoding="utf-8")
+        cmd = f"cd {shlex.quote(str(app_dir))} && {dev.claude_cmd()} \"$(cat {shlex.quote(str(f))})\""
+        term = next((t for t in ("gnome-terminal", "konsole", "x-terminal-emulator", "xterm") if shutil.which(t)), None)
+        opened = False
+        if term and not b.get("command_only"):
+            inner = f"{cmd}; exec bash"
+            argv = ([term, "--title", "DevAgent — nouvel outil", "--", "bash", "-lc", inner] if term == "gnome-terminal"
+                    else [term, "-e", "bash", "-lc", inner])
+            try:
+                subprocess.Popen(argv, start_new_session=True, stdin=subprocess.DEVNULL,
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                opened = True
+            except OSError:
+                pass
+        return {"opened": opened, "command": cmd, "brief": text}
+    return _guarded(build)

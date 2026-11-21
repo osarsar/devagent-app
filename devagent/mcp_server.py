@@ -36,7 +36,8 @@ confirmer dans DevAgent (ou `devagent approuver <n>`), puis verifie avec `confir
 Ne cherche jamais a la faire autrement.
 - Tu ne recois jamais de secret (token, mot de passe) : les outils s'en servent sans te les montrer. \
 Un secret manquant se saisit par l'utilisateur dans l'interface de DevAgent.
-- Enregistre une connexion (domaine, serveur, depot...) avec l'outil prevu, pas en ecrivant un fichier."""
+- Enregistre une connexion (domaine, serveur, depot...) avec l'outil prevu, pas en ecrivant un fichier.
+- S'il manque un outil a DevAgent pour ce qui est demande, note-le avec `outil_demander`."""
 
 
 def _ctx():

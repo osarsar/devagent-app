@@ -10,6 +10,33 @@ DA.page({
       DA.riskPill('ecriture'), ` ${count('ecriture')} journalises · `,
       DA.riskPill('irreversible'), ` ${count('irreversible')} avec ta confirmation. `,
       'Le chat, Claude Code et les automatisations utilisent tous cette meme liste.'));
+    /* Missing tools noted by the agent: build them with Claude Code, or mark them done */
+    const wanted = (await api('/api/agent/tool-requests')).requests;
+    if (wanted.length) {
+      root.append(h('div', { class: 'card stack' },
+        h('div', { class: 'spread' }, h('h2', {}, 'Outils qui manquent'), DA.pill(`${wanted.length} demande(s)`, 'warn')),
+        h('p', { class: 'muted' }, 'L\'agent les a notes quand il a du passer par une commande ou te renvoyer vers un site. ',
+          '« Construire » ouvre Claude Code dans le code de DevAgent avec la demande deja redigee : il ecrit l\'outil et son test ',
+          'sur une branche. Le nouvel outil n\'est actif qu\'apres ta relecture et un redemarrage de DevAgent.'),
+        ...wanted.map(r => {
+          const build = h('button', { class: 'btn sm primary', type: 'button' }, 'Construire avec Claude Code');
+          const cmdBox = h('pre', { class: 'muted small', hidden: true });
+          build.onclick = () => act(build, async () => {
+            const x = await api(`/api/agent/tool-requests/${r.id}`, { build: true });
+            if (!x.ok) throw new Error(x.message);
+            cmdBox.hidden = false;
+            cmdBox.textContent = (x.result.opened ? 'Claude Code s\'ouvre dans un terminal. Sinon, lance :\n' : 'Lance dans un terminal :\n') + x.result.command;
+          });
+          const done = h('button', { class: 'btn sm', type: 'button' }, 'C\'est fait');
+          done.onclick = () => act(done, async () => { await api(`/api/agent/tool-requests/${r.id}`, { status: 'faite' }); DA.show('outils'); });
+          const drop = h('button', { class: 'btn sm ghost', type: 'button' }, 'Ecarter');
+          drop.onclick = () => act(drop, async () => { await api(`/api/agent/tool-requests/${r.id}`, { status: 'ecartee' }); DA.show('outils'); });
+          return h('div', { class: 'stack', style: 'border-top:1px solid var(--border-1);padding-top:10px' },
+            h('div', {}, h('b', {}, r.need), h('span', { class: 'muted small' }, `  · ${DA.when(r.at)} · ${r.actor}`)),
+            r.example ? h('div', { class: 'mono muted' }, 'En attendant : ', r.example) : null,
+            h('div', { class: 'row' }, build, done, drop), cmdBox);
+        })));
+    }
     const out = h('pre', { class: 'card', hidden: true });
     for (const d of domains) {
       const rows = tools.filter(t => t.domain === d).map(t => {

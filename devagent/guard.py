@@ -141,6 +141,11 @@ def call(name, args=None, actor="agent", ctx=None):
                 "message": "L'agent est en pause : seules les lectures sont permises (DevAgent → Agent → Reprendre)."}
     if _is_automation(actor) and not tool.automation:
         return {"statut": "erreur", "message": f"{name} n'est pas permis dans une automatisation."}
+    if tool.precheck:
+        try:
+            tool.precheck(args)
+        except ToolError as e:
+            return {"statut": "erreur", "message": str(e)}
     if tool.risk == RISK_IRREVERSIBLE:
         return _ask(tool, args, actor, _project_id(ctx, args))
     return _run(tool, args, actor, ctx, approved=False)

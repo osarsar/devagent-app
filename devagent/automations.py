@@ -387,7 +387,7 @@ def _run(project, a, trigger):
         rid = c.execute("INSERT INTO automation_runs (project_id, name, trigger, started_at, status) VALUES (?,?,?,?,?)",
                         (pid, name, trigger, started, "en_cours")).lastrowid
     failed, error, log = False, "", []
-    variables = {"projet": project["name"], "automatisation": name, "date": started, "erreur": "",
+    variables = {"projet": project["name"], "automatisation": name, "date": started, "erreur": "", "resultat": "",
                  "commit": _memo(pid, name).get("sha", "")[:10]}
     for i, st in enumerate(a["etapes"], 1):
         cond = st.get("si", "succes")
@@ -418,6 +418,9 @@ def _run(project, a, trigger):
             if not failed:
                 failed, error = True, f"{st['outil']} : {entry.get('message', '')}"
         entry["resultat"] = _short(out.get("resultat"))
+        res = out.get("resultat")
+        if entry["statut"] == "ok" and isinstance(res, dict) and (res.get("texte") or res.get("resume")):
+            variables["resultat"] = str(res.get("texte") or res.get("resume"))   # for the next steps: {{resultat}}
         log.append(entry)
     status = "echec" if failed else "ok"
     with db.get_db() as c:
@@ -580,6 +583,22 @@ TEMPLATES = {
                     "minimum": {"certificat_jours_restants": 14}},
                    {"outil": "notifier", "si": "echec_nouveau",
                     "args": {"message": "Certificat de {{projet}} bientot expire : {{erreur}}"}}]},
+    "point-du-matin": {
+        "description": "Chaque matin, l'agent fait le point sur tous tes projets et te l'envoie : ce qui demande "
+                       "une action, ou en est chaque projet. Utilise ta cle API Anthropic (quelques centimes par jour).",
+        "declencheur": {"type": "horaire", "a": "08:00", "jours": ["lun", "mar", "mer", "jeu", "ven"]},
+        "etapes": [{"outil": "guide_point"},
+                   {"outil": "notifier", "args": {"titre": "DevAgent — point du matin", "message": "{{resultat}}"}}]},
+    "surveillance-site-expliquee": {
+        "description": "Comme surveillance-site, mais quand le site tombe l'agent cherche la cause et t'ecrit quoi "
+                       "faire. Utilise ta cle API Anthropic, seulement au moment d'une panne.",
+        "declencheur": {"type": "intervalle", "toutes": "10m"},
+        "etapes": [{"outil": "site_tester", "args": {"url": "https://exemple.ma"}, "attendu": {"ok": True}},
+                   {"outil": "guide_expliquer", "si": "echec_nouveau",
+                    "args": {"probleme": "Le site de {{projet}} ne repond plus : {{erreur}}"}},
+                   {"outil": "notifier", "si": "echec_nouveau",
+                    "args": {"message": "Le site de {{projet}} ne repond plus : {{erreur}}\n\n{{resultat}}"}},
+                   {"outil": "notifier", "si": "retabli", "args": {"message": "Le site de {{projet}} repond a nouveau."}}]},
     "verifier-acces": {
         "description": "Chaque matin, essaie tous les acces (tokens, cles) et previent si l'un ne marche plus ou expire bientot.",
         "declencheur": {"type": "horaire", "a": "09:00"},

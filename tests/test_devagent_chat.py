@@ -139,3 +139,57 @@ def test_limite_de_series(chat, monkeypatch):
     chat.send(c["id"], "boucle", client=FakeClient(loop), wait=True)
     got = chat.get(c["id"])
     assert got["status"] == "pret" and "Arrete apres 3" in got["events"][-1]["text"]
+
+
+def test_le_guide_ne_fait_que_regarder(chat, P):
+    p = P.create("site")
+    client = FakeClient([
+        resp("tool_use", {"type": "tool_use", "id": "t1", "name": "projet_etat", "input": {}},
+             {"type": "tool_use", "id": "t2", "name": "projet_etape_ajouter", "input": {"phase": "dev", "libelle": "interdit"}}),
+        resp("end_turn", {"type": "text", "text": "1. Lier GitHub. 2. Choisir l'hebergement."})])
+    out = chat.guide(p["id"], client=client, wait=True)
+    assert out["ok"]
+    ev = out["chat"]["events"]
+    assert ev[0]["text"] == "Que faire maintenant ?"                           # the long instruction is not shown
+    assert [(e["name"], e["statut"]) for e in ev if e["type"] == "tool"] == [("projet_etat", "ok"), ("projet_etape_ajouter", "erreur")]
+    first = client.calls[0]
+    assert "Regarde l'etat REEL" in first["messages"][0]["content"]
+    names = {t["name"] for t in first["tools"]}
+    assert "projet_etat" in names and "projet_creer" not in names and "projet_supprimer" not in names   # only tools that look
+    import phases
+    assert "interdit" not in [s["label"] for ph in phases.roadmap(p["id"])["phases"] for s in ph["steps"]]
+    assert chat.last_text(out["chat"]["id"]).startswith("1. Lier GitHub")
+
+
+def test_point_du_matin_et_alerte_expliquee(chat, P, monkeypatch):
+    from devagent import automations, guard, registry
+    automations._ready_for = None
+    p = P.create("site")
+    for t in ("point-du-matin", "surveillance-site-expliquee"):
+        assert automations.check(automations.TEMPLATES[t]) == []
+    sent = []
+    monkeypatch.setattr(registry.get("notifier"), "fn",
+                        lambda ctx, message, titre="", canal=None, projet=None: sent.append((titre, message)) or {"envoye": True})
+    monkeypatch.setattr(chat, "_client", lambda: FakeClient([resp("end_turn", {"type": "text", "text": "Tout va bien. site : phase preparation."})]))
+    monkeypatch.setattr(chat, "configured", lambda: True)
+    automations.from_template(p, "point-du-matin")
+    automations.set_active(p, "point-du-matin", True)
+    run = automations.run(p, "point-du-matin")
+    assert run["statut"] == "ok" and sent == [("DevAgent — point du matin", "Tout va bien. site : phase preparation.")]
+    # the explained alert: the cause is looked for only when the site goes down, and joins the message
+    sent.clear()
+    monkeypatch.setattr(registry.get("site_tester"), "fn", lambda ctx, url: {"ok": False})
+    monkeypatch.setattr(chat, "_client", lambda: FakeClient([resp("end_turn", {"type": "text", "text": "Cause probable : le DNS ne pointe plus vers Vercel."})]))
+    automations.from_template(p, "surveillance-site-expliquee", url="https://exemple.ma")
+    automations.set_active(p, "surveillance-site-expliquee", True)
+    automations.run(p, "surveillance-site-expliquee")
+    assert len(sent) == 1 and "ne repond plus" in sent[0][1] and "Cause probable : le DNS" in sent[0][1]
+    # without an API key the alert still leaves, without the explanation
+    sent.clear()
+    monkeypatch.setattr(chat, "configured", lambda: False)
+    monkeypatch.setattr(chat, "_client", lambda: (_ for _ in ()).throw(RuntimeError("pas de cle")))
+    automations.from_template(p, "surveillance-site-expliquee", name="sans-cle", url="https://exemple.ma")
+    automations.set_active(p, "sans-cle", True)
+    automations.run(p, "sans-cle")
+    assert len(sent) == 1 and "ne repond plus" in sent[0][1]
+    assert guard.call("guide_point", actor="mcp")["statut"] == "erreur"         # no key: says so, does not crash

@@ -297,6 +297,47 @@ def sync():
                       + (f", {len(elsewhere)} projet(s) existent sur un autre PC" if elsewhere else "")}
 
 
+def forget(name):
+    """A project was removed for good: it leaves the shared state too (otherwise the other PCs —
+    and this one — would keep seeing it as « present on another PC »)."""
+    if not connected():
+        return False
+    repo = state_dir()
+    try:
+        _pull()
+    except Exception:
+        pass
+    changed = False
+    folder = repo / "projets" / name
+    if folder.is_dir():
+        shutil.rmtree(folder)
+        changed = True
+    listing_f = repo / "projets.json"
+    try:
+        listing = json.loads(listing_f.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        listing = {}
+    if listing.pop(name, None) is not None:
+        listing_f.write_text(json.dumps(listing, indent=2, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
+        changed = True
+    index = _load_index()
+    if index.pop(name, None) is not None:
+        _index_file().write_text(json.dumps(index), encoding="utf-8")
+    if changed:
+        _git(["add", "-A"])
+        _git(["-c", "user.name=DevAgent", "-c", f"user.email=devagent@{socket.gethostname()}", "commit", "-q", "-m",
+              f"Projet retire : {name}"])
+        _git(["push", "-q", "origin", "HEAD:main"], timeout=120)
+    return changed
+
+
+def on_project_removed(project):
+    try:
+        forget(project["name"])
+    except Exception:
+        pass
+
+
 _last_auto = 0.0
 
 

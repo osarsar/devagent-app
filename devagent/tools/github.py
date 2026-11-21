@@ -3,7 +3,7 @@ import ghorg
 import github_ops
 import projects as P
 
-from .. import RISK_WRITE
+from .. import RISK_IRREVERSIBLE, RISK_WRITE
 from ..registry import PROJET, ToolError, tool
 from ._common import checked, github_token, resolve_project
 
@@ -80,3 +80,63 @@ def github_cloner_depot(ctx, depot, projet=None, dossier=None):
       "jamais un depot qui a du travail en cours.", risk=RISK_WRITE, params={"projet": PROJET})
 def github_tout_mettre_a_jour(ctx, projet=None):
     return ghorg.pull_all(resolve_project(ctx, projet)["id"])
+
+
+def _gh(args):
+    """Run the gh tool of this PC (the user's own GitHub login). Returns its output."""
+    import shutil
+    import subprocess
+    if not shutil.which("gh"):
+        raise ToolError("L'outil gh n'est pas installe sur ce PC")
+    r = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=60)
+    if r.returncode != 0:
+        raise ToolError(f"GitHub : {(r.stderr or r.stdout).strip()[:300]}")
+    return r.stdout.strip()
+
+
+def _full(depot):
+    depot = depot.strip().removesuffix(".git")
+    for prefix in ("https://github.com/", "git@github.com:"):
+        depot = depot.removeprefix(prefix)
+    if "/" not in depot:
+        depot = f"{_gh(['api', 'user', '-q', '.login'])}/{depot}"
+    return depot
+
+
+@tool("github_depot", "Un depot GitHub : visibilite, archive ou non, branche principale, dernier envoi.",
+      params={"depot": {"type": "string", "description": "nom, ou proprietaire/nom"}}, required=("depot",))
+def github_depot(ctx, depot):
+    import json
+    return json.loads(_gh(["repo", "view", _full(depot), "--json",
+                           "nameWithOwner,isPrivate,isArchived,defaultBranchRef,pushedAt,url,description"]))
+
+
+@tool("github_renommer_depot", "Renomme un depot sur GitHub. GitHub redirige l'ancienne adresse ; les clones "
+      "existants continuent de marcher. Avec 'projet', met aussi a jour l'adresse (origin) du clone de ce depot "
+      "dans le projet.", risk=RISK_IRREVERSIBLE, automation=False,
+      params={"depot": {"type": "string", "description": "nom actuel, ou proprietaire/nom"},
+              "nouveau_nom": {"type": "string"}, "projet": PROJET}, required=("depot", "nouveau_nom"))
+def github_renommer_depot(ctx, depot, nouveau_nom, projet=None):
+    full = _full(depot)
+    owner, old = full.split("/", 1)
+    _gh(["api", "-X", "PATCH", f"repos/{full}", "-f", f"name={nouveau_nom}", "-q", ".full_name"])
+    out = {"ancien": full, "nouveau": f"{owner}/{nouveau_nom}", "clones_mis_a_jour": []}
+    if projet:
+        p = resolve_project(ctx, projet)
+        for r in P.find_repos(p["path"]):
+            path = P.resolve(p["path"]) / r["dir"]
+            rc, url, _ = P.git(["remote", "get-url", "origin"], cwd=path)
+            if rc == 0 and url.strip().removesuffix(".git").lower().endswith(f"{owner}/{old}".lower()):
+                new_url = url.strip().removesuffix(".git")[: -len(old)] + nouveau_nom + ".git"
+                P.git(["remote", "set-url", "origin", new_url], cwd=path)
+                out["clones_mis_a_jour"].append({"dossier": r["dir"], "origin": new_url})
+    return out
+
+
+@tool("github_archiver_depot", "Archive un depot sur GitHub : il devient en lecture seule et n'apparait plus "
+      "comme actif. Rien n'est supprime ; il se desarchive depuis ses reglages.", risk=RISK_IRREVERSIBLE,
+      automation=False, params={"depot": {"type": "string"}}, required=("depot",))
+def github_archiver_depot(ctx, depot):
+    full = _full(depot)
+    _gh(["repo", "archive", full, "--yes"])
+    return {"archive": full}

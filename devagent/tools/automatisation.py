@@ -37,7 +37,7 @@ def automatisation_modeles(ctx):
             "etape": {"outil": "nom d'un outil non irreversible", "args": "ses arguments",
                       "si": "succes (defaut) | echec | toujours | echec_nouveau | retabli",
                       "attendu / minimum / maximum": "chemin dans le resultat → valeur ; sinon l'etape echoue",
-                      "variables": "{{projet}} {{automatisation}} {{erreur}} {{date}}"}}
+                      "variables": "{{projet}} {{automatisation}} {{erreur}} {{date}} — {{resultat}} = le texte (ou le resume) rendu par l'etape precedente"}}
 
 
 @tool("automatisation_proposer", "Ecrit une automatisation dans le projet. Elle reste INACTIVE : l'utilisateur "
@@ -57,7 +57,7 @@ def automatisation_proposer(ctx, nom, declencheur, etapes, projet=None, descript
 
 
 @tool("automatisation_depuis_modele", "Cree une automatisation a partir d'un modele (sauvegarde-nuit, "
-      "surveillance-site, certificat, depots-a-jour, nouveau-commit, verifier-acces). Elle reste inactive jusqu'a ce que l'utilisateur l'active.",
+      "surveillance-site, certificat, depots-a-jour, nouveau-commit, verifier-acces, point-du-matin, surveillance-site-expliquee). Elle reste inactive jusqu'a ce que l'utilisateur l'active.",
       risk=RISK_WRITE, automation=False,
       params={"projet": PROJET, "modele": {"type": "string", "enum": sorted(automations.TEMPLATES)},
               "nom": NOM, "url": {"type": "string", "description": "Adresse du site a surveiller (sinon le domaine du projet)"}},

@@ -37,6 +37,9 @@ la confirmer. Dis-lui clairement ce qui attend, et ne cherche pas une autre faco
 - Pour une tache qui doit se repeter (chaque nuit, toutes les 10 minutes, quand un site tombe), propose une \
 automatisation avec `automatisation_depuis_modele` ou `automatisation_proposer`. Elle reste inactive : \
 l'utilisateur l'active lui-meme.
+- S'il te manque un outil pour faire ce qui est demande, ne t'arrete pas la : propose la commande exacte avec \
+`commande_proposer` (l'utilisateur la confirme, tu lis ensuite sa sortie avec `confirmation_etat`), puis note le \
+manque avec `outil_demander`. Ne renvoie l'utilisateur vers un site que si aucune commande ne peut le faire.
 - Reponds en francais simple, court. Commence par le resultat. Dis ce que tu as fait, ce qui a echoue, \
 et la prochaine etape quand il y en a une."""
 
@@ -151,10 +154,11 @@ def _client():
     return anthropic.Anthropic(api_key=key) if key else anthropic.Anthropic()
 
 
-def api_tools():
-    """The registry as API tool definitions — always in the same order (the prompt cache needs it)."""
+def api_tools(read_only=False):
+    """The registry as API tool definitions — always in the same order (the prompt cache needs it).
+    read_only: the tools that only look (a guide must not change anything)."""
     return [{"name": t.name, "description": f"[{t.risk}] {t.description}", "input_schema": t.input_schema}
-            for t in registry.all_tools()]
+            for t in registry.all_tools(max_risk="lecture" if read_only else None)]
 
 
 def _system(project):
@@ -206,8 +210,10 @@ def _explain(e):
 
 # ── A turn ──────────────────────────────────────────────────────────────────
 
-def send(cid, text, client=None, wait=False):
-    """Add the user's message and run the turn (background thread unless wait=True)."""
+def send(cid, text, client=None, wait=False, read_only=False, shown=None):
+    """Add the user's message and run the turn (background thread unless wait=True).
+    read_only: this turn may only use tools that look. shown: what the conversation displays
+    instead of the full text (a guide's long instruction is not interesting to read)."""
     text = (text or "").strip()
     d = _load(cid)
     if not d:
@@ -219,20 +225,20 @@ def send(cid, text, client=None, wait=False):
     if client is None and not configured():
         return {"ok": False, "message": "Pas de cle API Anthropic. Ajoute-la dans Agent → Reglages."}
     d["messages"].append({"role": "user", "content": text})
-    d["events"].append({"type": "user", "text": text, "at": _now()})
+    d["events"].append({"type": "user", "text": shown or text, "at": _now()})
     _save(cid, messages=d["messages"], events=d["events"], status="en_cours", error="",
-          title=d["title"] or text[:60])
+          title=d["title"] or (shown or text)[:60])
     if wait:
-        _turn(cid, client)
+        _turn(cid, client, read_only)
     else:
-        t = threading.Thread(target=_turn, args=(cid, client), name=f"devagent-chat-{cid}", daemon=True)
+        t = threading.Thread(target=_turn, args=(cid, client, read_only), name=f"devagent-chat-{cid}", daemon=True)
         with _lock:
             _threads[cid] = t
         t.start()
     return {"ok": True, "chat": get(cid)}
 
 
-def _turn(cid, client=None):
+def _turn(cid, client=None, read_only=False):
     d = _load(cid)
     messages, events = d["messages"], d["events"]
     try:
@@ -240,7 +246,7 @@ def _turn(cid, client=None):
         project = db.get_project(d["project_id"]) if d["project_id"] else None
         ctx = {"project_id": d["project_id"]} if d["project_id"] else {}
         params = {"model": model(), "max_tokens": MAX_TOKENS, "system": _system(project),
-                  "tools": api_tools(), "thinking": {"type": "adaptive"},
+                  "tools": api_tools(read_only), "thinking": {"type": "adaptive"},
                   "output_config": {"effort": db.get_setting("agent_effort", "") or "medium"},
                   "cache_control": {"type": "ephemeral"}}
         for _ in range(MAX_STEPS):
@@ -256,7 +262,10 @@ def _turn(cid, client=None):
                 for b in content:
                     if b.get("type") != "tool_use":
                         continue
-                    answer = guard.call(b["name"], b.get("input") or {}, actor="chat", ctx=ctx)
+                    if read_only and registry.get(b["name"]).risk != "lecture":
+                        answer = {"statut": "erreur", "message": "Ce tour ne fait que regarder : aucune modification."}
+                    else:
+                        answer = guard.call(b["name"], b.get("input") or {}, actor="chat", ctx=ctx)
                     events.append({"type": "tool", "name": b["name"], "args": b.get("input") or {},
                                    "statut": answer["statut"], "message": answer.get("message", ""),
                                    "confirmation": answer.get("confirmation"), "at": _now()})
@@ -291,3 +300,60 @@ def _turn(cid, client=None):
         msg = _explain(e)
         events.append({"type": "error", "text": msg, "at": _now()})
         _save(cid, messages=messages, events=events, status="pret", error=msg)
+
+
+# ── Guide: the agent looks at the real state and says what to do ─────────────
+
+GUIDE_PROJECT = """Regarde l'etat REEL de ce projet avec tes outils avant de repondre : projet_etat, projet_acces, git_depots, et selon le cas vercel_etat, domaine_etat, serveur_lister, automatisation_lister. Ne modifie rien.
+
+Puis dis-moi quoi faire maintenant :
+1. Une phrase : ou en est le projet.
+2. Les prochaines actions, 5 au plus, dans l'ordre ou il faut les faire. Pour chacune : ce qu'il faut faire, pourquoi maintenant, et comment — « je peux le faire si tu me le demandes » (nomme l'outil) ou « a faire par toi » (donne la page ou la commande exacte).
+3. Ce qui bloque ou risque de casser bientot (acces qui expire, site mal configure, travail non pousse), s'il y en a.
+
+N'ecris que ce qui decoule de ce que tu as lu. Si une information manque, dis laquelle."""
+
+GUIDE_ALL = """Fais le point sur TOUS les projets, pour un message court a lire le matin. Regarde avec tes outils (projet_lister, puis pour chaque projet actif projet_etat ; acces_etat une fois ; les automatisations et leur dernier resultat avec automatisation_historique). Ne modifie rien.
+
+Ecris, en texte simple sans tableau ni titre Markdown (le message part sur Telegram ou par email) :
+- ce qui demande une action aujourd'hui, le plus urgent d'abord (un acces expire ou en panne, un site qui ne repond plus, une automatisation qui echoue, du travail non pousse) ;
+- pour chaque projet actif, une ligne : ou il en est et la prochaine etape ;
+- si tout va bien, dis-le en une phrase.
+400 mots au plus."""
+
+GUIDE_EXPLAIN = """Un probleme vient d'etre detecte :
+
+{probleme}
+
+Cherche la cause avec tes outils (par exemple site_tester, domaine_verifier, dns_resoudre, vercel_etat, serveur_tester, acces_etat). Ne modifie rien. Puis ecris un message court, en texte simple : la cause la plus probable d'apres ce que tu as vu, ce que tu as verifie, et quoi faire maintenant, etape par etape. 150 mots au plus."""
+
+
+def last_text(cid):
+    c = get(cid)
+    texts = [e["text"] for e in (c or {}).get("events", []) if e["type"] == "assistant"]
+    return texts[-1] if texts else ""
+
+
+def guide(project_id=None, client=None, wait=False):
+    """Start a read-only « what should I do now? » conversation. Returns the chat."""
+    c = start(project_id)
+    out = send(c["id"], GUIDE_PROJECT if project_id else GUIDE_ALL, client=client, wait=wait, read_only=True,
+               shown="Que faire maintenant ?" if project_id else "Fais le point sur tous mes projets.")
+    if not out.get("ok"):
+        delete(c["id"])
+        return out
+    return {"ok": True, "chat": get(c["id"])}
+
+
+def run_once(instruction, title, project_id=None, client=None):
+    """One read-only run, to the end: the text the agent wrote (for automations)."""
+    import projects as P
+    c = start(project_id)
+    out = send(c["id"], instruction, client=client, wait=True, read_only=True, shown=title)
+    if not out.get("ok"):
+        delete(c["id"])
+        raise P.ProjectError(out.get("message") or "Le guide n'a pas pu demarrer")
+    done = get(c["id"])
+    if done["error"]:
+        raise P.ProjectError(done["error"])
+    return {"texte": last_text(c["id"]), "conversation": c["id"]}

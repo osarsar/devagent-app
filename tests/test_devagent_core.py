@@ -265,3 +265,37 @@ def test_outils_du_pc_et_connexions(agent, P):
     # cleaning is irreversible, and only the listed actions exist (no free path)
     assert g.call("pc_nettoyer", {"action": "pip_cache"}, actor="mcp")["statut"] == "confirmation_requise"
     assert g.call("pc_nettoyer", {"action": "delete_file"}, actor="mcp")["statut"] == "erreur"
+
+
+def test_quand_il_manque_un_outil(agent, P, monkeypatch):
+    g = agent.guard
+    from devagent.tools import manque
+    manque._ready_for = None
+    p = P.create("site")
+    # the command is proposed, never run by the agent
+    ask = g.call("commande_proposer", {"commande": "echo bonjour > trace.txt && cat trace.txt", "pourquoi": "ecrire un fichier d'essai",
+                                       "projet": "site"}, actor="chat")
+    assert ask["statut"] == "confirmation_requise" and not os.path.exists(os.path.join(p["path"], "trace.txt"))
+    out = g.approve(ask["confirmation"])["resultat"]
+    assert out["reussi"] and out["sortie"].strip() == "bonjour" and out["dossier"] == os.path.realpath(p["path"])
+    assert g.call("confirmation_etat", {"numero": ask["confirmation"]}, actor="chat")["resultat"]["status"] == "fait"
+    # a failing command says so; a key in the output is masked
+    bad = g.approve(g.call("commande_proposer", {"commande": "echo ghp_abcdefghijklmnopqrstuvwxyz012345; exit 3",
+                                                 "pourquoi": "essai"}, actor="chat")["confirmation"])["resultat"]
+    assert bad["reussi"] is False and bad["code_retour"] == 3 and "ghp_" not in bad["sortie"] and "[cle masquee]" in bad["sortie"]
+    # what it may never do — refused before the user is even asked
+    waiting = len(agent.journal.approvals("attente"))
+    for cmd in ("cat ~/.config/devagent/vault.key", "sudo apt install x", "bw unlock --raw", "cat ~/.ssh/id_ed25519",
+                "printenv", "sqlite3 devpilot.db .dump", "gh auth token", "echo a\necho b"):
+        assert g.call("commande_proposer", {"commande": cmd, "pourquoi": "x"}, actor="chat")["statut"] == "erreur", cmd
+    assert len(agent.journal.approvals("attente")) == waiting
+    assert any("irreversible" in e or "ne peut pas" in e for e in __import__("devagent.automations", fromlist=["x"]).check(
+        {"declencheur": {"type": "manuel"}, "etapes": [{"outil": "commande_proposer", "args": {"commande": "ls", "pourquoi": "x"}}]}))
+    # the missing tool is noted once, and has a brief for Claude Code
+    a = g.call("outil_demander", {"besoin": "Renommer un depot GitHub", "exemple": "gh api -X PATCH repos/o/r -f name=n"}, actor="chat")["resultat"]
+    b = g.call("outil_demander", {"besoin": "renommer un depot github"}, actor="chat")["resultat"]
+    assert b == {"demande": a["demande"], "deja_notee": True}
+    assert [r["need"] for r in g.call("outils_demandes", actor="chat")["resultat"]] == ["Renommer un depot GitHub"]
+    brief = manque.brief(a["demande"])
+    assert "Renommer un depot GitHub" in brief and "gh api -X PATCH" in brief and "nouvelle branche" in brief
+    assert manque.set_status(a["demande"], "faite") and g.call("outils_demandes", actor="chat")["resultat"] == []

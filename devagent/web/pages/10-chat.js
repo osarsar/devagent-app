@@ -20,8 +20,16 @@ DA.page({
     const input = h('textarea', { placeholder: 'Demande quelque chose… (Entree pour envoyer, Maj+Entree pour une ligne)', rows: 1 });
     const sendBtn = h('button', { class: 'btn primary', type: 'button' }, 'Envoyer');
     const typing = h('div', { class: 'typing', hidden: true }, 'L\'agent travaille…');
+    const guideBtn = h('button', { class: 'btn primary', type: 'button', title: 'L\'agent lit l\'etat reel et te dit quoi faire. Il ne modifie rien.' },
+      ctx.project ? '✦ Que faire maintenant ?' : '✦ Le point sur tous mes projets');
+    guideBtn.onclick = () => act(guideBtn, async () => {
+      const r = await api('/api/agent/guide', { project_id: ctx.project });
+      if (!r.ok) throw new Error(r.message);
+      await open(r.chat.id);
+    });
     root.append(h('div', { class: 'chat' },
       h('div', { class: 'stack' },
+        guideBtn,
         h('button', { class: 'btn', type: 'button', onclick: () => open(null) }, '+ Nouvelle conversation'), list),
       h('div', { class: 'chat-main' }, msgs, h('div', { class: 'composer' }, input, sendBtn))));
 

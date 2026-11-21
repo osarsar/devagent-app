@@ -94,3 +94,40 @@ def _fmt(n):
         if n < 1024 or unit == "To":
             return f"{n:.0f} {unit}" if unit == "o" else f"{n:.1f} {unit}"
         n /= 1024
+
+
+@tool("execution_demarrer", "Lance un depot du projet en local (son dev.sh, « npm run dev », run.sh… : la commande "
+      "est celle que DevAgent a trouvee, pas une commande libre), dans un terminal de DevAgent qui survit. "
+      "Renvoie l'adresse ou le voir une fois demarre (execution_apercus la redonne).", risk=RISK_WRITE,
+      params={"projet": PROJET, "depot": {"type": "string", "description": "Dossier du depot dans le projet ('.' = la racine)"}})
+def execution_demarrer(ctx, projet=None, depot="."):
+    import time
+    import persist
+    p = resolve_project(ctx, projet)
+    pv = preview.previews(p["id"])
+    key = depot or "."
+    if key not in pv:
+        raise ToolError(f"Depot « {key} » inconnu dans ce projet. Depots : " + ", ".join(pv) or "aucun")
+    entry = pv[key]
+    if entry.get("running"):
+        return {"deja_lance": True, "adresses": [r.get("url") for r in entry["running"]]}
+    start = entry.get("start")
+    if not start:
+        raise ToolError(f"Je ne sais pas comment lancer « {key} » : ni dev.sh, ni script « dev » dans package.json, ni run.sh.")
+    if not persist.available():
+        raise ToolError("tmux n'est pas installe sur ce PC (sudo apt install tmux) : lance-le a la main : " + start["cmd"])
+    cwd = str((project_dir(p) / start["cwd"]).resolve())
+    sid = f"dev-{p['id']}-{time.time_ns() % 10**10}"
+    persist.create(sid, cwd, ["bash", "-lc", f"{start['cmd']}; exec bash --login"],
+                   {"pid": p["id"], "repo": key, "kind": "terminal", "label": f"{key} · {start['cmd']}"},
+                   env={"TERM": "xterm-256color", "COLORTERM": "truecolor"})
+    url = None
+    for _ in range(40):                                  # up to ~20 s for the server to answer
+        time.sleep(0.5)
+        running = (preview.previews(p["id"]).get(key) or {}).get("running") or []
+        if running:
+            url = running[0].get("url")
+            break
+    return {"lance": True, "commande": start["cmd"], "dossier": start["cwd"], "session": sid, "adresse": url,
+            "note": None if url else "Demarrage en cours (installation des dependances ?) : regarde dans "
+                                     "DevAgent → Sessions, ou rappelle execution_apercus dans un instant."}

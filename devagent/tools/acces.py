@@ -47,7 +47,14 @@ def vercel_lier(ctx, projet_vercel, projet=None, equipe=None, compte=None):
       params={"projet": PROJET})
 def vercel_etat(ctx, projet=None):
     p = resolve_project(ctx, projet)
-    return {"deploiements": vercel.deployments(p), "domaines": vercel.domains(p)}
+    return {"git": vercel.git_link(p), "deploiements": vercel.deployments(p), "domaines": vercel.domains(p)}
+
+
+@tool("vercel_retirer_domaine", "Retire un nom de domaine du projet Vercel (le site ne repondra plus sur ce nom).",
+      risk=RISK_IRREVERSIBLE, automation=False,
+      params={"projet": PROJET, "domaine": {"type": "string"}}, required=("projet", "domaine"))
+def vercel_retirer_domaine(ctx, projet, domaine):
+    return vercel.remove_domain(resolve_project(ctx, projet), domaine.strip().lower())
 
 
 @tool("vercel_ajouter_domaine", "Attache un nom de domaine au projet Vercel et renvoie les enregistrements DNS a "

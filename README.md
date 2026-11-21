@@ -65,6 +65,18 @@ choisissant un projet, elle montre ce dont **ce projet** a besoin et ce qui manq
 informations (`acces_etat`, `acces_tester`, `projet_acces`), sans jamais voir une clé. Une clé ne se renouvelle
 pas toute seule : l'automatisation `verifier-acces` te prévient quand l'une tombe ou expire bientôt.
 
+**Le guide.** Dans la page *Chat*, le bouton « Que faire maintenant ? » fait lire à l'agent l'état réel du
+projet (accès, dépôts, Vercel, domaine, automatisations) et rédige les prochaines actions, dans l'ordre, avec
+ce qui bloque. Sans projet choisi : le point sur tous les projets. Il ne modifie rien. Deux automatisations
+s'en servent : `point-du-matin` (un résumé envoyé chaque matin) et `surveillance-site-expliquee` (quand le site
+tombe, l'agent cherche la cause et l'écrit dans l'alerte). Chaque appel utilise ta clé API Anthropic.
+
+**Quand il manque un outil à l'agent**, il ne reste pas bloqué : il propose la commande exacte
+(`commande_proposer`), que tu vois et confirmes ; elle tourne et il continue avec le résultat. Il note aussi le
+manque (`outil_demander`) : la page *Outils* liste ces demandes, et « Construire avec Claude Code » ouvre Claude
+dans le code de DevAgent avec la demande rédigée. Un nouvel outil n'est actif qu'après ta relecture et un
+redémarrage. Une commande qui lirait une clé ou demanderait `sudo` n'est jamais proposée.
+
 **Bitwarden : les clés sur tous tes PC.** Toutes les clés de la page *Accès* sont gardées dans une note de ton
 Bitwarden (« DevAgent — acces »). Sur chaque PC, une seule fois : `devagent coffre connecter`. Ensuite :
 
