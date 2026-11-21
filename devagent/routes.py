@@ -530,3 +530,41 @@ def api_todo(tid):
     if action == "check":
         return jsonify({"ok": True, "closed": todos.check(tid)})
     return jsonify({"ok": False, "message": "action inconnue"}), 400
+
+
+# ── Tools « a l'essai » ──────────────────────────────────────────────────────
+
+@agent_bp.route("/api/agent/trial")
+def api_trial():
+    files = []
+    errors = registry.trial_errors()
+    tools = [t for t in registry.all_tools() if t.trial]
+    for f in sorted(registry.trial_dir().glob("*.py")):
+        if f.name.startswith("_"):
+            continue
+        files.append({"file": f.name, "error": errors.get(f.name, ""),
+                      "source": f.read_text(encoding="utf-8", errors="replace")[:20000],
+                      "tools": [{"name": t.name, "risk": t.risk, "description": t.description}
+                                for t in tools if t.source and _Path(t.source).name == f.name]})
+    return jsonify({"files": files})
+
+
+@agent_bp.route("/api/agent/trial/<filename>", methods=["POST"])
+def api_trial_do(filename):
+    action = _body().get("action")
+    if action == "approve":
+        def go():
+            out = registry.approve_trial(filename)
+            journal.record(guard.HUMAN, "outil_approuver", "ecriture", {"fichier": filename}, "ok", out)
+            return out
+        return _guarded(go)
+    if action == "delete":
+        f = registry.trial_dir() / filename
+        if not f.is_file() or f.parent != registry.trial_dir() or filename.startswith("_"):
+            return jsonify({"ok": False, "message": "fichier introuvable"}), 404
+        import projects as P
+        P.move_to_trash(str(f))
+        registry.load_trial()
+        journal.record(guard.HUMAN, "outil_ecarter", "ecriture", {"fichier": filename}, "ok", None)
+        return jsonify({"ok": True})
+    return jsonify({"ok": False, "message": "action inconnue"}), 400

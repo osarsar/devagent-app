@@ -2,7 +2,7 @@
 DA.page({
   id: 'outils', title: 'Outils', icon: '🧰', order: 60,
   async render(root, ctx) {
-    const { h, api, act } = DA;
+    const { h, api, act, toast } = DA;
     const { tools, domains } = await api('/api/agent/tools');
     const count = r => tools.filter(t => t.risk === r).length;
     root.append(h('p', { class: 'muted' }, `${tools.length} outils. `,
@@ -10,6 +10,35 @@ DA.page({
       DA.riskPill('ecriture'), ` ${count('ecriture')} journalises · `,
       DA.riskPill('irreversible'), ` ${count('irreversible')} avec ta confirmation. `,
       'Le chat, Claude Code et les automatisations utilisent tous cette meme liste.'));
+    /* Tools « a l'essai » : usable at once, every call confirmed, until approved here */
+    const trial = (await api('/api/agent/trial')).files;
+    if (trial.length) {
+      root.append(h('div', { class: 'card stack' },
+        h('div', { class: 'spread' }, h('h2', {}, 'Outils a l\'essai'), DA.pill(`${trial.length} fichier(s)`, 'warn')),
+        h('p', { class: 'muted' }, 'Ecrits pour l\'agent, pas encore approuves. L\'agent peut deja s\'en servir, mais chaque appel ',
+          'passe par tes Confirmations. Quand tu as vu qu\'un outil se comporte bien, approuve-le : il devient un outil normal.'),
+        ...trial.map(f => {
+          const ok = h('button', { class: 'btn sm primary', type: 'button' }, 'J\'approuve cet outil');
+          ok.onclick = () => act(ok, async () => {
+            if (!confirm(`Approuver ${f.file} ? Ses outils ne demanderont plus de confirmation (sauf ceux qui se declarent irreversibles).`)) return;
+            const r = await api(`/api/agent/trial/${f.file}`, { action: 'approve' });
+            if (!r.ok) throw new Error(r.message);
+            toast('Approuve.', 'ok'); DA.show('outils');
+          });
+          const del = h('button', { class: 'btn sm ghost', type: 'button' }, 'Supprimer');
+          del.onclick = () => act(del, async () => {
+            if (!confirm(`Supprimer ${f.file} ? (il part a la corbeille)`)) return;
+            await api(`/api/agent/trial/${f.file}`, { action: 'delete' }); DA.show('outils');
+          });
+          return h('div', { class: 'stack', style: 'border-top:1px solid var(--border-1);padding-top:10px' },
+            h('div', {}, h('b', { class: 'mono' }, f.file)),
+            f.error ? h('div', { style: 'color:#ff8fa3' }, 'Non charge : ', f.error) : null,
+            ...f.tools.map(t => h('div', { class: 'small' }, h('span', { class: 'mono' }, t.name), ' ', DA.riskPill(t.risk), ' ', t.description)),
+            h('details', { class: 'small' }, h('summary', { style: 'cursor:pointer' }, 'Voir le code'), h('pre', { class: 'muted' }, f.source)),
+            h('div', { class: 'row' }, f.error ? null : ok, del));
+        })));
+    }
+
     /* Missing tools noted by the agent: build them with Claude Code, or mark them done */
     const wanted = (await api('/api/agent/tool-requests')).requests;
     if (wanted.length) {

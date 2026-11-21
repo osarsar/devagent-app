@@ -76,6 +76,17 @@ créer, une décision) est noté dans une liste, avec le lien exact ou la comman
 elle n'est pas vide, et le menu en affiche le nombre. Quand un outil peut constater que c'est fait, la ligne
 est rayée toute seule (vérification toutes les 10 minutes, ou bouton « Vérifier maintenant »).
 
+**Le code, par Claude Code.** L'agent gère les plateformes ; quand une tâche demande de toucher au code, il la
+confie à Claude Code (outil `claude_code`), qui travaille dans le dépôt avec ton abonnement Claude Code. Garde-fous :
+toujours sur une branche de travail (créée si le dépôt est sur `main`), jamais d'envoi sur GitHub, commandes limitées
+au développement ; ce qui est refusé revient à l'agent, qui te le propose. L'agent enchaîne ensuite : lancer en
+local, commit, envoi, mise en ligne.
+
+**Outils à l'essai.** `outil_construire` fait écrire par Claude Code l'outil qui manque, dans `devagent/tools_essai/`.
+Il est utilisable tout de suite, sans redémarrage, mais **chaque appel passe par tes Confirmations** tant que tu ne
+l'as pas approuvé (page *Outils* : voir le code, « J'approuve cet outil »). Un fichier qui exécuterait du code à son
+chargement n'est pas chargé, et tout ce que Claude Code aurait modifié ailleurs dans DevAgent est annulé.
+
 **Quand il manque un outil à l'agent**, il ne reste pas bloqué : il propose la commande exacte
 (`commande_proposer`), que tu vois et confirmes ; elle tourne et il continue avec le résultat. Il note aussi le
 manque (`outil_demander`) : la page *Outils* liste ces demandes, et « Construire avec Claude Code » ouvre Claude

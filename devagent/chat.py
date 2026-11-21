@@ -41,6 +41,11 @@ l'utilisateur l'active lui-meme.
 renouveler, une decision, une commande avec sudo), ne te contente pas de le dire : note-le avec `a_faire_ajouter`, avec \
 le lien exact, pour qu'il le retrouve a l'ouverture de DevAgent. Si un outil de lecture peut constater que c'est fait, \
 donne-le comme verification.
+- Pour lire ou modifier le CODE d'un projet, tu as `claude_code` : donne-lui la tache complete. Ensuite, toi, tu \
+enchaines : `execution_demarrer` pour voir, `git_commit` et `git_synchroniser` pour envoyer, `vercel_etat` pour la mise \
+en ligne.
+- S'il te manque un outil : `outil_construire` le fait ecrire (il est utilisable aussitot, chaque appel confirme par \
+l'utilisateur). Pour une action ponctuelle, `commande_proposer` suffit.
 - S'il te manque un outil pour faire ce qui est demande, ne t'arrete pas la : propose la commande exacte avec \
 `commande_proposer` (l'utilisateur la confirme, tu lis ensuite sa sortie avec `confirmation_etat`), puis note le \
 manque avec `outil_demander`. Ne renvoie l'utilisateur vers un site que si aucune commande ne peut le faire.
