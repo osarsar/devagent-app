@@ -74,7 +74,7 @@ DA.page({
       h('h3', {}, 'DNS'),
       h('p', { class: 'muted small' }, 'Avec tes acces chez le fournisseur DNS du domaine (Cloudflare, OVH ou Hostinger), l\'agent peut ',
         'ecrire les enregistrements. Chaque ecriture attend ta confirmation, avec la liste de ce qui change. ',
-        'OVH : cree les trois cles sur eu.api.ovh.com/createToken avec les droits GET, POST et PUT sur /domain/zone/*.'),
+        'OVH : cree les trois cles sur auth.eu.ovhcloud.com/api/createToken avec les droits GET, POST et PUT sur /domain/zone/*.'),
       h('div', { class: 'grid' }, mk('dns_cloudflare_api_token', 'Cloudflare — token API (DNS lecture + ecriture)', 'password'),
         mk('dns_hostinger_api_token', 'Hostinger — token API', 'password'),
         mk('dns_ovh_application_key', 'OVH — application key', 'password'),
