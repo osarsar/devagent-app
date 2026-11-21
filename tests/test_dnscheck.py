@@ -238,8 +238,11 @@ def test_check_domain_without_expectation(dns):
 def test_expected_for():
     assert dnscheck.expected_for(server_ip="1.2.3.4") == {"type": "A", "value": "1.2.3.4"}
     assert dnscheck.expected_for(server_ip="1.2.3.4, 5.6.7.8") == {"type": "A", "values": ["1.2.3.4", "5.6.7.8"]}
-    assert dnscheck.expected_for("vercel") == {"type": "CNAME", "value": "cname.vercel-dns.com",
-                                               "apex_a": ["76.76.21.21"]}
+    v = dnscheck.expected_for("vercel")
+    assert (v["type"], v["value"], v["apex_a"]) == ("CNAME", "cname.vercel-dns.com", ["76.76.21.21"])
+    # Vercel's newer answers are accepted when checking (never written by default)
+    exp = dnscheck._norm_expected(v)
+    assert "216.198.79.1" in exp["also_a"] and any(__import__("re").search(rx, "abc123.vercel-dns-017.com") for rx in exp["also_cname"])
     assert dnscheck.expected_for("netlify", target="monsite") == {"type": "CNAME", "value": "monsite.netlify.app",
                                                                   "apex_a": ["75.2.60.5"]}
     assert dnscheck.expected_for("netlify", target="monsite.netlify.app")["value"] == "monsite.netlify.app"

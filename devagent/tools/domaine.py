@@ -106,7 +106,16 @@ def _dns_inputs(ctx, projet):
         raise ToolError("Ce projet n'a pas encore de nom de domaine (domaine_enregistrer).")
     if not exp.get("records"):
         raise ToolError("Rien a mettre dans le DNS : le projet n'a pas encore d'hebergement (ni d'email) defini.")
-    return exp["domain"], exp["records"]
+    records = exp["records"]
+    try:                                   # on Vercel, the right site records are the ones Vercel gives for THIS domain
+        from ..connectors import vercel
+        from ._common import resolve_project as _rp
+        site = vercel.dns_records(_rp(ctx, projet))
+        if site:
+            records = site + [r for r in records if r["type"] not in ("A", "AAAA", "CNAME")]
+    except Exception:
+        pass
+    return exp["domain"], records
 
 
 @tool("dns_fournisseurs", "Les fournisseurs DNS branches a DevAgent (ceux chez qui il peut ecrire les enregistrements).")

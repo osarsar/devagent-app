@@ -366,3 +366,33 @@ def _journal_interface_writes(resp):
     except Exception:
         pass
     return resp
+
+
+# ── Access to the outside platforms ─────────────────────────────────────────
+
+@agent_bp.route("/api/agent/access")
+def api_access():
+    from . import access
+    pid = request.args.get("project_id", type=int)
+    out = {"access": access.status()}
+    for e in out["access"]:
+        e["explain"] = access.explain(e)
+    if pid:
+        try:
+            out["project"] = access.for_project(pid)
+        except Exception as e:
+            if not guard._refused(e):
+                raise
+    return jsonify(out)
+
+
+@agent_bp.route("/api/agent/access", methods=["POST"])
+def api_access_save():
+    from . import access
+    return jsonify({"saved": access.save(_body())})
+
+
+@agent_bp.route("/api/agent/access/test", methods=["POST"])
+def api_access_test():
+    from . import access
+    return _guarded(lambda: access.test(_body().get("key") or None))

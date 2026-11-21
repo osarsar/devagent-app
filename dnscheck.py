@@ -75,7 +75,10 @@ MX_LABELS = {
 # filled by expected_for(target=...). "apex_a" is the IP the bare domain may use
 # when the registrar does not support CNAME/ALIAS at the apex.
 EXPECTED_FOR_PLATFORM = {
-    "vercel":           {"type": "CNAME", "value": "cname.vercel-dns.com", "apex_a": ["76.76.21.21"]},
+    # "also_a" / "also_cname": other answers the platform uses and that are just as right
+    # (Vercel now hands out per-project targets): accepted when checking, never written.
+    "vercel":           {"type": "CNAME", "value": "cname.vercel-dns.com", "apex_a": ["76.76.21.21"],
+                         "also_a": ["216.198.79.1"], "also_cname": [r"\.vercel-dns(-\d+)?\.com$"]},
     "netlify":          {"type": "CNAME", "value": "<site>.netlify.app", "apex_a": ["75.2.60.5"]},
     "cloudflare_pages": {"type": "CNAME", "value": "<project>.pages.dev"},
     "github_pages":     {"type": "CNAME", "value": "<user>.github.io",
@@ -271,6 +274,9 @@ def _norm_expected(expected):
     apex_a = _dedupe([str(v).strip() for v in (expected.get("apex_a") or [])])
     if apex_a:
         out["apex_a"] = apex_a
+    for k in ("also_a", "also_cname"):
+        if expected.get(k):
+            out[k] = list(expected[k])
     return out
 
 
@@ -290,10 +296,10 @@ def _match(found, exp, target_ips, apex=None, apex_ok=False):
         if hits:
             return True, hits[0]
     else:
-        hits = [c for c in cn if c in exp["values"]]
+        hits = [c for c in cn if c in exp["values"] or any(re.search(rx, c) for rx in exp.get("also_cname", []))]
         if hits:
             return True, hits[0]
-        hits = [ip for ip in a if ip in exp.get("apex_a", [])]
+        hits = [ip for ip in a if ip in exp.get("apex_a", []) or ip in exp.get("also_a", [])]
         if hits:
             return True, hits[0]
         hits = [ip for ip in a if ip in target_ips]  # CNAME flattening (Cloudflare, ALIAS)
@@ -395,6 +401,9 @@ def expected_for(platform=None, server_ip=None, target=None):
         out = {"type": "CNAME", "value": value}
         if p.get("apex_a"):
             out["apex_a"] = list(p["apex_a"])
+        for k in ("also_a", "also_cname"):
+            if p.get(k):
+                out[k] = list(p[k])
         return out
     if p.get("apex_a"):
         return {"type": "A", "values": list(p["apex_a"])}

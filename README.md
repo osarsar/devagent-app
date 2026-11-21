@@ -28,8 +28,8 @@ ce qui se répète. Tout passe par **une seule liste d'outils** (`devagent outil
 | Dans l'interface | http://localhost:5555/agent → *Chat* (clé API Anthropic dans *Réglages*) | à l'usage, sur ta clé |
 | Sans IA | *Automatisations* : sauvegarde de nuit, surveillance du site, certificat… | aucun |
 
-**Les pages** (http://localhost:5555/agent) : Chat · Confirmations · Automatisations · Carte du projet ·
-Journal · Outils · Réglages.
+**Les pages** (http://localhost:5555/agent) : Chat · Confirmations · Accès · Automatisations · Carte du
+projet · Journal · Outils · Réglages.
 
 **Les commandes**
 
@@ -59,8 +59,18 @@ inactif. Elles tournent tant que DevAgent est lancé. Le format est en tête de 
 `~/.config/devagent/vault.key` : **garde-en une copie** avec tes autres clés (sans elle, les secrets sont à
 ressaisir). Revenir à une version d'avant DevAgent : `devagent coffre ouvrir` d'abord (remet les secrets en clair).
 
-**Le DNS.** Avec un token Cloudflare (Réglages), `dns_plan` montre ce qui changerait et `dns_appliquer`
-l'écrit après ta confirmation. Il ne supprime rien et ne remplace jamais des MX, SPF ou DMARC existants.
+**Les accès.** La page *Accès* range toutes les clés au même endroit : à quoi sert chaque plateforme, si la
+clé est saisie, si elle marche vraiment, quand elle expire, et le lien pour la créer ou la renouveler. En
+choisissant un projet, elle montre ce dont **ce projet** a besoin et ce qui manque. L'agent a les mêmes
+informations (`acces_etat`, `acces_tester`, `projet_acces`), sans jamais voir une clé. Une clé ne se renouvelle
+pas toute seule : l'automatisation `verifier-acces` te prévient quand l'une tombe ou expire bientôt.
+
+**Vercel.** Avec le token du compte : `vercel_etat` (déploiements réussis ou en erreur, domaines, enregistrements
+DNS que Vercel attend), `vercel_ajouter_domaine`, `vercel_redeployer` (après confirmation).
+
+**Le DNS.** Avec tes accès Cloudflare, OVH ou Hostinger, `dns_plan` montre ce qui changerait et `dns_appliquer`
+l'écrit après ta confirmation. Il ne supprime rien et ne remplace jamais des MX, SPF ou DMARC existants. Pour
+un site sur Vercel, les enregistrements sont ceux que Vercel donne pour ce domaine.
 
 **Où est le code**
 

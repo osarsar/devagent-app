@@ -57,7 +57,7 @@ def automatisation_proposer(ctx, nom, declencheur, etapes, projet=None, descript
 
 
 @tool("automatisation_depuis_modele", "Cree une automatisation a partir d'un modele (sauvegarde-nuit, "
-      "surveillance-site, certificat, depots-a-jour, nouveau-commit). Elle reste inactive jusqu'a ce que l'utilisateur l'active.",
+      "surveillance-site, certificat, depots-a-jour, nouveau-commit, verifier-acces). Elle reste inactive jusqu'a ce que l'utilisateur l'active.",
       risk=RISK_WRITE, automation=False,
       params={"projet": PROJET, "modele": {"type": "string", "enum": sorted(automations.TEMPLATES)},
               "nom": NOM, "url": {"type": "string", "description": "Adresse du site a surveiller (sinon le domaine du projet)"}},
