@@ -44,7 +44,8 @@ def chat(home):
     return chat
 
 
-def test_un_tour_avec_outils(chat, P):
+def _waiting_turn(chat, P):
+    """A turn that adds a step, then asks to delete the project: it stops and waits."""
     p = P.create("site")
     c = chat.start(p["id"])
     client = FakeClient([
@@ -54,31 +55,76 @@ def test_un_tour_avec_outils(chat, P):
              {"type": "tool_use", "id": "t2", "name": "projet_etape_ajouter",
               "input": {"phase": "dev", "libelle": "Depuis le chat"}}),
         resp("tool_use", {"type": "tool_use", "id": "t3", "name": "projet_supprimer", "input": {"projet": "site"}}),
-        resp("end_turn", {"type": "text", "text": "Etape ajoutee. La suppression attend ta confirmation."}),
     ])
     assert chat.send(c["id"], "ajoute une etape puis supprime le projet", client=client, wait=True)["ok"]
+    return p, c, client
+
+
+def test_un_tour_avec_outils(chat, P):
+    p, c, client = _waiting_turn(chat, P)
     got = chat.get(c["id"])
-    assert got["status"] == "pret" and got["title"].startswith("ajoute une etape")
+    assert got["status"] == "attente" and got["title"].startswith("ajoute une etape")
     kinds = [(e["type"], e.get("name"), e.get("statut")) for e in got["events"]]
     assert kinds == [("user", None, None), ("assistant", None, None),
                      ("tool", "projet_etat", "ok"), ("tool", "projet_etape_ajouter", "ok"),
-                     ("tool", "projet_supprimer", "confirmation_requise"), ("assistant", None, None)]
-    assert got["events"][4]["confirmation"]                       # the interface shows a confirm button
-    assert P.get(p["id"])                                         # not deleted
+                     ("tool", "projet_supprimer", "confirmation_requise")]
+    aid = got["events"][4]["confirmation"]
+    assert got["waiting"] == [{"confirmation": aid, "tool": "projet_supprimer"}]   # shown at the bottom of the chat
+    assert P.get(p["id"]) and len(client.calls) == 2                               # not deleted, the model waits
 
-    first, second, third = client.calls
+    first, second = client.calls
     assert first["model"] == "claude-opus-5-5" and first["thinking"] == {"type": "adaptive"}
     assert first["output_config"] == {"effort": "medium"} and "site" in first["system"]
-    assert [t["name"] for t in first["tools"]] == sorted(t["name"] for t in first["tools"]) or True
     assert first["tools"] == second["tools"]                      # stable prefix: cacheable
     # both results of the first round went back in ONE user message, thinking block untouched
     assert second["messages"][1]["content"][0] == {"type": "thinking", "thinking": "", "signature": "sig"}
     res = second["messages"][2]["content"]
     assert [r["tool_use_id"] for r in res] == ["t1", "t2"] and all(r["type"] == "tool_result" for r in res)
     assert json.loads(res[0]["content"])["resultat"]["projet"]["nom"] == "site"   # no project named: the chat's one
-    assert "confirmation_requise" in third["messages"][4]["content"][0]["content"]
     from devagent import journal
     assert journal.actions(tool="projet_etape_ajouter")[0]["actor"] == "chat"
+
+
+def test_confirmation_refusee_puis_le_tour_continue(chat, P):
+    from devagent import guard
+    p, c, client = _waiting_turn(chat, P)
+    aid = chat.get(c["id"])["waiting"][0]["confirmation"]
+    assert chat.resume(c["id"], client=client, wait=True) is False                 # not decided yet
+    guard.refuse(aid)
+    client.script.append(resp("end_turn", {"type": "text", "text": "D'accord, je ne supprime rien."}))
+    assert chat.resume(c["id"], client=client, wait=True) is True
+    got = chat.get(c["id"])
+    assert got["status"] == "pret" and got["waiting"] == []
+    assert [(e["type"], e.get("statut")) for e in got["events"][-2:]] == [("decision", "refuse"), ("assistant", None)]
+    r = client.calls[2]["messages"][-1]["content"][0]
+    assert r["tool_use_id"] == "t3" and r["is_error"] is True and "refuse" in r["content"]
+    assert P.get(p["id"])
+    assert chat.resume(c["id"], client=client, wait=True) is False                 # once only
+
+
+def test_confirmation_approuvee_puis_le_tour_continue(chat, P):
+    from devagent import guard
+    p, c, client = _waiting_turn(chat, P)
+    aid = chat.get(c["id"])["waiting"][0]["confirmation"]
+    assert guard.approve(aid, "site")["statut"] == "ok"
+    client.script.append(resp("end_turn", {"type": "text", "text": "Projet supprime."}))
+    assert chat.resume(c["id"], client=client, wait=True) is True
+    r = client.calls[2]["messages"][-1]["content"][0]
+    assert "is_error" not in r and json.loads(r["content"])["confirme_par_utilisateur"] is True
+    assert chat.get(c["id"])["events"][-2]["statut"] == "fait"
+
+
+def test_ecrire_pendant_l_attente_vaut_refus(chat, P):
+    from devagent import journal
+    p, c, client = _waiting_turn(chat, P)
+    aid = chat.get(c["id"])["waiting"][0]["confirmation"]
+    client.script.append(resp("end_turn", {"type": "text", "text": "Compris, je garde le projet."}))
+    assert chat.send(c["id"], "non, garde-le", client=client, wait=True)["ok"]
+    assert journal.approval(aid)["status"] == "refuse"
+    content = client.calls[2]["messages"][-1]["content"]
+    assert content[0]["type"] == "tool_result" and content[0]["is_error"] is True and "a la place" in content[0]["content"]
+    assert content[1] == {"type": "text", "text": "non, garde-le"}
+    assert chat.get(c["id"])["status"] == "pret" and P.get(p["id"])
 
 
 def test_erreur_d_outil_marquee(chat, P):

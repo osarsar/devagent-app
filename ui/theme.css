@@ -231,3 +231,99 @@ body.ws-agent-open .ws-panel.da .chat { height: calc(100vh - 196px); min-height:
 .da .menu-item.danger { color: #ff9aae; }
 .da .pcard { overflow: visible; position: relative; }
 .da .pcard:has(.menu[open]) { z-index: 20; }
+
+/* ── Top bar: title on the left, the agent on the right, nothing else ── */
+.topbar { justify-content: space-between; }
+
+/* ── Icon buttons (reload, phone width, open in a tab) ── */
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 9px; border: 0;
+  cursor: pointer; color: var(--text-2); background: rgba(190, 180, 255, .07); box-shadow: inset 0 0 0 1px rgba(190, 180, 255, .12); text-decoration: none; }
+.icon-btn:hover { color: var(--text-0); background: rgba(190, 180, 255, .14); }
+.ui-ico { flex: none; vertical-align: -2px; }
+.btn .ui-ico { margin-right: 2px; }
+
+/* ── The steps of a project: one slim bar per phase, the next step on the right ── */
+.phase2 { display: flex; align-items: center; gap: 22px; margin-bottom: 12px; padding: 12px 16px; border-radius: 14px;
+  background: var(--glass); box-shadow: var(--glass-rim); }
+.phase2 .ph-steps { display: flex; gap: 8px; flex: 1; min-width: 0; }
+.phase2 .ph { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.phase2 .ph span { font-size: 11px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.phase2 .ph-bar { height: 4px; border-radius: 4px; background: rgba(200, 190, 255, .10); overflow: hidden; }
+.phase2 .ph-bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #8e80ff, #cfc8ff); }
+.phase2 .ph.done .ph-bar i { background: var(--emerald); }
+.phase2 .ph.done span { color: var(--emerald); }
+.phase2 .ph.current span { color: var(--text-0); font-weight: 500; }
+.phase2 .ph-next { display: flex; flex-direction: column; gap: 2px; max-width: 34%; min-width: 0; }
+.phase2 .ph-next b { font-size: 13px; font-weight: 500; color: var(--text-0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.eyebrow { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-3); }
+
+/* ── Chat ── */
+.da .chat2 { display: flex; flex-direction: column; height: calc(100vh - 150px); min-height: 380px; border-radius: var(--radius);
+  background: var(--glass); box-shadow: var(--glass-rim); overflow: hidden; }
+.ws-panel.da .chat2 { height: calc(100vh - 262px); }
+.da .chat-top { display: flex; align-items: center; gap: 8px; justify-content: flex-start; padding: 10px 12px; border-bottom: 1px solid var(--border-0); }
+.da .chat-pick { flex: 1; min-width: 0; width: auto; max-width: 420px; padding: 6px 30px 6px 12px; font-size: 13px; border-radius: 999px; }
+.da .chat-body { flex: 1; min-height: 0; overflow: hidden; display: flex; }
+.da .chat2 .msgs { flex: 1; overflow: auto; padding: 18px 18px 8px; display: flex; flex-direction: column; gap: 10px; }
+.da .chat2 .msg { max-width: 88%; padding: 10px 14px; border-radius: 16px; line-height: 1.55; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.da .chat2 .msg.user { align-self: flex-end; background: rgba(124, 108, 255, .22); box-shadow: inset 0 0 0 1px rgba(170, 158, 255, .30);
+  color: var(--text-0); border-bottom-right-radius: 6px; max-height: 300px; overflow: auto; }
+.da .chat2 .msg.assistant { align-self: flex-start; background: transparent; padding: 2px 2px; color: var(--text-1); max-width: 100%; }
+.da .chat2 .msg.assistant code { font: 12px ui-monospace, monospace; padding: 1px 6px; border-radius: 6px; background: rgba(190, 180, 255, .10); color: #d9d4ff; }
+.da .chat2 .msg.assistant b { color: var(--text-0); font-weight: 600; }
+.da .chat2 .md-h { display: block; margin-top: 6px; font-weight: 600; color: var(--text-0); }
+.da .chat2 .md-li { display: block; padding-left: 18px; position: relative; }
+.da .chat2 .md-li::before { content: "•"; position: absolute; left: 4px; color: var(--violet); }
+.da .chat2 .md-li.n::before { content: attr(data-n); left: 0; font-size: 12px; color: var(--text-3); }
+.da .chat2 .msg.note, .da .chat2 .msg.error { align-self: center; font-size: 12px; color: var(--text-2); background: transparent; }
+.da .chat2 .msg.error { color: #ff9aae; }
+.da .hello { margin: auto; text-align: center; display: flex; flex-direction: column; gap: 8px; align-items: center; color: var(--text-0); font-size: 18px; letter-spacing: -.02em; }
+.da .hello-mark { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 20px; color: #fff; background: var(--lit); box-shadow: var(--lit-rim); }
+.da .working { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); padding: 4px 2px; }
+.da .working[hidden] { display: none; }
+.da .spark { color: #bdb3ff; animation: spark 1.4s ease-in-out infinite; }
+@keyframes spark { 50% { opacity: .35; transform: scale(.8) rotate(45deg); } }
+
+/* an action of the agent: one line, details on click */
+.da .act { align-self: stretch; font-size: 12.5px; }
+.da .act > summary { list-style: none; display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 3px 4px; border-radius: 8px; color: var(--text-2); min-width: 0; }
+.da .act > summary::-webkit-details-marker { display: none; }
+.da .act > summary:hover { background: rgba(190, 180, 255, .06); }
+.da .act-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--text-4); }
+.da .act.ok .act-dot { background: var(--emerald); }
+.da .act.bad .act-dot { background: var(--rose); }
+.da .act.wait .act-dot { background: var(--amber); box-shadow: 0 0 0 3px rgba(245, 177, 61, .18); }
+.da .act-name { font: 500 12px ui-monospace, monospace; color: var(--text-0); flex: none; }
+.da .act-args { flex: 1; min-width: 0; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.da .act-state { flex: none; font-size: 11px; color: var(--text-3); }
+.da .act.bad .act-state { color: #ff9aae; }
+.da .act.wait .act-state { color: var(--amber); }
+.da .act-more { margin: 4px 0 6px 20px; padding-left: 10px; border-left: 1px solid var(--border-1); }
+.da .act-msg { color: var(--text-1); margin-bottom: 4px; white-space: pre-wrap; }
+.da .act-more pre { font-size: 11px; color: var(--text-3); white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+
+/* the question at the bottom, while the agent waits for your OK */
+.da .chat-foot { padding: 10px 12px 12px; border-top: 1px solid var(--border-0); display: flex; flex-direction: column; gap: 10px; }
+.da .permission { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 14px;
+  background: linear-gradient(180deg, rgba(245, 177, 61, .10), rgba(245, 177, 61, .04)); box-shadow: inset 0 0 0 1px rgba(245, 177, 61, .35); }
+.da .permission[hidden] { display: none; }
+.da .perm-head { display: flex; align-items: center; gap: 10px; color: var(--text-0); font-size: 14px; }
+.da .perm-mark { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; color: #1a1205; background: var(--amber); }
+.da .perm-what { display: flex; flex-direction: column; gap: 4px; padding-left: 32px; }
+.da .perm-detail { font-size: 13px; color: var(--text-1); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 140px; overflow: auto; }
+.da .permission .input { margin-left: 32px; width: calc(100% - 32px); }
+.da .perm-actions { gap: 8px; padding-left: 32px; align-items: center; }
+
+/* the composer */
+.da .composer2 { display: flex; align-items: flex-end; gap: 8px; padding: 6px 6px 6px 16px; border-radius: 22px;
+  background: rgba(8, 7, 18, .6); box-shadow: inset 0 0 0 1px rgba(190, 180, 255, .18); }
+.da .composer2:focus-within { box-shadow: inset 0 0 0 1.5px var(--border-focus), 0 0 0 4px rgba(133, 115, 255, .12); }
+.da .composer2 textarea { flex: 1; resize: none; border: 0; outline: none; background: transparent; color: var(--text-0);
+  font: 14px/1.5 var(--font); padding: 8px 0; min-height: 22px; max-height: 180px; box-shadow: none; }
+.da .composer2 textarea:focus { box-shadow: none; }
+.da .send { width: 36px; height: 36px; flex: none; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center;
+  color: #fff; background: var(--lit); box-shadow: var(--lit-rim); }
+.da .send:disabled { opacity: .45; cursor: default; }
+.da .chat-top > .btn { flex: none; }
+.da .chat-top > .btn.primary { margin-left: auto; }
+#ws-etat a { color: #b3a8ff; }

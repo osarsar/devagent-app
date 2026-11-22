@@ -83,8 +83,18 @@ function renderPhaseLine(r) {
     if (!line) return;
     if (!r.phases.length) { line.style.display = 'none'; return; }
     line.style.display = 'flex';
-    line.innerHTML = `${phaseStepper(r, true)}<span style="font-size:11px;color:var(--text-3)">${r.next ? 'Prochaine etape : <b style="color:var(--text-0)">' + hx(r.next.label) + '</b>' : '<span style="color:var(--emerald)">en production</span>'}</span>
-        <button class="btn btn-xs" onclick="wsAsk('Montre-moi la feuille de route de ce projet et ce qui reste a faire.')">Feuille de route</button>`;
+    line.className = 'phase2';
+    const seg = r.phases.map(p => {
+        const pct = p.state === 'done' ? 100 : p.total ? Math.round(p.done * 100 / p.total) : 0;
+        return `<div class="ph ${hx(p.state)}" title="${hx(p.desc)} — ${p.done}/${p.total}">
+            <div class="ph-bar"><i style="width:${pct}%"></i></div>
+            <span>${p.state === 'done' ? '✓ ' : ''}${hx(p.label)}</span></div>`;
+    }).join('');
+    line.innerHTML = `<div class="ph-steps">${seg}</div>
+        <div class="ph-next">${r.next
+            ? `<span class="eyebrow">Prochaine etape</span><b>${hx(r.next.label)}</b>`
+            : '<b style="color:var(--emerald)">En production</b>'}</div>
+        <button class="btn btn-xs" onclick="wsAsk('Montre-moi la feuille de route de ce projet et ce qui reste a faire.')">${uiIcon('spark', 11)} Feuille de route</button>`;
 }
 
 async function refreshPhaseLine() {

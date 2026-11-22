@@ -17,7 +17,7 @@ from datetime import datetime
 
 import db
 
-from . import guard, registry
+from . import guard, journal, registry
 
 DEFAULT_MODEL = "claude-opus-5-5"
 MAX_TOKENS = 16000
@@ -31,8 +31,9 @@ Comment travailler :
 - Regarde avant d'agir : `projet_etat` dit ou en est un projet et ce qui lui manque.
 - Agis avec les outils. N'invente jamais un etat : si tu ne l'as pas lu avec un outil, tu ne le sais pas.
 - Chaque outil repond avec `statut` : `ok`, `erreur` (lis `message` et dis-le simplement), ou `confirmation_requise`.
-- `confirmation_requise` : l'action est irreversible et n'a PAS ete faite. L'utilisateur voit un bouton pour \
-la confirmer. Dis-lui clairement ce qui attend, et ne cherche pas une autre facon de la faire.
+- `confirmation_requise` : l'action est irreversible. La conversation s'arrete et l'utilisateur voit la demande \
+en bas du chat. Quand il a decide, tu recois le resultat de l'outil (fait, echec ou refuse) et tu continues. \
+S'il refuse, ne cherche pas une autre facon de faire la meme chose : tiens compte de ce qu'il a ecrit.
 - Tu ne vois jamais de secret (token, mot de passe). S'il en manque un, l'utilisateur le saisit dans les reglages.
 - Pour une tache qui doit se repeter (chaque nuit, toutes les 10 minutes, quand un site tombe), propose une \
 automatisation avec `automatisation_depuis_modele` ou `automatisation_proposer`. Elle reste inactive : \
@@ -81,6 +82,9 @@ def _ensure():
                 events TEXT DEFAULT '[]'
             );
         """)
+        cols = {r[1] for r in c.execute("PRAGMA table_info(agent_chats)")}
+        if "pending" not in cols:                       # a turn waiting for the user's confirmation
+            c.execute("ALTER TABLE agent_chats ADD COLUMN pending TEXT DEFAULT ''")
         c.execute("UPDATE agent_chats SET status = 'pret', error = 'Interrompu : DevAgent a redemarre.' "
                   "WHERE status = 'en_cours'")
     _ready_for = str(db.DB_PATH)
@@ -99,6 +103,7 @@ def _load(cid):
     d = dict(r)
     d["messages"] = json.loads(d["messages"] or "[]")
     d["events"] = json.loads(d["events"] or "[]")
+    d["pending"] = json.loads(d.get("pending") or "null")
     return d
 
 
@@ -106,7 +111,7 @@ def _save(cid, **kw):
     sets, vals = ["updated_at = ?"], [_now()]
     for k, v in kw.items():
         sets.append(f"{k} = ?")
-        vals.append(json.dumps(v, ensure_ascii=False, default=str) if k in ("messages", "events") else v)
+        vals.append(json.dumps(v, ensure_ascii=False, default=str) if k in ("messages", "events", "pending") else v)
     with db.get_db() as c:
         c.execute(f"UPDATE agent_chats SET {', '.join(sets)} WHERE id = ?", vals + [cid])
 
@@ -125,9 +130,13 @@ def get(cid, since=0):
     d = _load(cid)
     if not d:
         return None
+    if d["status"] == "attente" and resume(cid):
+        d = _load(cid)
+    waiting = [{"confirmation": w["confirmation"], "tool": w["name"]} for w in (d["pending"] or {}).get("waiting", [])
+               if d["status"] == "attente"]
     return {"id": d["id"], "project_id": d["project_id"], "title": d["title"], "status": d["status"],
             "error": d["error"], "updated_at": d["updated_at"], "total": len(d["events"]),
-            "events": d["events"][max(0, int(since)):]}
+            "events": d["events"][max(0, int(since)):], "waiting": waiting}
 
 
 def chats(project_id=None, limit=30):
@@ -238,9 +247,18 @@ def send(cid, text, client=None, wait=False, read_only=False, shown=None):
         return {"ok": False, "message": "L'agent travaille deja sur ta demande precedente"}
     if client is None and not configured():
         return {"ok": False, "message": "Pas de cle API Anthropic. Ajoute-la dans Agent → Reglages."}
-    d["messages"].append({"role": "user", "content": text})
+    if d["status"] == "attente" and d["pending"]:      # like Claude Code: writing instead of answering refuses
+        for w in d["pending"]["waiting"]:
+            a = journal.approval(w["confirmation"])
+            if a and a["status"] == "attente":
+                guard.refuse(w["confirmation"])
+        results = _decided_results(d["pending"], written=True)
+        d["messages"].append({"role": "user", "content": results + [{"type": "text", "text": text}]})
+        d["events"].extend(_decision_events(d["pending"]))
+    else:
+        d["messages"].append({"role": "user", "content": text})
     d["events"].append({"type": "user", "text": shown or text, "at": _now()})
-    _save(cid, messages=d["messages"], events=d["events"], status="en_cours", error="",
+    _save(cid, messages=d["messages"], events=d["events"], status="en_cours", error="", pending="",
           title=d["title"] or (shown or text)[:60])
     if wait:
         _turn(cid, client, read_only)
@@ -272,7 +290,7 @@ def _turn(cid, client=None, read_only=False):
                     events.append({"type": "assistant", "text": b["text"], "at": _now()})
             reason = resp.stop_reason
             if reason == "tool_use":
-                results = []
+                results, waiting = [], []
                 for b in content:
                     if b.get("type") != "tool_use":
                         continue
@@ -283,9 +301,17 @@ def _turn(cid, client=None, read_only=False):
                     events.append({"type": "tool", "name": b["name"], "args": b.get("input") or {},
                                    "statut": answer["statut"], "message": answer.get("message", ""),
                                    "confirmation": answer.get("confirmation"), "at": _now()})
+                    if answer["statut"] == "confirmation_requise" and answer.get("confirmation"):
+                        waiting.append({"tool_use_id": b["id"], "confirmation": answer["confirmation"], "name": b["name"]})
+                        results.append({"type": "tool_result", "tool_use_id": b["id"], "content": ""})   # filled on decision
+                        continue
                     results.append({"type": "tool_result", "tool_use_id": b["id"],
                                     "content": guard.compact(answer),
                                     **({"is_error": True} if answer["statut"] == "erreur" else {})})
+                if waiting:                                                  # the user decides; then resume()
+                    _save(cid, messages=messages, events=events, status="attente",
+                          pending={"results": results, "waiting": waiting})
+                    return
                 messages.append({"role": "user", "content": results})       # every result in ONE message
                 _save(cid, messages=messages, events=events)
                 continue
@@ -314,6 +340,75 @@ def _turn(cid, client=None, read_only=False):
         msg = _explain(e)
         events.append({"type": "error", "text": msg, "at": _now()})
         _save(cid, messages=messages, events=events, status="pret", error=msg)
+
+
+# ── Waiting for a confirmation, then going on ───────────────────────────────
+
+DECIDED = ("fait", "echec", "refuse")
+
+
+def _decided_results(pending, written=False):
+    """The tool results of a waiting turn, each confirmation now decided."""
+    by_id = {w["tool_use_id"]: w for w in pending["waiting"]}
+    out = []
+    for r in pending["results"]:
+        w = by_id.get(r["tool_use_id"])
+        if not w:
+            out.append(r)
+            continue
+        a = journal.approval(w["confirmation"]) or {}
+        if a.get("status") == "refuse":
+            msg = "L'utilisateur a refuse cette action." + (" Il a ecrit a la place le message qui suit." if written else "")
+            out.append({"type": "tool_result", "tool_use_id": r["tool_use_id"], "is_error": True,
+                        "content": json.dumps({"statut": "erreur", "message": msg}, ensure_ascii=False)})
+        else:
+            ok = a.get("status") == "fait"
+            out.append({"type": "tool_result", "tool_use_id": r["tool_use_id"], **({} if ok else {"is_error": True}),
+                        "content": json.dumps({"statut": "ok" if ok else "erreur", "confirme_par_utilisateur": True,
+                                               "reponse": a.get("result") or ""}, ensure_ascii=False)[:guard.MAX_RESULT_CHARS]})
+    return out
+
+
+def _decision_events(pending):
+    evs = []
+    for w in pending["waiting"]:
+        a = journal.approval(w["confirmation"]) or {}
+        evs.append({"type": "decision", "confirmation": w["confirmation"], "name": w["name"],
+                    "statut": a.get("status") or "refuse", "at": _now()})
+    return evs
+
+
+def resume(cid, client=None, wait=False):
+    """A waiting turn goes on once every confirmation is decided. True when it resumed."""
+    d = _load(cid)
+    if not d or d["status"] != "attente" or not d["pending"]:
+        return False
+    for w in d["pending"]["waiting"]:
+        a = journal.approval(w["confirmation"])
+        if a and a["status"] not in DECIDED:
+            return False                                 # still waiting (or running after the approval)
+    with db.get_db() as c:                               # one resume only, whoever asks first
+        if c.execute("UPDATE agent_chats SET status = 'en_cours' WHERE id = ? AND status = 'attente'", (cid,)).rowcount != 1:
+            return False
+    d["messages"].append({"role": "user", "content": _decided_results(d["pending"])})
+    d["events"].extend(_decision_events(d["pending"]))
+    _save(cid, messages=d["messages"], events=d["events"], pending="")
+    if wait:
+        _turn(cid, client)
+    else:
+        t = threading.Thread(target=_turn, args=(cid, client), name=f"devagent-chat-{cid}", daemon=True)
+        with _lock:
+            _threads[cid] = t
+        t.start()
+    return True
+
+
+def resume_waiting():
+    """After a decision: every conversation waiting for it goes on."""
+    _ensure()
+    with db.get_db() as c:
+        ids = [r[0] for r in c.execute("SELECT id FROM agent_chats WHERE status = 'attente'")]
+    return [cid for cid in ids if resume(cid)]
 
 
 # ── Guide: the agent looks at the real state and says what to do ─────────────
