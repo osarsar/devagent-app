@@ -17,9 +17,11 @@ const PAGE_TITLES = {
 const COLORS = ['#6d5cff','#06b6d4','#22d3a7','#f472b6','#f59e0b','#f43f5e','#60a5fa','#fb923c','#2dd4bf'];
 
 /* ═══ CHART DEFAULTS ═══ */
-Chart.defaults.color = '#42424e';
-Chart.defaults.borderColor = 'rgba(255,255,255,.04)';
-Chart.defaults.font.family = "'Inter', sans-serif";
+if (window.Chart) {                  // a missing chart library must never take the whole app down
+    Chart.defaults.color = '#42424e';
+    Chart.defaults.borderColor = 'rgba(255,255,255,.04)';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+}
 
 const CHART_COLORS = ['#6d5cff','#38bdf8','#22d3a7','#f472b6','#f59e0b','#f43f5e','#60a5fa','#fb923c','#2dd4bf'];
 const DOUGHNUT_OPTS = {

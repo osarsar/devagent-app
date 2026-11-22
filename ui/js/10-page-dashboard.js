@@ -48,7 +48,7 @@ async function loadDashboard() {
 
     // Disk chart
     destroyChart('chart-disk');
-    charts['chart-disk'] = new Chart(document.getElementById('chart-disk'), {
+    charts['chart-disk'] = window.Chart && new Chart(document.getElementById('chart-disk'), {
         type: 'doughnut',
         data: {
             labels: sys.disks.map(dk => dk.mount === '/' ? 'SSD (/)' : dk.mount),
@@ -64,7 +64,7 @@ async function loadDashboard() {
     destroyChart('chart-home');
     const topH = home.slice(0, 8);
     const catColors = { system: '#8b5cf6', cache: '#fbbf24', downloads: '#fb7185', sdk: '#38bdf8', projects: '#34d399', project: '#a78bfa', personal: '#60a5fa' };
-    charts['chart-home'] = new Chart(document.getElementById('chart-home'), {
+    charts['chart-home'] = window.Chart && new Chart(document.getElementById('chart-home'), {
         type: 'bar',
         data: {
             labels: topH.map(h => h.name.length > 14 ? h.name.slice(0, 14) + '..' : h.name),
@@ -82,7 +82,7 @@ async function loadDashboard() {
     empty.style.display = pj.length ? 'none' : '';
     empty.textContent = proj.length ? 'Taille des projets en cours de calcul...' : 'Aucun projet';
     if (pj.length) {
-        charts['chart-projects'] = new Chart(canvas, {
+        charts['chart-projects'] = window.Chart && new Chart(canvas, {
             type: 'doughnut',
             data: { labels: pj.map(p => p.name), datasets: [{ data: pj.map(p => p.disk_size), backgroundColor: pj.map(p => p.color), borderWidth: 0, spacing: 3, borderRadius: 4 }] },
             options: { ...DOUGHNUT_OPTS, plugins: { ...DOUGHNUT_OPTS.plugins, tooltip: { ...DOUGHNUT_OPTS.plugins.tooltip, callbacks: { label: ctx => pj[ctx.dataIndex].name + ': ' + fmtB(pj[ctx.dataIndex].disk_size) } } } }

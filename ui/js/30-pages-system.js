@@ -40,7 +40,7 @@ async function loadCaches() {
     document.getElementById('global-count').textContent = gc.length;
     destroyChart('chart-gcache');
     const gf = gc.filter(g => g.size > 0);
-    if (gf.length) { charts['chart-gcache'] = new Chart(document.getElementById('chart-gcache'), { type: 'doughnut', data: { labels: gf.map(g => g.label), datasets: [{ data: gf.map(g => g.size), backgroundColor: CHART_COLORS, borderWidth: 0, spacing: 3, borderRadius: 4 }] }, options: { ...DOUGHNUT_OPTS, plugins: { ...DOUGHNUT_OPTS.plugins, tooltip: { ...DOUGHNUT_OPTS.plugins.tooltip, callbacks: { label: ctx => gf[ctx.dataIndex].size_h } } } } }); }
+    if (gf.length) { charts['chart-gcache'] = window.Chart && new Chart(document.getElementById('chart-gcache'), { type: 'doughnut', data: { labels: gf.map(g => g.label), datasets: [{ data: gf.map(g => g.size), backgroundColor: CHART_COLORS, borderWidth: 0, spacing: 3, borderRadius: 4 }] }, options: { ...DOUGHNUT_OPTS, plugins: { ...DOUGHNUT_OPTS.plugins, tooltip: { ...DOUGHNUT_OPTS.plugins.tooltip, callbacks: { label: ctx => gf[ctx.dataIndex].size_h } } } } }); }
     document.getElementById('global-table').innerHTML = `<table><thead><tr><th>Cache</th><th class="text-right">Taille</th><th></th></tr></thead><tbody>${gc.map(g => `<tr><td><span style="font-weight:600">${g.label}</span>${g.cmd ? `<span class="text-dim mono" style="font-size:9px;margin-left:8px">${g.cmd}</span>` : ''}</td><td class="text-right mono" style="font-weight:600;color:var(--sky)">${g.size_h}</td><td><button class="btn btn-xs btn-danger" onclick="clearGlobal('${g.key}','${g.label}')">Vider</button></td></tr>`).join('')}</tbody></table>`;
 
     // System cache
