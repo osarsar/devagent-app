@@ -84,7 +84,7 @@ function renderPhaseLine(r) {
     if (!r.phases.length) { line.style.display = 'none'; return; }
     line.style.display = 'flex';
     line.innerHTML = `${phaseStepper(r, true)}<span style="font-size:11px;color:var(--text-3)">${r.next ? 'Prochaine etape : <b style="color:var(--text-0)">' + hx(r.next.label) + '</b>' : '<span style="color:var(--emerald)">en production</span>'}</span>
-        <button class="btn btn-xs" onclick="wsTab('roadmap')">Feuille de route</button>`;
+        <button class="btn btn-xs" onclick="wsAsk('Montre-moi la feuille de route de ce projet et ce qui reste a faire.')">Feuille de route</button>`;
 }
 
 async function refreshPhaseLine() {

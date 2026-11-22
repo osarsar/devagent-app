@@ -1,7 +1,8 @@
 /* ═══ Le poste de travail d'un projet ═══
-   A gauche tu parles a l'agent ; a droite tu regardes le projet : son etat, le site en local,
-   le site en ligne, le terminal. Quatre vues du meme panneau (wsView). */
-let wsViewCur = 'term', wsStation = null, wsOnline = null, wsStationTimer = null, wsLiveUrl = null;
+   A gauche l'agent : c'est lui qui travaille (code, git, connexions, etapes). A droite tu regardes
+   le projet : son etat, le site en local, le site en ligne. Trois vues du meme panneau (wsView).
+   Plus de terminal ni d'onglets : leur code reste (l'apercu local s'en sert) mais rien ne s'affiche. */
+let wsViewCur = 'etat', wsStation = null, wsOnline = null, wsStationTimer = null, wsLiveUrl = null;
 
 const _wsShowTermBase = wsShowTerm, _wsToggleViewBase = wsToggleView;
 function _wsViewMark(v) {
@@ -9,22 +10,21 @@ function _wsViewMark(v) {
     document.querySelectorAll('.ws-view-btn').forEach(b => b.classList.toggle('on', b.dataset.view === v));
     document.getElementById('ws-etat').style.display = v === 'etat' ? 'block' : 'none';
     document.getElementById('ws-ligne').style.display = v === 'ligne' ? 'flex' : 'none';
-    document.querySelectorAll('.ws-term-only').forEach(e => { e.style.display = v === 'term' ? '' : 'none'; });
 }
-wsShowTerm = function () { _wsShowTermBase(); _wsViewMark('term'); };
-wsToggleView = function (on) {                       // kept for the code that opens the local preview itself
+wsShowTerm = function () { _wsShowTermBase(); document.getElementById('ws-xterm').style.display = 'none'; };
+wsToggleView = function (on) {                       // the local preview opens or closes
     _wsToggleViewBase(on);
-    _wsViewMark(wsPrevOn ? 'local' : 'term');
+    if (wsPrevOn) _wsViewMark('local'); else wsView('etat');
 };
+startXterm = function () {};                         // no terminal in the page any more…
+wsAttach = function (sid) { wsTermSid = sid; };       // …a session started for the site keeps running on its own
 
 function wsView(v) {
-    if (v === 'term') return wsShowTerm();
     if (v === 'local') { if (!wsPrevOn) wsToggleView(true); else _wsViewMark('local'); return; }
     if (wsPrevOn) _wsToggleViewBase(false);          // leaves the local preview
     document.getElementById('ws-xterm').style.display = 'none';
-    _wsViewMark(v);
-    if (v === 'etat') loadWsStation();
-    if (v === 'ligne') renderWsLive();
+    _wsViewMark(v === 'ligne' ? 'ligne' : 'etat');
+    if (v === 'ligne') renderWsLive(); else loadWsStation();
 }
 
 async function loadWsStation(online) {
@@ -57,10 +57,10 @@ function wsStationLocal(dir, url) {
 }
 async function wsStationStart(dir, btn) {
     devChoose(dir);
-    wsView('term');                                  // you see it start…
-    await devStart(dir, btn);
-    wsView('local');                                 // …then the site
+    await devStart(dir, btn);                        // runs in the background, ready in a few seconds
     loadWsStation();
+    const pv = devPrev(dir);
+    if (pv && pv.running.some(x => x.kind === 'page')) wsView('local');
 }
 
 function renderWsStation() {
@@ -110,7 +110,7 @@ function renderWsStation() {
         live += `<div class="st-line">${dot(o.git_relie ? 'ok' : 'warn')}
             <div class="st-main">${o.git_relie ? 'Vercel est relie a GitHub : chaque envoi met le site en ligne.' : 'Vercel n\'est pas relie a GitHub : la mise en ligne se fait a la main.'}</div></div>`;
     } else if (!s.domaine) live += `<div class="st-sub" style="padding:8px 0">Ce projet n'a pas encore de site en ligne.
-        <a href="#" onclick="wsTab('connections');return false">Connexions</a></div>`;
+        <a href="#" onclick="wsAsk('Aide-moi a mettre ce projet en ligne : hebergement et nom de domaine.');return false">Demander a l'agent</a></div>`;
 
     const agent = (s.confirmations.length ? `<div class="st-line">${dot('bad')}<div class="st-main"><b>${s.confirmations.length} action(s) attendent ta confirmation</b>
             <div class="st-sub">${s.confirmations.map(a => hx(a.tool)).join(', ')}</div></div>
@@ -119,7 +119,10 @@ function renderWsStation() {
             <div class="st-main"><span class="mono">${hx(a.tool)}</span> <span class="st-sub" style="display:inline">· ${hx(a.actor)}</span></div>
             <span class="st-sub">${when(a.at)}</span></div>`).join('') || '<div class="st-sub">Aucune action sur ce projet pour l\'instant.</div>');
 
-    el.innerHTML = `
+    const missing = s.dossier ? '' : `<div class="st-card"><div class="st-line">${dot('bad')}<div class="st-main"><b>Le dossier du projet est introuvable sur ce PC</b>
+            <div class="st-sub">Il a ete deplace ou supprime.</div></div>
+            <button class="btn btn-xs btn-primary" onclick="go('projects');openMoveModal(${s.id})">Relocaliser</button></div></div>`;
+    el.innerHTML = missing + `
         <div class="st-card"><div class="st-head"><h4>En local, sur ce PC</h4></div>${local}</div>
         <div class="st-card"><div class="st-head"><h4>En ligne</h4><button class="btn btn-xs btn-ghost" onclick="loadWsStation(true)" title="Relire l'hebergement">⟳</button></div>${live}</div>
         <div class="st-card"><div class="st-head"><h4>Le code</h4></div>${code}</div>
@@ -132,7 +135,7 @@ function renderWsLive() {
     if (!s.domaine) {
         bar.innerHTML = '<span>pas de site en ligne</span>';
         body.innerHTML = `<div class="ws-prev-msg">Ce projet n'a pas de nom de domaine enregistre.<br>
-            <button class="btn btn-sm btn-primary" style="margin-top:10px" onclick="wsTab('connections')">Ouvrir Connexions</button></div>`;
+            <button class="btn btn-sm btn-primary" style="margin-top:10px" onclick="wsAsk('Aide-moi a mettre ce projet en ligne : hebergement et nom de domaine.')">Demander a l'agent</button></div>`;
         return;
     }
     const url = 'https://' + s.domaine;
@@ -143,24 +146,22 @@ function renderWsLive() {
     if (wsLiveUrl !== url) { wsLiveUrl = url; body.innerHTML = `<iframe src="${hx(url)}" title="Site en ligne"></iframe>`; }
 }
 
-/* opening a project, or its Agent tab: the work station */
+/* a project page is its work station: whatever tab is asked for, the agent is shown */
 const _wsTabBase = wsTab;
 wsTab = function (tab) {
-    _wsTabBase(tab);
-    document.body.classList.toggle('ws-agent-open', tab === 'agent');
-    if (tab === 'agent' && wsViewCur === 'term' && !wsStationSeen) { wsStationSeen = true; wsView('etat'); }
-    try { if (fitAddon) fitAddon.fit(); } catch (e) {}
+    if (tab === 'dev') loadWsDev();                  // the repositories: the local preview needs them
+    _wsTabBase('agent');
+    document.body.classList.add('ws-agent-open');
 };
-let wsStationSeen = false;
 const _openWorkspaceBase = openWorkspace;
 openWorkspace = async function (pid) {
-    if (pid !== wsProjectId) { wsStation = null; wsOnline = null; wsLiveUrl = null; wsStationSeen = false; }
-    wsShowTerm();
+    if (pid !== wsProjectId) { wsStation = null; wsOnline = null; wsLiveUrl = null; }
+    if (wsPrevOn) _wsToggleViewBase(false);
     const sel = document.getElementById('ws-project-select');
     if (sel && DA.state.projects.length) {
         sel.innerHTML = DA.state.projects.map(p => `<option value="${p.id}">${hx(p.name)}</option>`).join('');
         sel.value = pid;
     }
-    await _openWorkspaceBase(pid);                   // loads the repositories (tab Développer)…
-    if (wsProjectId === pid) wsTab('agent');         // …then shows the work station: the agent and the state
+    await _openWorkspaceBase(pid);                   // its wsTab('dev') loads the repositories and shows the agent
+    if (wsProjectId === pid) wsView('etat');
 };
