@@ -128,6 +128,7 @@ const DA = (() => {
   function open(id) {
     const d = def(id) || def('accueil') || pages[0];
     if (!d) return '';
+    if (d.id === 'chat') setProject(null);                     // the menu's Chat is the general one; a project's chat is in its work station
     const head = document.getElementById('da-head');
     const sel = document.getElementById('da-project');
     if (head) head.hidden = !!d.global;                       // a screen about everything has no project to choose
@@ -154,6 +155,10 @@ const DA = (() => {
       sel.value = state.project || '';
       sel.addEventListener('change', () => {
         setProject(sel.value);
+        if (state.project && window.currentPage === 'agent:chat') {     // a project chosen in the chat: its work station
+          window.openWorkspace(state.project).then(() => window.wsTab('agent'));
+          return;
+        }
         if (window.currentPage && window.currentPage.startsWith('agent:')) open(window.currentPage.split(':')[1]);
       });
     }

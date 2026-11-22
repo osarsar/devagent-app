@@ -111,3 +111,51 @@ def build():
             "a_faire_total": todos.count(), "confirmations": waiting[:5], "confirmations_total": len(waiting),
             "alertes": _alerts(projs), "projets": projs, "systeme": systeme, "pause": guard.paused(),
             "sync": etat.info(), "activite": journal.actions(limit=8)}
+
+
+# ── The work station of ONE project: what you watch while you talk to the agent ──
+
+def station(pid):
+    """Local state of a project, read at once (no network): where each repository runs on this PC,
+    what is not committed or not sent, the site, the last actions and what waits for the user."""
+    from . import guard
+    p = P.get_project(pid) if hasattr(P, "get_project") else next((x for x in P.all_projects() if x["id"] == pid), None)
+    if not p:
+        return None
+    out = {"id": pid, "nom": p["name"], "depots": [], "domaine": None, "site": None,
+           "activite": [], "confirmations": []}
+    previews = guard.call("execution_apercus", {"projet": str(pid)}, actor=guard.HUMAN).get("resultat") or {}
+    if p.get("path") and Path(p["path"]).is_dir():
+        for r in P.find_repos(p["path"]):
+            st = P.git_state(Path(p["path"]) / r["dir"])
+            pv = previews.get(r["dir"]) or previews.get(r.get("name")) or {}
+            out["depots"].append({
+                "dir": r["dir"], "nom": r.get("name") or r["dir"], "branche": st.get("branch") or "",
+                "modifies": (st.get("modified") or 0) + (st.get("untracked") or 0), "non_envoyes": st.get("unpushed") or 0,
+                "distant": bool(st.get("has_remote")), "erreur": st.get("error"),
+                "local": [{"port": x.get("port"), "url": x.get("url"), "page": x.get("kind") == "page"} for x in pv.get("running") or []],
+                "lancement": (pv.get("start") or {}).get("cmd")})
+    try:
+        dom = (db.get_project_component(pid, "domain") or {}).get("config") or {}
+        if dom.get("domain"):
+            ok = dom.get("site_ok")
+            out["domaine"] = dom["domain"]
+            out["site"] = "ok" if ok is True or ok == "True" else ("en_panne" if ok is False or ok == "False" else "inconnu")
+    except Exception:
+        pass
+    out["activite"] = [{k: a.get(k) for k in ("at", "actor", "tool", "status")}                  # tools only, not page requests
+                       for a in journal.actions(limit=40, project_id=pid) if " /api/" not in a.get("tool", "")][:6]
+    out["confirmations"] = [{k: a.get(k) for k in ("id", "tool", "reason")} for a in journal.approvals("attente")
+                            if a.get("project_id") == pid]
+    return out
+
+
+def online(pid):
+    """What the hosting platform says (a network call: asked apart, so the screen never waits for it)."""
+    from . import guard
+    r = guard.call("vercel_etat", {"projet": str(pid)}, actor=guard.HUMAN)
+    if r.get("statut") != "ok":
+        return {"vercel": False, "message": r.get("message") or ""}
+    v = r["resultat"]
+    return {"vercel": True, "git_relie": bool((v.get("git") or {}).get("relie")), "git_comment": (v.get("git") or {}).get("comment"),
+            "deploiements": (v.get("deploiements") or [])[:4], "domaines": v.get("domaines") or []}

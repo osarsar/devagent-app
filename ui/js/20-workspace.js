@@ -18,7 +18,7 @@ let wsComponents = [];
 function buildWsTabs(components) {
     // Determine which tabs to show based on active components
     // work first (code, agent, steps), then what the project is connected to, then the rest
-    const tabs = ['dev', 'agent', 'roadmap', 'connections', 'automatisations', 'carte'];
+    const tabs = ['agent', 'dev', 'roadmap', 'connections', 'automatisations', 'carte'];
     if (!components || components.length === 0 || components.includes('git')) tabs.push('git');
     if (components && (components.includes('storage') || components.includes('backup') || components.includes('database'))) tabs.push('cloud');
     tabs.push('sessions');
@@ -28,7 +28,7 @@ function buildWsTabs(components) {
 
     const container = document.getElementById('ws-tabs-container');
     container.innerHTML = tabs.map((t, i) =>
-        `<div class="ws-tab${i===0?' active':''}" data-tab="${t}" onclick="wsTab('${t}')" title="${hx(WS_TAB_TITLES[t] || t)}">${WS_TAB_ICONS[t] || ''}<span>${WS_TAB_LABELS[t] || t}</span><span class="ws-tab-badge" id="ws-badge-${t}" style="display:none"></span></div>`
+        `<div class="ws-tab${t==='dev'?' active':''}" data-tab="${t}" onclick="wsTab('${t}')" title="${hx(WS_TAB_TITLES[t] || t)}">${WS_TAB_ICONS[t] || ''}<span>${WS_TAB_LABELS[t] || t}</span><span class="ws-tab-badge" id="ws-badge-${t}" style="display:none"></span></div>`
     ).join('');
     wsTabsOverflow();
 

@@ -130,6 +130,7 @@ DA.page({
     await loadList();
     const wanted = DA.state.chat; DA.state.chat = null;                             // a conversation asked for by another screen
     await open(wanted || null);
+    if (DA.state.draft) { input.value = DA.state.draft; DA.state.draft = null; input.focus(); }   // prepared by a button: you read, then send
     return () => clearTimeout(timer);
   }
 });

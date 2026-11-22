@@ -592,3 +592,16 @@ def api_trial_do(filename):
 def api_home():
     from . import home
     return jsonify(home.build())
+
+
+@agent_bp.route("/api/agent/station/<int:pid>")
+def api_station(pid):
+    from . import home
+    s = home.station(pid)
+    return jsonify(s) if s else (jsonify({"message": "Projet introuvable"}), 404)
+
+
+@agent_bp.route("/api/agent/station/<int:pid>/en-ligne")
+def api_station_online(pid):
+    from . import home
+    return jsonify(home.online(pid))

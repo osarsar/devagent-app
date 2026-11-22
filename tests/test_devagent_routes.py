@@ -138,3 +138,13 @@ def test_carte_chat_et_reglages_par_http(c, monkeypatch):
     # saving the form again with the masked value must not erase the token
     c.post("/api/agent/notify", json={"notify_telegram_bot_token": "****"})
     assert db.get_setting("notify_telegram_bot_token") == "1:ABC"
+
+
+def test_poste_de_travail(c):
+    assert c.get("/api/agent/station/999999").status_code == 404
+    pid = c.post("/api/projects", json={"name": "poste-essai"}).get_json().get("id")
+    if pid:                                                          # local state: read at once, no network
+        s = c.get(f"/api/agent/station/{pid}").get_json()
+        assert s["id"] == pid and {"depots", "domaine", "site", "activite", "confirmations"} <= set(s)
+        assert all(" /api/" not in a["tool"] for a in s["activite"])
+    assert "/ui/js/28-workspace-poste.js" in c.get("/").get_data(as_text=True)
