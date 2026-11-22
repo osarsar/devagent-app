@@ -77,7 +77,7 @@ function renderWsStation() {
             <div class="st-main"><b>${hx(d.nom)}</b>
               <div class="st-sub">${up ? d.local.map(x => 'localhost:' + x.port).join(', ') : (d.lancement ? 'pas lance · <code>' + hx(d.lancement) + '</code>' : 'rien a lancer')}</div></div>
             ${pages.length ? `<button class="btn btn-xs btn-primary" onclick="wsStationLocal(${q(d.dir)}, ${q(pages[0].url)})">Voir</button>`
-              : (!up && d.lancement ? `<button class="btn btn-xs btn-primary" onclick="wsStationStart(${q(d.dir)}, this)">▶ Lancer</button>` : '')}
+              : (!up && d.lancement ? `<button class="btn btn-xs btn-primary" onclick="wsStationStart(${q(d.dir)}, this)">${uiIcon('play', 11)} Lancer</button>` : '')}
         </div>`;
     }).join('') || '<div class="st-sub">Aucun depot dans ce projet.</div>';
 
@@ -89,7 +89,7 @@ function renderWsStation() {
               <div class="st-sub">${d.erreur ? hx(d.erreur) : (what || 'tout est enregistre et envoye')}</div></div>
             ${dirty ? `<button class="btn btn-xs" onclick="wsAsk(${q(`Enregistre mon travail du depot ${d.dir} et envoie-le sur GitHub.`)})">Envoyer</button>` : ''}
         </div>`;
-    }).join('');
+    }).join('') || '<div class="st-sub">Aucun depot de code dans ce projet.</div>';
 
     let live = '';
     if (s.domaine) {
@@ -105,7 +105,7 @@ function renderWsStation() {
         if (d) live += `<div class="st-line">${dot(st[0])}
             <div class="st-main"><b>Dernier deploiement</b> · ${hx(st[1])}
               <div class="st-sub">${when(d.quand)}${d.commit ? ' · ' + hx(d.commit) : ''}${d.erreur ? ' · ' + hx(d.erreur) : ''}</div></div>
-            <a class="btn btn-xs" href="${hx(d.inspecter || d.url)}" target="_blank" rel="noopener" style="text-decoration:none">Vercel ↗</a>
+            <a class="btn btn-xs" href="${hx(d.inspecter || d.url)}" target="_blank" rel="noopener" style="text-decoration:none">Vercel ${uiIcon('external', 11)}</a>
             <button class="btn btn-xs" onclick="wsAsk('Mets en ligne la derniere version du site.')">Deployer</button></div>`;
         live += `<div class="st-line">${dot(o.git_relie ? 'ok' : 'warn')}
             <div class="st-main">${o.git_relie ? 'Vercel est relie a GitHub : chaque envoi met le site en ligne.' : 'Vercel n\'est pas relie a GitHub : la mise en ligne se fait a la main.'}</div></div>`;
@@ -124,7 +124,7 @@ function renderWsStation() {
             <button class="btn btn-xs btn-primary" onclick="go('projects');openMoveModal(${s.id})">Relocaliser</button></div></div>`;
     el.innerHTML = missing + `
         <div class="st-card"><div class="st-head"><h4>En local, sur ce PC</h4></div>${local}</div>
-        <div class="st-card"><div class="st-head"><h4>En ligne</h4><button class="btn btn-xs btn-ghost" onclick="loadWsStation(true)" title="Relire l'hebergement">⟳</button></div>${live}</div>
+        <div class="st-card"><div class="st-head"><h4>En ligne</h4><button class="icon-btn" onclick="loadWsStation(true)" title="Relire l'hebergement">${uiIcon('reload')}</button></div>${live}</div>
         <div class="st-card"><div class="st-head"><h4>Le code</h4></div>${code}</div>
         <div class="st-card"><div class="st-head"><h4>Ce que l'agent a fait</h4><a href="#agent:journal" class="st-sub">journal</a></div>${agent}</div>`;
 }
@@ -140,9 +140,9 @@ function renderWsLive() {
     }
     const url = 'https://' + s.domaine;
     bar.innerHTML = `<b style="color:var(--text-1)">${hx(s.domaine)}</b>
-        <button class="btn btn-xs" onclick="wsLiveUrl=null;renderWsLive()" title="Recharger la page">⟳</button>
-        <a class="btn btn-xs" href="${hx(url)}" target="_blank" rel="noopener" style="text-decoration:none" title="Ouvrir dans un onglet du navigateur">↗</a>
-        <span style="margin-left:auto">le site que voient tes visiteurs · vide ? ouvre-le avec ↗</span>`;
+        <button class="icon-btn" onclick="wsLiveUrl=null;renderWsLive()" title="Recharger la page">${uiIcon('reload')}</button>
+        <a class="icon-btn" href="${hx(url)}" target="_blank" rel="noopener" title="Ouvrir dans un onglet du navigateur">${uiIcon('external')}</a>
+        <span style="margin-left:auto">le site que voient tes visiteurs · vide ? ouvre-le dans un onglet</span>`;
     if (wsLiveUrl !== url) { wsLiveUrl = url; body.innerHTML = `<iframe src="${hx(url)}" title="Site en ligne"></iframe>`; }
 }
 

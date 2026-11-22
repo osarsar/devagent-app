@@ -88,6 +88,21 @@ async function deleteFile(path, name) {
 }
 
 /* ═══ NAVIGATION ═══ */
+/* small line icons for buttons (no emoji: they look different on every system) */
+const UI_ICONS = {
+    reload: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
+    phone: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>',
+    desktop: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+    external: '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+    play: '<path d="M7 5v14l11-7z"/>',
+    spark: '<path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/>',
+    up: '<path d="M12 19V5"/><path d="M5 12l7-7 7 7"/>',
+};
+function uiIcon(name, size) {
+    const n = size || 14;
+    return `<svg class="ui-ico" width="${n}" height="${n}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${UI_ICONS[name] || ''}</svg>`;
+}
+
 function go(page) {
     if (page === 'projects') page = 'agent:projets';     // the agent's Projets screen replaced the old page
     document.body.classList.remove('nav-open');          // narrow window: the menu folds after a choice
@@ -128,21 +143,7 @@ function loadPage(p) {
 function refresh() { loadPage(currentPage); toast('Rafraichi', 'info'); }
 
 /* ═══ TOPBAR LIVE STATS ═══ */
-async function updateTopbar() {
-    try {
-        const s = await api('system');
-        const d = s.disks.find(d => d.mount === '/') || s.disks[0];
-        const cpuCls = s.cpu.percent > 80 ? 'danger' : s.cpu.percent > 60 ? 'warn' : '';
-        const ramCls = s.ram.percent > 80 ? 'danger' : s.ram.percent > 60 ? 'warn' : '';
-        document.getElementById('topbar-stats').innerHTML = `
-            <div class="topbar-stat">CPU <b class="${cpuCls}">${s.cpu.percent}%</b></div>
-            <div class="topbar-stat">RAM <b class="${ramCls}">${s.ram.percent}%</b> <span style="color:var(--text-4)">${s.ram.used_h}</span></div>
-            <div class="topbar-stat">SSD <b>${d?.percent || 0}%</b> <span style="color:var(--text-4)">${d?.free_h || ''} libre</span></div>
-            ${s.trash.size > 100 * 1024 * 1024 ? '<div class="topbar-stat"><b class="danger">' + s.trash.size_h + '</b> trash</div>' : ''}`;
-    } catch (e) {}
-}
-
-setInterval(updateTopbar, 8000); updateTopbar();
+function updateTopbar() {}           // the figures moved to « Ce PC »; kept for old callers
 
 // Poll events
 setInterval(async () => {

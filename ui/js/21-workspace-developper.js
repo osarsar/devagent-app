@@ -232,7 +232,7 @@ function renderWsPreview() {
         body.className = 'ws-prev-body';
         body.innerHTML = !pv ? '<div class="ws-prev-msg"><span class="dev-spin"></span> recherche…</div>'
             : pv.start ? `<div class="ws-prev-msg">Ce dépôt n'est pas lancé sur ce PC.<br>
-                  <button class="btn btn-sm btn-primary" style="margin-top:10px" onclick="wsPrevStart(this)">▶ Lancer</button>
+                  <button class="btn btn-sm btn-primary" style="margin-top:10px" onclick="wsPrevStart(this)">${uiIcon('play', 12)} Lancer</button>
                   <div style="margin-top:10px;font-size:11px;color:var(--text-4)"><code>${hx(pv.start.cmd)}</code> dans <code>${hx(pv.start.cwd)}</code> (${hx(pv.start.why)})</div></div>`
             : (pv.running.length ? `<div class="ws-prev-msg">Ce dépôt répond sur ${pv.running.map(x => 'localhost:' + x.port).join(', ')},
                   mais aucune page web à afficher (API / service).</div>`
@@ -245,9 +245,9 @@ function renderWsPreview() {
              ${pages.map(x => `<option value="${hx(x.url)}"${x.url === wsPrevUrl ? ' selected' : ''}>localhost:${x.port}</option>`).join('')}</select>`
         : `<span class="mono" style="color:var(--text-1)">${hx(wsPrevUrl.replace(/^https?:\/\//, ''))}</span>`;
     bar.innerHTML = `<b style="color:var(--text-1)">${hx(nom)}</b> ${choix}
-        <button class="btn btn-xs" onclick="wsPrevReload()" title="Recharger la page">⟳</button>
-        <button class="btn btn-xs" onclick="wsPrevPhone=!wsPrevPhone;renderWsPreview()" title="Largeur téléphone / pleine largeur">${wsPrevPhone ? '🖥' : '📱'}</button>
-        <a class="btn btn-xs" href="${hx(wsPrevUrl)}" target="_blank" rel="noopener" style="text-decoration:none" title="Ouvrir dans un onglet du navigateur">↗</a>
+        <button class="icon-btn" onclick="wsPrevReload()" title="Recharger la page">${uiIcon('reload')}</button>
+        <button class="icon-btn" onclick="wsPrevPhone=!wsPrevPhone;renderWsPreview()" title="Largeur téléphone / pleine largeur">${uiIcon(wsPrevPhone ? 'desktop' : 'phone')}</button>
+        <a class="icon-btn" href="${hx(wsPrevUrl)}" target="_blank" rel="noopener" title="Ouvrir dans un onglet du navigateur">${uiIcon('external')}</a>
         <span style="margin-left:auto">tes modifications, en direct</span>`;
     body.className = 'ws-prev-body' + (wsPrevPhone ? ' phone' : '');
     const f = body.querySelector('iframe');

@@ -83,12 +83,25 @@ def _dns_preview(a):
 
 @agent_bp.route("/api/agent/approvals/<int:aid>/approve", methods=["POST"])
 def api_approve(aid):
-    return jsonify(guard.approve(aid, _body().get("confirm")))
+    out = guard.approve(aid, _body().get("confirm"))
+    _resume_chats()
+    return jsonify(out)
 
 
 @agent_bp.route("/api/agent/approvals/<int:aid>/refuse", methods=["POST"])
 def api_refuse(aid):
-    return jsonify(guard.refuse(aid))
+    out = guard.refuse(aid)
+    _resume_chats()
+    return jsonify(out)
+
+
+def _resume_chats():
+    """A conversation that waited for this decision goes on by itself."""
+    try:
+        from . import chat
+        chat.resume_waiting()
+    except Exception:
+        pass
 
 
 @agent_bp.route("/api/agent/state")
