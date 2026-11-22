@@ -10,6 +10,7 @@ function _wsViewMark(v) {
     document.querySelectorAll('.ws-view-btn').forEach(b => b.classList.toggle('on', b.dataset.view === v));
     document.getElementById('ws-etat').style.display = v === 'etat' ? 'block' : 'none';
     document.getElementById('ws-ligne').style.display = v === 'ligne' ? 'flex' : 'none';
+    document.getElementById('ws-afaire').style.display = v === 'afaire' ? 'block' : 'none';
 }
 wsShowTerm = function () { _wsShowTermBase(); document.getElementById('ws-xterm').style.display = 'none'; };
 wsToggleView = function (on) {                       // the local preview opens or closes
@@ -23,8 +24,8 @@ function wsView(v) {
     if (v === 'local') { if (!wsPrevOn) wsToggleView(true); else _wsViewMark('local'); return; }
     if (wsPrevOn) _wsToggleViewBase(false);          // leaves the local preview
     document.getElementById('ws-xterm').style.display = 'none';
-    _wsViewMark(v === 'ligne' ? 'ligne' : 'etat');
-    if (v === 'ligne') renderWsLive(); else loadWsStation();
+    _wsViewMark(['ligne', 'afaire'].includes(v) ? v : 'etat');
+    if (v === 'ligne') renderWsLive(); else if (v === 'afaire') loadWsTodos(true); else loadWsStation();
 }
 
 async function loadWsStation(online) {
@@ -122,7 +123,10 @@ function renderWsStation() {
     const missing = s.dossier ? '' : `<div class="st-card"><div class="st-line">${dot('bad')}<div class="st-main"><b>Le dossier du projet est introuvable sur ce PC</b>
             <div class="st-sub">Il a ete deplace ou supprime.</div></div>
             <button class="btn btn-xs btn-primary" onclick="go('projects');openMoveModal(${s.id})">Relocaliser</button></div></div>`;
-    el.innerHTML = missing + `
+    const todoN = wsTodos ? wsTodos.open.length : 0;
+    const todoLine = todoN ? `<div class="st-card todo-callout" onclick="wsView('afaire')"><span class="st-dot warn"></span>
+        <b>${todoN} chose${todoN > 1 ? 's' : ''} a faire par toi pour ce projet</b><span class="grow"></span><span class="btn btn-xs btn-primary">Voir</span></div>` : '';
+    el.innerHTML = missing + todoLine + `
         <div class="st-card"><div class="st-head"><h4>En local, sur ce PC</h4></div>${local}</div>
         <div class="st-card"><div class="st-head"><h4>En ligne</h4><button class="icon-btn" onclick="loadWsStation(true)" title="Relire l'hebergement">${uiIcon('reload')}</button></div>${live}</div>
         <div class="st-card"><div class="st-head"><h4>Le code</h4></div>${code}</div>
@@ -163,5 +167,59 @@ openWorkspace = async function (pid) {
         sel.value = pid;
     }
     await _openWorkspaceBase(pid);                   // its wsTab('dev') loads the repositories and shows the agent
-    if (wsProjectId === pid) wsView('etat');
+    if (wsProjectId !== pid) return;
+    const n = await loadWsTodos(false);              // something to do for this project: that comes first
+    if (wsProjectId === pid) wsView(n ? 'afaire' : 'etat');
 };
+
+
+/* ═══ A faire : what the user must do himself for THIS project, done from here ═══ */
+let wsTodos = null, wsTodosShowDone = false;
+
+async function loadWsTodos(check) {
+    const pid = wsProjectId;
+    const d = await fetch(`/api/agent/todos?project_id=${pid}&check=${check ? 1 : 0}`).then(r => r.json()).catch(() => null);
+    if (pid !== wsProjectId || !d) return 0;
+    if (d.closed && d.closed.length) toast('Fait entre-temps : ' + d.closed.map(c => c.titre).join(', '), 'success');
+    wsTodos = { open: d.open, done: (d.done || []).filter(t => t.project_id === pid) };
+    const n = document.getElementById('ws-afaire-n');
+    if (n) { n.textContent = d.open.length; n.hidden = !d.open.length; }
+    renderWsTodos();
+    return d.open.length;
+}
+
+async function wsTodoAction(id, action, btn) {
+    if (btn) btn.disabled = true;
+    const r = await fetch(`/api/agent/todos/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }) }).then(x => x.json()).catch(() => null);
+    if (action === 'check') toast(r && r.closed && r.closed.length ? 'C\'est bien fait : je raye la ligne.' : 'Pas encore fait, d\'apres ce que je vois.',
+        r && r.closed && r.closed.length ? 'success' : 'info');
+    await loadWsTodos(false);
+    DA.refreshState();
+}
+
+function renderWsTodos() {
+    const el = document.getElementById('ws-afaire');
+    if (!el || !wsTodos) return;
+    const q = t => hx(JSON.stringify(t));
+    const card = t => `<div class="st-card todo">
+        <div class="todo-head"><span class="st-dot warn"></span><b>${hx(t.title)}</b>
+          ${t.check_tool ? '<span class="todo-auto" title="DevAgent le constate tout seul quand c\'est fait">verifie tout seul</span>' : ''}</div>
+        ${t.why ? `<div class="st-sub todo-why">${hx(t.why)}</div>` : ''}
+        ${t.how ? `<details class="todo-how"><summary>Comment faire</summary><div>${hx(t.how)}</div></details>` : ''}
+        <div class="todo-actions">
+          ${t.link ? `<a class="btn btn-xs btn-primary" href="${hx(t.link)}" target="_blank" rel="noopener" style="text-decoration:none">Ouvrir la page ${uiIcon('external', 11)}</a>` : ''}
+          ${t.check_tool ? `<button class="btn btn-xs" onclick="wsTodoAction(${t.id}, 'check', this)">Verifier</button>` : ''}
+          <button class="btn btn-xs${t.link ? '' : ' btn-primary'}" onclick="wsTodoAction(${t.id}, 'done', this)">C'est fait</button>
+          <button class="btn btn-xs" onclick="wsAsk(${q('Aide-moi a faire ceci : ' + t.title)})">${uiIcon('spark', 11)} Demander</button>
+          <button class="btn btn-xs btn-ghost" onclick="wsTodoAction(${t.id}, 'drop', this)" title="Ne plus l'afficher">Ecarter</button>
+        </div></div>`;
+    const done = wsTodos.done;
+    el.innerHTML = (wsTodos.open.length ? wsTodos.open.map(card).join('')
+        : `<div class="todo-empty"><div class="todo-empty-mark">✓</div><b>Rien a faire de ton cote</b>
+             <div class="st-sub">L'agent ajoute ici ce qu'il ne peut pas faire seul pour ce projet : un accord sur un site, une cle, une decision.</div></div>`)
+        + (done.length ? `<button class="todo-done-btn" onclick="wsTodosShowDone=!wsTodosShowDone;renderWsTodos()">${wsTodosShowDone ? 'Masquer' : 'Voir'} les ${done.length} deja faites</button>
+             ${wsTodosShowDone ? done.map(t => `<div class="st-line small"><span class="st-dot ok"></span><div class="st-main" style="color:var(--text-2)">${hx(t.title)}</div>
+                 <span class="st-sub">${t.done_by === 'verification' ? 'constate' : 'coche'} · ${hx(String(t.done_at || '').slice(0, 10))}</span>
+                 <button class="icon-btn" title="Remettre a faire" onclick="wsTodoAction(${t.id}, 'reopen', this)">${uiIcon('reload', 12)}</button></div>`).join('') : ''}` : '');
+}
