@@ -651,3 +651,56 @@ def api_resources(pid):
 def api_chat_stop(cid):
     from . import chat
     return jsonify(chat.stop(cid))
+
+
+# ── Documents of a company (logo, card, brochures) ──────────────────────────
+
+@agent_bp.route("/api/agent/documents")
+def api_documents_overview():
+    from . import documents
+    return jsonify({"projets": documents.overview()})
+
+
+@agent_bp.route("/api/agent/documents/<int:pid>")
+def api_documents(pid):
+    from . import documents
+    try:
+        return jsonify(documents.catalog(pid))
+    except documents.DocError as e:
+        return jsonify({"ok": False, "message": str(e)}), 404
+
+
+@agent_bp.route("/api/agent/documents/<int:pid>/fichier")
+@agent_bp.route("/api/agent/documents/<int:pid>/fichier/<name>")        # the name in the URL: the PDF viewer shows it
+def api_document_file(pid, name=None):
+    """?f=<path in the list>[&dl=1]: shown in the browser (preview, print) or downloaded."""
+    from flask import send_file
+    from . import documents
+    try:
+        f = documents.path(pid, request.args.get("f", ""))
+    except documents.DocError as e:
+        return jsonify({"ok": False, "message": str(e)}), 404
+    return send_file(f, mimetype=documents.mime(f), as_attachment=request.args.get("dl") == "1",
+                     download_name=f.name, max_age=0)
+
+
+@agent_bp.route("/api/agent/documents/<int:pid>/apercu")
+def api_document_thumb(pid):
+    from flask import send_file
+    from . import documents
+    try:
+        f = documents.thumbnail(pid, request.args.get("f", ""))
+    except documents.DocError as e:
+        return jsonify({"ok": False, "message": str(e)}), 404
+    return send_file(f, mimetype="image/jpeg", max_age=3600)
+
+
+@agent_bp.route("/api/agent/documents/<int:pid>/agent", methods=["POST"])
+def api_document_agent(pid):
+    """« Modifier » a document, or « Creer » one of the list: the agent takes the request in a new conversation."""
+    from . import documents
+    b = _body()
+    try:
+        return jsonify({"ok": True, **documents.ask_agent(pid, b.get("demande"), b.get("doc"), b.get("creer"))})
+    except documents.DocError as e:
+        return jsonify({"ok": False, "message": str(e)}), 400
