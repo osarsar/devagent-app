@@ -74,6 +74,7 @@ DA.page({
           h('div', { class: 'progress-line' }, h('i', { style: `width:${pct}%` })),
           p.prochaine ? h('div', { class: 'small' }, h('span', { class: 'muted' }, 'Prochaine etape · '), p.prochaine) : null),
         signals.length ? h('div', { class: 'row tags' }, ...signals) : null,
+        h('div', { class: 'pres', 'data-pid': p.id }),                 // disk and live use, filled by refreshRes()
         h('div', { class: 'row pcard-foot' },
           h('button', { class: 'btn sm primary', type: 'button', onclick: ev => { ev.stopPropagation(); openWorkspace(p.id); } }, 'Ouvrir'),
           guideBtn, h('span', { class: 'grow' }), menu(p)));
@@ -108,5 +109,24 @@ DA.page({
       h('button', { class: 'btn sm', type: 'button', onclick: () => openAddProject('folder') }, 'Ajouter')));
     root.append(grid);
     draw();
+
+    /* what each project costs this PC: disk always, RAM / CPU / GPU while it runs (every 5 s) */
+    let resTimer = null;
+    async function refreshRes() {
+      let r;
+      try { r = (await api('/api/agent/ressources')).projets; } catch (e) { r = null; }
+      if (r) root.querySelectorAll('.pres').forEach(el => {
+        const x = r[el.dataset.pid];
+        if (!x) return;
+        const disk = x.disque ? octets(x.disque) : (x.disque_en_cours ? 'mesure…' : '—');
+        el.innerHTML = `<span class="pres-item" title="Place sur le disque">${uiIcon('disk', 12)} ${disk}</span>`
+          + (x.en_marche
+            ? `<span class="pres-item on" title="Consommation en direct"><span class="st-dot ok"></span>RAM ${octets(x.ram)} · CPU ${String(x.cpu).replace('.', ',')} %${x.gpu ? ' · GPU ' + octets(x.gpu) : ''}</span>`
+            : '<span class="pres-item off">ne tourne pas</span>');
+      });
+      resTimer = setTimeout(refreshRes, 5000);
+    }
+    refreshRes();
+    return () => clearTimeout(resTimer);
   }
 });

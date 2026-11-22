@@ -97,7 +97,15 @@ const UI_ICONS = {
     play: '<path d="M7 5v14l11-7z"/>',
     spark: '<path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/>',
     up: '<path d="M12 19V5"/><path d="M5 12l7-7 7 7"/>',
+    disk: '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+    pulse: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
 };
+function octets(n) {                 // sizes in French units (Go, Mo)
+    n = Number(n) || 0;
+    const u = ['o', 'Ko', 'Mo', 'Go', 'To']; let i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    return (i === 0 ? n : n >= 100 ? Math.round(n) : n.toFixed(1)).toString().replace('.', ',') + ' ' + u[i];
+}
 function uiIcon(name, size) {
     const n = size || 14;
     return `<svg class="ui-ico" width="${n}" height="${n}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${UI_ICONS[name] || ''}</svg>`;

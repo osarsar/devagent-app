@@ -624,3 +624,17 @@ def api_station_online(pid):
 def api_projects_page():
     from . import home
     return jsonify({"projets": home.projects_page()})
+
+
+# ── Resources: disk always, RAM / CPU / GPU while it runs ───────────────────
+
+@agent_bp.route("/api/agent/ressources")
+def api_resources_overview():
+    from . import ressources
+    return jsonify({"projets": ressources.overview()})
+
+
+@agent_bp.route("/api/agent/ressources/<int:pid>")
+def api_resources(pid):
+    from . import ressources
+    return jsonify(ressources.project(pid, refresh_disk=request.args.get("remesurer") == "1"))
