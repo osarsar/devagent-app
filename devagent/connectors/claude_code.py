@@ -14,6 +14,9 @@ Limits, enforced here:
   - no MCP server inside (no recursion, none of the user's other connectors).
 """
 import json
+import threading
+import signal
+import os
 import re
 import shlex
 import shutil
@@ -118,6 +121,54 @@ def _parse(stdout):
     return out
 
 
+# ── A run that can be stopped from outside (the chat's « Arreter ») ─────────
+
+_running = {}                 # thread ident → Popen of the Claude Code started by that thread
+_running_lock = threading.Lock()
+
+
+def _launch(argv, cwd, timeout):
+    """subprocess.run, but registered so that stop_for(thread) can kill it (and its children)."""
+    proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            text=True, start_new_session=True)
+    me = threading.get_ident()
+    with _running_lock:
+        _running[me] = proc
+    try:
+        out, err = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _kill(proc)
+        out, err = proc.communicate()
+        raise subprocess.TimeoutExpired(argv, timeout, output=out, stderr=err)
+    finally:
+        with _running_lock:
+            _running.pop(me, None)
+    return subprocess.CompletedProcess(argv, proc.returncode, out, err)
+
+
+def _kill(proc):
+    try:
+        os.killpg(proc.pid, signal.SIGTERM)
+        proc.wait(timeout=5)
+    except (ProcessLookupError, PermissionError, OSError):
+        pass
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except OSError:
+            pass
+
+
+def stop_for(thread_ident):
+    """Stop the Claude Code run started by this thread, if any. True when one was stopped."""
+    with _running_lock:
+        proc = _running.get(thread_ident)
+    if not proc or proc.poll() is not None:
+        return False
+    _kill(proc)
+    return True
+
+
 def run(repo, task, resume=None, rules=None, allowed=None, timeout=TIMEOUT):
     """Run Claude Code in ``repo`` on ``task``. Returns what it did (never raises on a failed task)."""
     repo = Path(repo)
@@ -129,8 +180,11 @@ def run(repo, task, resume=None, rules=None, allowed=None, timeout=TIMEOUT):
     if resume:
         argv += ["--resume", resume]
     try:
-        r = subprocess.run(argv, cwd=str(repo), capture_output=True, text=True, timeout=timeout, stdin=subprocess.DEVNULL)
-        parsed, err = _parse(r.stdout), r.stderr.strip()
+        r = _launch(argv, str(repo), timeout)
+        parsed, err = _parse(r.stdout), (r.stderr or "").strip()
+        if r.returncode in (-signal.SIGTERM, -signal.SIGKILL) and not parsed["text"]:
+            parsed["is_error"] = True
+            parsed["text"] = "Arrete par l'utilisateur."
         if r.returncode != 0 and not parsed["text"]:
             parsed["is_error"] = True
             parsed["text"] = (err or "Claude Code s'est arrete sans reponse")[-600:]
@@ -174,7 +228,7 @@ def build_tool(need, example=""):
             "--max-turns", str(MAX_TURNS), "--strict-mcp-config", "--append-system-prompt", TOOL_RULES,
             "--allowedTools", *argv_allowed, "--disallowedTools", *DENIED]
     try:
-        r = subprocess.run(argv, cwd=str(APP), capture_output=True, text=True, timeout=TIMEOUT, stdin=subprocess.DEVNULL)
+        r = _launch(argv, str(APP), TIMEOUT)
         parsed = _parse(r.stdout)
     except subprocess.TimeoutExpired:
         parsed = {"text": "Arrete : trop long.", "is_error": True, "denials": [], "session": None}

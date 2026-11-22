@@ -430,3 +430,38 @@ select.fs-native { position: absolute !important; width: 1px !important; height:
 .form-input.fs-btn, .input.fs-btn { width: 100%; }
 .da .chat-pick.fs-btn { flex: 1; width: auto; min-width: 0; max-width: 420px; border-radius: 999px; }
 .ws-project-select.fs-btn { width: auto; min-width: 200px; max-width: 260px; border-radius: 999px; font-size: 14px; font-weight: 600; }
+
+/* ── Roadmap detail ── */
+.phase2 .ph-steps { cursor: pointer; }
+.phase2 .ph-steps:hover .ph-bar { background: rgba(200, 190, 255, .18); }
+.phase2.open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; }
+.roadmap-pop { margin-bottom: 12px; padding: 14px 16px 16px; border-radius: 0 0 14px 14px; background: var(--glass); box-shadow: var(--glass-rim);
+  max-height: 46vh; overflow: auto; }
+.rp-intro { font-size: 12.5px; color: var(--text-2); line-height: 1.55; margin-bottom: 12px; max-width: 900px; }
+.rp-intro b { color: var(--text-0); font-weight: 500; }
+.rp-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.rp-col { padding: 10px 12px; border-radius: 12px; background: rgba(8, 7, 18, .4); box-shadow: inset 0 0 0 1px var(--border-0); }
+.rp-col.current { box-shadow: inset 0 0 0 1px rgba(160, 148, 255, .45); }
+.rp-head { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-0); }
+.rp-head span { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.rp-desc { margin: 2px 0 8px; white-space: normal; }
+.rp-step { display: flex; gap: 9px; padding: 7px 0; border-top: 1px solid var(--border-0); }
+.rp-step.skipped { opacity: .55; }
+.rp-ico { flex: none; width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; margin-top: 1px; }
+.rp-ico.ok { background: var(--emerald-dim); color: var(--emerald); }
+.rp-ico.part { background: var(--amber-dim); color: var(--amber); }
+.rp-ico.todo { box-shadow: inset 0 0 0 1.5px var(--text-4); }
+.rp-ico.later { color: var(--text-3); }
+.rp-main { flex: 1; min-width: 0; }
+.rp-label { font-size: 12.5px; color: var(--text-0); }
+.rp-step .st-sub { white-space: normal; font-size: 11.5px; }
+.rp-how { color: var(--text-4); }
+.rp-actions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.rp-actions:empty { display: none; }
+.da .chat2 .msgs > * { flex-shrink: 0; }      /* a long conversation must never squeeze the messages */
+.da .send.stop { background: rgba(255, 93, 122, .16); box-shadow: inset 0 0 0 1px rgba(255, 120, 145, .5); color: #ffb3c1; }
+.da .send.stop:hover { background: rgba(255, 93, 122, .26); }
+.da .working .stop-hint { margin-left: 8px; font-size: 11px; color: var(--text-4); }
+.da .chat2 .md-table { border-collapse: collapse; margin: 6px 0; font-size: 13px; white-space: normal; display: block; overflow-x: auto; max-width: 100%; }
+.da .chat2 .md-table th { text-align: left; font-weight: 500; color: var(--text-0); padding: 6px 10px; border-bottom: 1px solid var(--border-2); }
+.da .chat2 .md-table td { padding: 6px 10px; border-bottom: 1px solid var(--border-0); vertical-align: top; }

@@ -638,3 +638,9 @@ def api_resources_overview():
 def api_resources(pid):
     from . import ressources
     return jsonify(ressources.project(pid, refresh_disk=request.args.get("remesurer") == "1"))
+
+
+@agent_bp.route("/api/agent/chats/<int:cid>/stop", methods=["POST"])
+def api_chat_stop(cid):
+    from . import chat
+    return jsonify(chat.stop(cid))

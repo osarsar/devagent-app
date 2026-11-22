@@ -233,6 +233,71 @@ def _explain(e):
 
 # ── A turn ──────────────────────────────────────────────────────────────────
 
+# ── Stopping a turn (the « Arreter » button, Echap, Ctrl+C) ─────────────────
+
+class _Stopped(Exception):
+    """The user stopped the turn."""
+
+
+_stops = {}                   # cid → threading.Event, set by stop()
+STOPPED_TEXT = "(Arrete par l'utilisateur.)"
+
+
+def _start_flag(cid):
+    _stops[cid] = threading.Event()
+
+
+def _wait(cid, fn, *args, **kw):
+    """Run fn in a helper thread and wait; a stop abandons it at once (a Claude Code run is killed)."""
+    flag = _stops.get(cid)
+    box = {}
+
+    def go():
+        try:
+            box["v"] = fn(*args, **kw)
+        except BaseException as e:            # noqa: BLE001 — re-raised below
+            box["e"] = e
+    t = threading.Thread(target=go, name=f"devagent-chat-{cid}-step", daemon=True)
+    t.start()
+    while t.is_alive():
+        t.join(0.2)
+        if flag is not None and flag.is_set() and t.is_alive():
+            from .connectors import claude_code
+            claude_code.stop_for(t.ident)
+            raise _Stopped()
+    if flag is not None and flag.is_set():
+        raise _Stopped()
+    if "e" in box:
+        raise box["e"]
+    return box["v"]
+
+
+def stop(cid):
+    """Stop what the agent is doing in this conversation."""
+    d = _load(cid)
+    if not d:
+        return {"ok": False, "message": "Conversation introuvable"}
+    if d["status"] == "attente" and d["pending"]:       # waiting for a confirmation: it is refused, the turn ends
+        for w in d["pending"]["waiting"]:
+            a = journal.approval(w["confirmation"])
+            if a and a["status"] == "attente":
+                guard.refuse(w["confirmation"])
+        d["messages"].append({"role": "user", "content": _decided_results(d["pending"])})
+        d["messages"].append({"role": "assistant", "content": [{"type": "text", "text": STOPPED_TEXT}]})
+        d["events"].extend(_decision_events(d["pending"]))
+        d["events"].append({"type": "note", "text": "Arrete.", "at": _now()})
+        _save(cid, messages=d["messages"], events=d["events"], status="pret", pending="")
+        return {"ok": True}
+    if d["status"] != "en_cours":
+        return {"ok": True, "message": "Rien n'est en cours"}
+    flag = _stops.get(cid)
+    if flag is None:                                    # no turn alive (DevAgent restarted): just unlock
+        _save(cid, status="pret")
+        return {"ok": True}
+    flag.set()
+    return {"ok": True}
+
+
 def send(cid, text, client=None, wait=False, read_only=False, shown=None):
     """Add the user's message and run the turn (background thread unless wait=True).
     read_only: this turn may only use tools that look. shown: what the conversation displays
@@ -260,6 +325,7 @@ def send(cid, text, client=None, wait=False, read_only=False, shown=None):
     d["events"].append({"type": "user", "text": shown or text, "at": _now()})
     _save(cid, messages=d["messages"], events=d["events"], status="en_cours", error="", pending="",
           title=d["title"] or (shown or text)[:60])
+    _start_flag(cid)
     if wait:
         _turn(cid, client, read_only)
     else:
@@ -281,8 +347,10 @@ def _turn(cid, client=None, read_only=False):
                   "tools": api_tools(read_only), "thinking": {"type": "adaptive"},
                   "output_config": {"effort": db.get_setting("agent_effort", "") or "medium"},
                   "cache_control": {"type": "ephemeral"}}
+        results, pending_ids = None, []
         for _ in range(MAX_STEPS):
-            resp = _create(client, messages=messages, **params)
+            results, pending_ids = None, []
+            resp = _wait(cid, _create, client, messages=list(messages), **params)
             content = _blocks(resp.content)
             messages.append({"role": "assistant", "content": content})
             for b in content:
@@ -291,13 +359,14 @@ def _turn(cid, client=None, read_only=False):
             reason = resp.stop_reason
             if reason == "tool_use":
                 results, waiting = [], []
+                pending_ids = [b["id"] for b in content if b.get("type") == "tool_use"]
                 for b in content:
                     if b.get("type") != "tool_use":
                         continue
                     if read_only and registry.get(b["name"]).risk != "lecture" and b["name"] not in NOTE_TOOLS:
                         answer = {"statut": "erreur", "message": "Ce tour ne fait que regarder : aucune modification."}
                     else:
-                        answer = guard.call(b["name"], b.get("input") or {}, actor="chat", ctx=ctx)
+                        answer = _wait(cid, guard.call, b["name"], b.get("input") or {}, actor="chat", ctx=ctx)
                     events.append({"type": "tool", "name": b["name"], "args": b.get("input") or {},
                                    "statut": answer["statut"], "message": answer.get("message", ""),
                                    "confirmation": answer.get("confirmation"), "at": _now()})
@@ -327,6 +396,24 @@ def _turn(cid, client=None, read_only=False):
             events.append({"type": "note", "text": f"Arrete apres {MAX_STEPS} series d'outils. Dis « continue » "
                            "pour poursuivre.", "at": _now()})
         _save(cid, messages=messages, events=events, status="pret")
+    except _Stopped:
+        # keep the conversation valid: every tool call gets a result, then a short assistant line
+        if results is not None and messages and messages[-1]["role"] == "assistant":
+            done = {r["tool_use_id"] for r in results}
+            for tid in pending_ids:
+                if tid not in done:
+                    results.append({"type": "tool_result", "tool_use_id": tid, "is_error": True,
+                                    "content": json.dumps({"statut": "erreur", "message":
+                                        "Arrete par l'utilisateur pendant ou avant cette action (elle a pu se terminer quand meme)."},
+                                        ensure_ascii=False)})
+            for r in results:
+                if r.get("content") == "":
+                    r.update(content=json.dumps({"statut": "erreur", "message": "Arrete par l'utilisateur."}), is_error=True)
+            messages.append({"role": "user", "content": results})
+        if messages and messages[-1]["role"] == "user":
+            messages.append({"role": "assistant", "content": [{"type": "text", "text": STOPPED_TEXT}]})
+        events.append({"type": "note", "text": "Arrete.", "at": _now()})
+        _save(cid, messages=messages, events=events, status="pret", pending="")
     except Exception as e:
         # the conversation must stay valid for the API: drop a trailing user message
         # (text or tool results) that never got its answer
@@ -393,6 +480,7 @@ def resume(cid, client=None, wait=False):
     d["messages"].append({"role": "user", "content": _decided_results(d["pending"])})
     d["events"].extend(_decision_events(d["pending"]))
     _save(cid, messages=d["messages"], events=d["events"], pending="")
+    _start_flag(cid)
     if wait:
         _turn(cid, client)
     else:
