@@ -53,6 +53,7 @@
                         <div class="ws-views">
                             <button class="ws-view-btn" data-view="afaire" onclick="wsView('afaire')" title="Ce que tu dois faire toi-meme pour ce projet">A faire <span class="ws-view-n" id="ws-afaire-n" hidden></span></button>
                             <button class="ws-view-btn on" data-view="etat" onclick="wsView('etat')" title="L'etat du projet : local, en ligne, code, actions de l'agent">Etat</button>
+                            <button class="ws-view-btn" data-view="ressources" onclick="wsView('ressources')" title="Ce que le projet prend sur ce PC : disque, et RAM / CPU / GPU quand il tourne">Ressources</button>
                             <button class="ws-view-btn" data-view="local" onclick="wsView('local')" title="Le site que tu developpes, sur ce PC">Local</button>
                             <button class="ws-view-btn" data-view="ligne" onclick="wsView('ligne')" title="Le site que voient tes visiteurs">En ligne</button>
                         </div>
@@ -60,6 +61,7 @@
                     <div id="ws-xterm" style="display:none"></div>
                     <div id="ws-afaire" style="display:none;flex:1;overflow:auto"></div>
                     <div id="ws-etat" style="flex:1;overflow:auto"></div>
+                    <div id="ws-ressources" style="display:none;flex:1;overflow:auto"></div>
                     <div id="ws-ligne" style="display:none;flex:1;flex-direction:column;min-height:0">
                         <div class="ws-prev-bar" id="ws-ligne-bar"></div>
                         <div class="ws-prev-body" id="ws-ligne-body"></div>
