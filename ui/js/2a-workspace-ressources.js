@@ -36,20 +36,20 @@ function resAgo(seconds) {
 /* a small curve, one series: 2px line, light area, the last value marked; hover shows the value */
 function resSpark(points, max, fmt, key) {
     const w = 220, h = 44;
-    if (points.length < 2) return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"></svg>`;
+    if (points.length < 2) return `<svg class="res-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"></svg>`;
     const top = Math.max(max || 0, ...points.map(p => p[1])) || 1;
     const xy = points.map((p, i) => [i * w / (points.length - 1), h - 3 - (p[1] / top) * (h - 8)]);
     const line = xy.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
     const [lx, ly] = xy[xy.length - 1];
-    return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" data-key="${key}"
+    return `<svg class="res-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" data-key="${key}"
                 onmousemove="resSparkHover(event, this)" onmouseleave="resSparkHover(null, this)">
-        <polygon points="0,${h} ${line} ${w},${h}" class="spark-area"/>
-        <polyline points="${line}" class="spark-line" vector-effect="non-scaling-stroke"/>
-        <line class="spark-cross" x1="0" x2="0" y1="0" y2="${h}" vector-effect="non-scaling-stroke" style="display:none"/>
-        <circle cx="${lx}" cy="${ly}" r="3" class="spark-dot" vector-effect="non-scaling-stroke"/></svg>`;
+        <polygon points="0,${h} ${line} ${w},${h}" class="res-spark-area"/>
+        <polyline points="${line}" class="res-spark-line" vector-effect="non-scaling-stroke"/>
+        <line class="res-spark-cross" x1="0" x2="0" y1="0" y2="${h}" vector-effect="non-scaling-stroke" style="display:none"/>
+        <circle cx="${lx}" cy="${ly}" r="3" class="res-spark-dot" vector-effect="non-scaling-stroke"/></svg>`;
 }
 function resSparkHover(ev, svg) {
-    const tile = svg.closest('.res-tile'), out = tile.querySelector('.res-hover'), cross = svg.querySelector('.spark-cross');
+    const tile = svg.closest('.res-tile'), out = tile.querySelector('.res-hover'), cross = svg.querySelector('.res-spark-cross');
     const key = svg.dataset.key, hist = (wsRes && wsRes.live.historique) || [];
     if (!ev || hist.length < 2) { out.textContent = ''; cross.style.display = 'none'; return; }
     const r = svg.getBoundingClientRect(), i = Math.round((ev.clientX - r.left) / r.width * (hist.length - 1));
