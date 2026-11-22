@@ -159,3 +159,18 @@ def online(pid):
     v = r["resultat"]
     return {"vercel": True, "git_relie": bool((v.get("git") or {}).get("relie")), "git_comment": (v.get("git") or {}).get("comment"),
             "deploiements": (v.get("deploiements") or [])[:4], "domaines": v.get("domaines") or []}
+
+
+def projects_page():
+    """The Projets screen: every project, what it needs, and where it stands."""
+    out = []
+    for p in P.all_projects():
+        d = _project(p)
+        d.update(statut=p.get("status") or "active", couleur=p.get("color") or "", chemin=p.get("path") or "",
+                 nb_confirmations=0)
+        out.append(d)
+    waiting = journal.approvals("attente")
+    for d in out:
+        d["nb_confirmations"] = sum(1 for a in waiting if a.get("project_id") == d["id"])
+    order = {"active": 0, "paused": 1, "done": 2}
+    return sorted(out, key=lambda d: (order.get(d["statut"], 3), {"bad": 0, "warn": 1}.get(d["sante"], 2), d["nom"].lower()))

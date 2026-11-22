@@ -116,7 +116,7 @@ async function loadRunning() {
                     <span style="font-size:11px;color:var(--text-4);margin-left:8px">${totalItems} ressources actives</span>
                 </div>
                 <div class="flex gap-6">
-                    <button class="btn btn-sm" onclick="go('projects');setTimeout(()=>showProjectDetail(${p.id}),300)">Details</button>
+                    <button class="btn btn-sm" onclick="openWorkspace(${p.id})">Details</button>
                     <button class="btn btn-sm" onclick="openWorkspace(${p.id})">Ouvrir</button>
                     <button class="btn btn-sm btn-danger" onclick="stopProject(${p.id}, '${esc(p.name)}', ${JSON.stringify(allPids)}, ${JSON.stringify(allContainers).replace(/"/g,'&quot;')})">Arreter tout</button>
                 </div>

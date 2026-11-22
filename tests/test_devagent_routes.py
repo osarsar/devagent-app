@@ -32,7 +32,7 @@ def test_page_et_fichiers(c):
     assert c.get("/agent/assets/../routes.py").status_code == 404
     assert c.get("/agent/assets/nope.js").status_code == 404
     pages = c.get("/api/agent/pages").get_json()["pages"]
-    assert [p["id"] for p in pages][:3] == ["accueil", "afaire", "chat"]
+    assert [p["id"] for p in pages][:4] == ["accueil", "projets", "afaire", "chat"]
     home = c.get("/api/agent/home").get_json()
     assert {"a_faire", "confirmations", "alertes", "projets", "systeme", "sync", "activite"} <= set(home)
     # same guard as the rest of the dashboard
@@ -148,3 +148,13 @@ def test_poste_de_travail(c):
         assert s["id"] == pid and {"depots", "domaine", "site", "activite", "confirmations"} <= set(s)
         assert all(" /api/" not in a["tool"] for a in s["activite"])
     assert "/ui/js/28-workspace-poste.js" in c.get("/").get_data(as_text=True)
+
+
+def test_page_projets(c):
+    c.post("/api/projects", json={"name": "projets-essai"})
+    projets = c.get("/api/agent/projets").get_json()["projets"]
+    p = next(x for x in projets if x["nom"] == "projets-essai")
+    assert {"statut", "sante", "phase", "prochaine", "fait", "total", "manque", "non_envoye", "nb_confirmations"} <= set(p)
+    assert [x["statut"] for x in projets] == sorted((x["statut"] for x in projets), key=["active", "paused", "done"].index)
+    html = c.get("/").get_data(as_text=True)
+    assert "/agent/assets/pages/02-projets.js" in html and "data-page=\"agent:projets\"" in html
