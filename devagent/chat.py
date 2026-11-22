@@ -41,7 +41,8 @@ l'utilisateur l'active lui-meme.
 - Quand quelque chose doit etre fait par l'utilisateur lui-meme (un accord a donner sur un site, une cle a creer ou \
 renouveler, une decision, une commande avec sudo), ne te contente pas de le dire : note-le avec `a_faire_ajouter`, avec \
 le lien exact, pour qu'il le retrouve a l'ouverture de DevAgent. Si un outil de lecture peut constater que c'est fait, \
-donne-le comme verification.
+donne-le comme verification. Si c'est une question ou une decision, mets-la dans « question » : il repondra dans la \
+tache et sa reponse te reviendra ici ; continue alors avec elle.
 - Pour lire ou modifier le CODE d'un projet, tu as `claude_code` : donne-lui la tache complete. Ensuite, toi, tu \
 enchaines : `execution_demarrer` pour voir, `git_commit` et `git_synchroniser` pour envoyer, `vercel_etat` pour la mise \
 en ligne.
@@ -58,7 +59,7 @@ deployer, corriger). Jamais de longue explication : tes actions s'affichent deja
 et la prochaine etape quand il y en a une."""
 
 # what a read-only turn (the guide) may still do: take notes for the user, change nothing else
-NOTE_TOOLS = ("a_faire_ajouter", "outil_demander")
+NOTE_TOOLS = ("a_faire_ajouter", "a_faire_terminer", "outil_demander")
 
 _ready_for = None
 _threads = {}
@@ -381,7 +382,7 @@ def _turn(cid, client=None, read_only=False):
     try:
         client = client or _client()
         project = db.get_project(d["project_id"]) if d["project_id"] else None
-        ctx = {"project_id": d["project_id"]} if d["project_id"] else {}
+        ctx = dict({"project_id": d["project_id"]} if d["project_id"] else {}, chat_id=cid)
         params = {"model": model(), "max_tokens": MAX_TOKENS, "system": _system(project),
                   "tools": api_tools(read_only), "thinking": {"type": "adaptive"},
                   "output_config": {"effort": db.get_setting("agent_effort", "") or "medium"},
