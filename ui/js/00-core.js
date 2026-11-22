@@ -18,8 +18,9 @@ const COLORS = ['#6d5cff','#06b6d4','#22d3a7','#f472b6','#f59e0b','#f43f5e','#60
 
 /* ═══ CHART DEFAULTS ═══ */
 if (window.Chart) {                  // a missing chart library must never take the whole app down
-    Chart.defaults.color = '#42424e';
-    Chart.defaults.borderColor = 'rgba(255,255,255,.04)';
+    const light = document.documentElement.dataset.theme === 'light';
+    Chart.defaults.color = light ? '#6f6a8b' : '#42424e';
+    Chart.defaults.borderColor = light ? 'rgba(50,36,140,.08)' : 'rgba(255,255,255,.04)';
     Chart.defaults.font.family = "'Inter', sans-serif";
 }
 

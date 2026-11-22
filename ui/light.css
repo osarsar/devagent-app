@@ -1,0 +1,155 @@
+/* DevAgent — light mode. Loaded after theme.css; applies when <html data-theme="light">.
+   Same direction as the dark look: violet light, glass cards with a thin rim, one lit violet control.
+   Here the page is a pale lavender white, the cards are white glass, the ink is deep violet-grey. */
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg-0: #f5f4fb;
+  --bg-1: #ffffff;
+  --bg-2: #f0eef9;
+  --bg-3: #e8e5f5;
+  --bg-4: #dcd8ee;
+  --bg-hover: #efedf9;
+  --bg-active: rgba(91, 69, 240, .10);
+  --border-0: rgba(50, 36, 140, .08);
+  --border-1: rgba(50, 36, 140, .12);
+  --border-2: rgba(50, 36, 140, .20);
+  --border-focus: #6a55f2;
+  --text-0: #16132a;
+  --text-1: #35314d;
+  --text-2: #5c5777;
+  --text-3: #6f6a8b;
+  --text-4: #9c97b4;
+  --violet: #5b45f0;
+  --violet-dim: rgba(91, 69, 240, .10);
+  --violet-glow: rgba(91, 69, 240, .22);
+  --emerald: #0b8a67;
+  --emerald-dim: rgba(11, 138, 103, .11);
+  --amber: #a86400;
+  --amber-dim: rgba(214, 140, 20, .14);
+  --rose: #d42449;
+  --rose-dim: rgba(212, 36, 73, .10);
+  --sky: #0b7fb8;
+  --blue: #2f6fd6;
+  --violet-ink: #4b35d6;
+  --violet-soft: #4b35d6;
+  --rose-ink: #c01f42;
+  --amber-ink: #9a5b00;
+  --field: #ffffff;
+  --popover: #ffffff;
+  --glass: linear-gradient(180deg, rgba(255, 255, 255, .96), rgba(255, 255, 255, .86));
+  --glass-rim: inset 0 0 0 1px rgba(50, 36, 140, .10), 0 1px 2px rgba(30, 20, 90, .05), 0 12px 32px rgba(40, 28, 120, .08);
+  --lit: linear-gradient(180deg, #7563ff, #563fe8);
+  --lit-rim: inset 0 0 0 1px rgba(255, 255, 255, .25), inset 0 1px 0 rgba(255, 255, 255, .35), 0 6px 18px rgba(72, 48, 220, .28);
+}
+
+html[data-theme="light"] body {
+  background:
+    radial-gradient(1100px 520px at 62% -160px, rgba(120, 100, 255, .14), transparent 70%),
+    radial-gradient(700px 400px at 8% 0, rgba(150, 130, 255, .10), transparent 70%),
+    var(--bg-0);
+  background-attachment: fixed;
+}
+html[data-theme="light"] ::selection { background: rgba(91, 69, 240, .22); color: inherit; }
+html[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(50, 36, 140, .16); }
+html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(50, 36, 140, .28); }
+
+/* menu and top bar */
+html[data-theme="light"] .sidebar { background: rgba(255, 255, 255, .78); }
+html[data-theme="light"] .sidebar-item:hover { background: rgba(50, 36, 140, .05); }
+html[data-theme="light"] .sidebar-item.active { box-shadow: inset 0 0 0 1px rgba(91, 69, 240, .18); color: var(--violet-ink); }
+html[data-theme="light"] .sidebar-logo { box-shadow: 0 6px 16px rgba(72, 48, 220, .25); }
+html[data-theme="light"] .topbar { background: rgba(245, 244, 251, .72); }
+html[data-theme="light"] .agent-dot { box-shadow: 0 0 0 3px var(--emerald-dim); }
+
+/* buttons, fields, pills */
+html[data-theme="light"] .btn, html[data-theme="light"] .da .btn {
+  background: #fff; box-shadow: inset 0 0 0 1px rgba(50, 36, 140, .16), 0 1px 2px rgba(30, 20, 90, .05); color: var(--text-0); }
+html[data-theme="light"] .btn:hover, html[data-theme="light"] .da .btn:hover { background: #f3f1fd; }
+html[data-theme="light"] .btn-primary, html[data-theme="light"] .da .btn.primary { background: var(--lit); box-shadow: var(--lit-rim); color: #fff; }
+html[data-theme="light"] .btn-danger, html[data-theme="light"] .da .btn.danger { background: var(--rose-dim); box-shadow: inset 0 0 0 1px rgba(212, 36, 73, .32); color: var(--rose-ink); }
+html[data-theme="light"] .btn-ghost, html[data-theme="light"] .da .btn.ghost { background: transparent; box-shadow: none; color: var(--text-2); }
+html[data-theme="light"] .btn-ghost:hover, html[data-theme="light"] .da .btn.ghost:hover { background: rgba(50, 36, 140, .06); color: var(--text-0); }
+html[data-theme="light"] .form-input, html[data-theme="light"] .da .input, html[data-theme="light"] .da textarea, html[data-theme="light"] .da select,
+html[data-theme="light"] .fs-btn, html[data-theme="light"] .fs-search, html[data-theme="light"] .composer2, html[data-theme="light"] .todo-reply {
+  box-shadow: inset 0 0 0 1px rgba(50, 36, 140, .18); }
+html[data-theme="light"] .fs-btn:hover { background: #f7f6fd; box-shadow: inset 0 0 0 1px rgba(50, 36, 140, .28); }
+html[data-theme="light"] .da .pill { background: rgba(50, 36, 140, .07); }
+html[data-theme="light"] .da .chip, html[data-theme="light"] .icon-btn, html[data-theme="light"] .da .pres-item {
+  background: #fff; box-shadow: inset 0 0 0 1px rgba(50, 36, 140, .14); }
+html[data-theme="light"] .da .chip:hover, html[data-theme="light"] .icon-btn:hover { background: #f3f1fd; }
+html[data-theme="light"] .da .pres-item.off { background: transparent; box-shadow: none; }
+html[data-theme="light"] .da .seg, html[data-theme="light"] .ws-views { background: rgba(50, 36, 140, .06); box-shadow: inset 0 0 0 1px rgba(50, 36, 140, .08); }
+html[data-theme="light"] .fs-menu, html[data-theme="light"] .da .menu-list {
+  box-shadow: 0 0 0 1px rgba(50, 36, 140, .12), 0 18px 44px rgba(40, 28, 120, .16); }
+html[data-theme="light"] .fs-opt.active, html[data-theme="light"] .da .menu-item:hover { background: rgba(91, 69, 240, .08); }
+html[data-theme="light"] .modal { background: #fff; box-shadow: 0 0 0 1px rgba(50, 36, 140, .12), 0 30px 80px rgba(30, 20, 90, .22); }
+html[data-theme="light"] .overlay { background: rgba(30, 24, 70, .32); }
+
+/* home */
+html[data-theme="light"] .da .ask { background: #fff; box-shadow: inset 0 0 0 1.5px rgba(91, 69, 240, .35), 0 14px 36px rgba(72, 48, 220, .14); }
+html[data-theme="light"] .da .ask-mark { color: var(--violet); }
+html[data-theme="light"] .da .ask-input { color: var(--text-0); }
+html[data-theme="light"] .da .ask-input::placeholder { color: var(--text-3); }
+html[data-theme="light"] .da .ask-send { background: var(--lit); color: #fff; box-shadow: var(--lit-rim); }
+html[data-theme="light"] .da .project:hover, html[data-theme="light"] .da .pcard:hover, html[data-theme="light"] .da .pcard:focus-visible {
+  box-shadow: inset 0 0 0 1px rgba(91, 69, 240, .28), 0 18px 40px rgba(40, 28, 120, .14); }
+html[data-theme="light"] .da .progress-line, html[data-theme="light"] .phase2 .ph-bar, html[data-theme="light"] .res-big-bar { background: rgba(50, 36, 140, .10); }
+html[data-theme="light"] .da .progress-line i, html[data-theme="light"] .phase2 .ph-bar i,
+html[data-theme="light"] .progress-fill, html[data-theme="light"] .fill-violet { background: linear-gradient(90deg, #5b45f0, #9d8fff) !important; }
+html[data-theme="light"] .phase2 .ph.done .ph-bar i { background: var(--emerald) !important; }
+html[data-theme="light"] .da .note-line { background: rgba(91, 69, 240, .06); box-shadow: inset 0 0 0 1px rgba(91, 69, 240, .16); }
+
+/* chat */
+html[data-theme="light"] .da .chat2 .msg.user, html[data-theme="light"] .da .msg.user {
+  background: rgba(91, 69, 240, .10); box-shadow: inset 0 0 0 1px rgba(91, 69, 240, .22); color: var(--text-0); }
+html[data-theme="light"] .da .chat2 .msg.assistant code { background: rgba(50, 36, 140, .07); }
+html[data-theme="light"] .da .working { background: #fff; box-shadow: inset 0 0 0 1px rgba(50, 36, 140, .12); }
+html[data-theme="light"] .da .working .spark { color: var(--violet); }
+html[data-theme="light"] .da .working::after { background-image: linear-gradient(90deg, transparent, #5b45f0, transparent); }
+html[data-theme="light"] .da .act > summary:hover { background: rgba(50, 36, 140, .05); }
+html[data-theme="light"] .da .act.run .act-dot, html[data-theme="light"] .res-big-bar i { background: var(--violet); }
+html[data-theme="light"] .da .act.run .act-state { color: var(--violet-ink); }
+html[data-theme="light"] .da .permission, html[data-theme="light"] .todo-callout {
+  background: linear-gradient(180deg, rgba(214, 140, 20, .12), rgba(214, 140, 20, .05)); box-shadow: inset 0 0 0 1px rgba(168, 100, 0, .35); }
+html[data-theme="light"] .da .perm-mark { background: #e8a33a; }
+html[data-theme="light"] .da .send.stop { background: var(--rose-dim); box-shadow: inset 0 0 0 1px rgba(212, 36, 73, .4); color: var(--rose-ink); }
+
+/* project panel */
+html[data-theme="light"] .ws-right { background: rgba(255, 255, 255, .7); }
+html[data-theme="light"] .st-dot.ok { box-shadow: 0 0 0 3px var(--emerald-dim); }
+html[data-theme="light"] .st-dot.bad, html[data-theme="light"] .da .dot.bad { box-shadow: 0 0 0 3px var(--rose-dim); }
+html[data-theme="light"] .da .pdot { box-shadow: none; }
+html[data-theme="light"] .res-tile, html[data-theme="light"] .rp-col { background: #fbfaff; }
+html[data-theme="light"] .rp-col.current { box-shadow: inset 0 0 0 1px rgba(91, 69, 240, .4); }
+html[data-theme="light"] .res-spark-line { stroke: var(--violet); }
+html[data-theme="light"] .res-spark-area { fill: rgba(91, 69, 240, .10); }
+html[data-theme="light"] .res-spark-dot { fill: var(--violet); stroke: #fff; }
+html[data-theme="light"] .res-spark-cross { stroke: rgba(50, 36, 140, .35); }
+html[data-theme="light"] .st-card.todo.question, html[data-theme="light"] .da .question-card { box-shadow: inset 0 0 0 1px rgba(91, 69, 240, .30), var(--glass-rim); }
+
+/* older screens (dashboard.css) */
+html[data-theme="light"] .card:hover { box-shadow: var(--glass-rim); }
+html[data-theme="light"] .badge-violet, html[data-theme="light"] .toast-info { color: var(--violet-ink); }
+html[data-theme="light"] .toast { box-shadow: 0 12px 32px rgba(30, 20, 90, .16); }
+html[data-theme="light"] .toast-success { background: #e6f6f0; }
+html[data-theme="light"] .toast-error { background: #fdebef; }
+html[data-theme="light"] .toast-info { background: #efecff; }
+html[data-theme="light"] .dev-br.base, html[data-theme="light"] .dev-chip.warn, html[data-theme="light"] .dev-warn { color: var(--amber-ink); }
+html[data-theme="light"] .dev-chip.info, html[data-theme="light"] .dev-info { color: var(--blue); }
+html[data-theme="light"] .dev-chip.bad { color: var(--rose-ink); }
+
+/* ── The theme switch, in the menu footer ── */
+.theme-switch { display: flex; gap: 2px; padding: 3px; margin: 8px 8px 2px; border-radius: 999px; background: rgba(190, 180, 255, .07); }
+html[data-theme="light"] .theme-switch { background: rgba(50, 36, 140, .06); }
+.theme-switch button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 0; cursor: pointer;
+  background: transparent; color: var(--text-3); font: 500 11.5px var(--font); padding: 5px 6px; border-radius: 999px; }
+.theme-switch button:hover { color: var(--text-0); }
+.theme-switch button.on { background: var(--bg-active); color: var(--text-0); box-shadow: inset 0 0 0 1px var(--border-2); }
+html[data-theme="light"] .theme-switch button.on { background: #fff; color: var(--violet-ink); box-shadow: 0 1px 3px rgba(30, 20, 90, .12); }
+html.theme-swap, html.theme-swap * { transition: none !important; }
+/* fields inside a framed box (composer, answer box): the box draws the frame, not the field */
+html[data-theme="light"] .da .composer2 textarea, html[data-theme="light"] .todo-reply textarea { box-shadow: none; background: transparent; }
+html[data-theme="light"] .da .composer2:focus-within, html[data-theme="light"] .todo-reply:focus-within,
+html[data-theme="light"] .form-input:focus, html[data-theme="light"] .da .input:focus, html[data-theme="light"] .fs-btn.open, html[data-theme="light"] .fs-btn:focus-visible {
+  box-shadow: inset 0 0 0 1.5px var(--border-focus), 0 0 0 4px rgba(91, 69, 240, .12); }

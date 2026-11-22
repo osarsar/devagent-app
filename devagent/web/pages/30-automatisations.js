@@ -51,7 +51,7 @@ DA.page({
         a.description ? h('div', {}, a.description) : null,
         h('ol', { class: 'small', style: 'margin:0;padding-left:18px' }, ...a.etapes.map(s =>
           h('li', {}, h('span', { class: 'mono' }, s.outil), s.si && s.si !== 'succes' ? ` (si ${s.si})` : ''))),
-        a.erreurs.length ? h('div', { class: 'small', style: 'color:#ff8fa3' }, a.erreurs.join(' · ')) : null,
+        a.erreurs.length ? h('div', { class: 'small', style: 'color:var(--rose-ink)' }, a.erreurs.join(' · ')) : null,
         a.dernier ? h('div', { class: 'small muted' }, 'Dernier : ', DA.when(a.dernier.started_at), ' ', DA.statusPill(a.dernier.status)) : null,
         h('div', { class: 'row' }, toggle, run, edit, del));
     }
