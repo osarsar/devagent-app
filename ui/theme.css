@@ -194,7 +194,8 @@ body.ws-agent-open .workspace { grid-template-columns: minmax(420px, 44%) 1fr; }
   display: inline-block; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
 .st-branch.work { background: var(--violet-dim); color: #bdb3ff; }
 /* talking to the agent: the bars above fold away, the chat and the panel take the height */
-body.ws-agent-open #ws-model-bar, body.ws-agent-open #ws-github-banner, body.ws-agent-open #ws-detect-banner,
-body.ws-agent-open #ws-running-bar { display: none !important; }
+/* the project page is the agent: no tabs, no bars to manage by hand, the chat and the panel take the height */
+#ws-tabs-wrap, #ws-copy-prompt, #ws-model-bar, #ws-github-banner, #ws-detect-banner, #ws-running-bar { display: none !important; }
 body.ws-agent-open .workspace { height: calc(100vh - 190px); }
-body.ws-agent-open .ws-panel.da .chat { height: calc(100vh - 252px); min-height: 300px; }
+body.ws-agent-open .ws-panel.da .chat { height: calc(100vh - 196px); min-height: 300px; }
+.ws-term-header { justify-content: flex-end; }

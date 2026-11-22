@@ -66,7 +66,7 @@ async function openWorkspace(pid) {
     // Build profile badge
     const profileBadge = '';   // the type is in the model bar below
     document.getElementById('ws-title').innerHTML = `<span style="color:${p.color}">${p.name}</span>${profileBadge}`;
-    document.getElementById('ws-term-title').textContent = p.path || p.name;
+    const termTitle = document.getElementById('ws-term-title'); if (termTitle) termTitle.textContent = p.path || p.name;
     document.getElementById('ws-copy-prompt').style.display = (specs && specs.prompt) ? '' : 'none';
 
     // Build dynamic tabs

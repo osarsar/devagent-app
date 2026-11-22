@@ -122,7 +122,7 @@ def station(pid):
     p = P.get_project(pid) if hasattr(P, "get_project") else next((x for x in P.all_projects() if x["id"] == pid), None)
     if not p:
         return None
-    out = {"id": pid, "nom": p["name"], "depots": [], "domaine": None, "site": None,
+    out = {"id": pid, "nom": p["name"], "dossier": bool(p.get("path") and Path(p["path"]).is_dir()), "depots": [], "domaine": None, "site": None,
            "activite": [], "confirmations": []}
     previews = guard.call("execution_apercus", {"projet": str(pid)}, actor=guard.HUMAN).get("resultat") or {}
     if p.get("path") and Path(p["path"]).is_dir():
