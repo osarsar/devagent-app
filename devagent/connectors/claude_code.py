@@ -41,6 +41,49 @@ RULES = ("Tu travailles pour DevAgent, dans ce depot, sur la branche « {branch}
          "change (fichiers), comment le verifier, et ce qui reste a faire ou que tu n'as pas pu faire.")
 
 
+# Which Claude for which task: the agent chooses, DevAgent checks the words and adds a fallback.
+MODELS = {
+    "haiku": "lire, chercher, resumer, une petite modification evidente (rapide, peu couteux)",
+    "sonnet": "le travail de code courant : une fonctionnalite, un bug clair, des tests (par defaut)",
+    "opus": "plusieurs fichiers, un bug difficile, une refonte, la securite, ce qui demande de reflechir",
+    "fable": "le plus capable : tres gros chantier, architecture, long travail autonome (le plus cher)",
+}
+FALLBACK = {"fable": "opus", "opus": "sonnet", "sonnet": "haiku"}
+EFFORTS = ("low", "medium", "high", "xhigh", "max")
+DEFAULT_MODEL = "sonnet"
+LONG_TIMEOUT = 3600            # « objectif » and « ultracode »: long autonomous work
+LONG_TURNS = 200
+
+
+def prompt_for(task, goal=None, ultracode=False):
+    """The text given to Claude Code. « objectif » uses its /goal (it keeps working until the condition is
+    met); « ultracode » opts the turn into its multi-agent workflows."""
+    task = (task or "").strip()
+    if goal:
+        return f"/goal {goal.strip()}\n\n{task}"
+    if ultracode:
+        return f"ultracode\n\n{task}"
+    return task
+
+
+def options(model=None, effort=None):
+    """--model / --effort / --fallback-model for the chosen model ('' = Claude Code's own default)."""
+    out = []
+    m = (model or "").strip().lower()
+    if m and m != "auto":
+        if m not in MODELS:
+            raise P.ProjectError(f"Modele inconnu : {model} (choisis parmi {', '.join(MODELS)})")
+        out += ["--model", m]
+        if FALLBACK.get(m):
+            out += ["--fallback-model", FALLBACK[m]]
+    e = (effort or "").strip().lower()
+    if e:
+        if e not in EFFORTS:
+            raise P.ProjectError(f"Effort inconnu : {effort} (low, medium, high, xhigh, max)")
+        out += ["--effort", e]
+    return out
+
+
 def _exe():
     try:
         import dev
@@ -96,7 +139,8 @@ def ensure_work_branch(repo, task):
 
 def _parse(stdout):
     """stream-json lines → {session, text, turns, cost, denials, is_error, tools}"""
-    out = {"session": None, "text": "", "turns": None, "cost": None, "denials": [], "is_error": False, "tools": []}
+    out = {"session": None, "text": "", "turns": None, "cost": None, "denials": [], "is_error": False, "tools": [],
+           "model": None}
     for line in stdout.splitlines():
         try:
             d = json.loads(line)
@@ -105,6 +149,8 @@ def _parse(stdout):
         t = d.get("type")
         if d.get("session_id"):
             out["session"] = d["session_id"]
+        if t == "system" and d.get("subtype") == "init" and d.get("model"):
+            out["model"] = d["model"]
         if t == "assistant":
             for b in (d.get("message") or {}).get("content") or []:
                 if b.get("type") == "tool_use":
@@ -238,14 +284,21 @@ def stop_for(thread_ident):
     return True
 
 
-def run(repo, task, resume=None, rules=None, allowed=None, timeout=TIMEOUT):
-    """Run Claude Code in ``repo`` on ``task``. Returns what it did (never raises on a failed task)."""
+def run(repo, task, resume=None, rules=None, allowed=None, timeout=None, model=None, effort=None, goal=None,
+        ultracode=False):
+    """Run Claude Code in ``repo`` on ``task``. Returns what it did (never raises on a failed task).
+    model: haiku / sonnet / opus / fable ; effort: low … max ; goal: a checkable end condition (/goal) ;
+    ultracode: its multi-agent workflows, for big work in several parts."""
     repo = Path(repo)
+    extra = options(model, effort)                     # bad words refused before anything changes
+    long_ = bool(goal or ultracode)
+    timeout = timeout or (LONG_TIMEOUT if long_ else TIMEOUT)
     branch, created = ensure_work_branch(repo, task)
-    argv = [_exe(), "-p", task, "--output-format", "stream-json", "--verbose", "--permission-mode", "acceptEdits",
-            "--max-turns", str(MAX_TURNS), "--strict-mcp-config",
-            "--append-system-prompt", (rules or RULES).format(branch=branch),
-            "--allowedTools", *(allowed or ALLOWED), "--disallowedTools", *DENIED]
+    tools = list(allowed or ALLOWED) + ["Agent"] + (["Workflow"] if ultracode else [])
+    argv = [_exe(), "-p", prompt_for(task, goal, ultracode), "--output-format", "stream-json", "--verbose",
+            "--permission-mode", "acceptEdits", "--max-turns", str(LONG_TURNS if long_ else MAX_TURNS),
+            "--strict-mcp-config", "--append-system-prompt", (rules or RULES).format(branch=branch),
+            *extra, "--allowedTools", *tools, "--disallowedTools", *DENIED]
     if resume:
         argv += ["--resume", resume]
     try:
@@ -267,9 +320,27 @@ def run(repo, task, resume=None, rules=None, allowed=None, timeout=TIMEOUT):
             "branche_creee": created, "fichiers_modifies": [p_ for _, p_ in _changed(repo)][:60],
             "resume_des_changements": stat[-1500:], "refuses": parsed["denials"][:20],
             "session": parsed["session"], "tours": parsed["turns"], "outils_utilises": len(parsed["tools"]),
+            "modele": parsed.get("model") or (model or "defaut"), "effort": effort or "defaut",
+            "mode": "objectif" if goal else "ultracode" if ultracode else "normal",
+            "cout_usd": parsed.get("cost"),
+            "a_continuer": _next_step(parsed),
             "note": ("Rien n'est envoye sur GitHub : utilise git_commit puis git_synchroniser. "
                      + ("Des commandes ont ete refusees a Claude Code (voir « refuses ») : propose-les avec "
                         "commande_proposer si elles sont necessaires." if parsed["denials"] else ""))}
+
+
+def _next_step(parsed):
+    """What the agent should do next with this session (it continues it, it does not start over)."""
+    sub = parsed.get("subtype")
+    if sub == "error_max_turns":
+        return ("Claude Code a atteint la limite de tours avant de finir : relance claude_code avec « suite » = cette "
+                "session et la consigne « continue, puis termine par ton compte rendu ».")
+    if parsed.get("denials"):
+        return "Des commandes ont ete refusees : decide si elles sont necessaires (commande_proposer)."
+    if parsed.get("is_error"):
+        return ("Echec : lis le compte rendu ; si c'est corrigeable, relance avec « suite » et une consigne precise "
+                "(ou un modele plus capable).")
+    return ""
 
 
 # ── Building a missing tool, in DevAgent's own code ─────────────────────────
@@ -285,7 +356,7 @@ TOOL_RULES = ("Tu ajoutes un outil a DevAgent (ce depot). Tu n'ecris QUE dans de
               "fait, son niveau de risque.")
 
 
-def build_tool(need, example=""):
+def build_tool(need, example="", model=None, effort=None):
     """Have Claude Code write a missing tool in tools_essai/. Whatever it changed elsewhere is undone."""
     from .. import registry
     before = {f.name for f in registry.trial_dir().glob("*.py")}
@@ -295,7 +366,7 @@ def build_tool(need, example=""):
     # DevAgent's own repo: stay on the current branch (the trial folder is not tied to a branch)
     argv = [_exe(), "-p", task, "--output-format", "stream-json", "--verbose", "--permission-mode", "acceptEdits",
             "--max-turns", str(MAX_TURNS), "--strict-mcp-config", "--append-system-prompt", TOOL_RULES,
-            "--allowedTools", *argv_allowed, "--disallowedTools", *DENIED]
+            *options(model or "opus", effort), "--allowedTools", *argv_allowed, "--disallowedTools", *DENIED]
     try:
         r = _launch(argv, str(APP), TIMEOUT, on_line=_reporter(APP))
         parsed = _parse(r.stdout)

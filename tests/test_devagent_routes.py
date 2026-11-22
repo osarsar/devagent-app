@@ -32,7 +32,7 @@ def test_page_et_fichiers(c):
     assert c.get("/agent/assets/../routes.py").status_code == 404
     assert c.get("/agent/assets/nope.js").status_code == 404
     pages = c.get("/api/agent/pages").get_json()["pages"]
-    assert [p["id"] for p in pages][:4] == ["accueil", "projets", "afaire", "chat"]
+    assert [p["id"] for p in pages][:4] == ["accueil", "projets", "documents", "afaire"]
     home = c.get("/api/agent/home").get_json()
     assert {"a_faire", "confirmations", "alertes", "projets", "systeme", "sync", "activite"} <= set(home)
     # same guard as the rest of the dashboard
