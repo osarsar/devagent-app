@@ -89,6 +89,7 @@ async function deleteFile(path, name) {
 
 /* ═══ NAVIGATION ═══ */
 function go(page) {
+    if (page === 'projects') page = 'agent:projets';     // the agent's Projets screen replaced the old page
     document.body.classList.remove('nav-open');          // narrow window: the menu folds after a choice
     const base = page.split(':')[0];                     // 'agent:chat' lives in the #page-agent container
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));

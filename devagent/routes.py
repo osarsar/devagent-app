@@ -605,3 +605,9 @@ def api_station(pid):
 def api_station_online(pid):
     from . import home
     return jsonify(home.online(pid))
+
+
+@agent_bp.route("/api/agent/projets")
+def api_projects_page():
+    from . import home
+    return jsonify({"projets": home.projects_page()})

@@ -199,3 +199,35 @@ body.ws-agent-open .workspace { grid-template-columns: minmax(420px, 44%) 1fr; }
 body.ws-agent-open .workspace { height: calc(100vh - 190px); }
 body.ws-agent-open .ws-panel.da .chat { height: calc(100vh - 196px); min-height: 300px; }
 .ws-term-header { justify-content: flex-end; }
+
+/* ── Projets ──────────────────────────────────────────────────────────── */
+.da .phead { margin: 4px 0 16px; gap: 12px; flex-wrap: wrap; }
+.da .phead .row { gap: 12px; }
+.da .search { width: 240px; border-radius: 999px; padding: 8px 16px; }
+.da .seg { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(190, 180, 255, .07); box-shadow: inset 0 0 0 1px rgba(190, 180, 255, .10); }
+.da .seg button { border: 0; cursor: pointer; background: transparent; color: var(--text-2); font: 500 13px var(--font); padding: 6px 14px; border-radius: 999px; display: inline-flex; gap: 7px; align-items: center; }
+.da .seg button:hover { color: var(--text-0); }
+.da .seg button.on { background: var(--lit); color: #fff; box-shadow: var(--lit-rim); }
+.da .seg-n { font-size: 11px; opacity: .7; font-variant-numeric: tabular-nums; }
+.da .note-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; margin-bottom: 16px;
+  border-radius: 14px; font-size: 13px; color: var(--text-1); background: rgba(124, 108, 255, .08); box-shadow: inset 0 0 0 1px rgba(160, 148, 255, .18); }
+.da .pgrid { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
+.da .pcard { cursor: pointer; margin-bottom: 0; gap: 12px; padding: 20px; transition: box-shadow .18s; }
+.da .pcard:hover, .da .pcard:focus-visible { outline: none; box-shadow: inset 0 0 0 1px rgba(190, 180, 255, .30), inset 0 1px 0 rgba(235, 230, 255, .26), 0 22px 50px rgba(0, 0, 0, .5); }
+.da .pcard.dim { opacity: .72; }
+.da .pcard h3 { font-size: 17px; letter-spacing: -.03em; color: var(--text-0); }
+.da .pcard-title { gap: 10px; align-items: center; }
+.da .pdot { width: 10px; height: 10px; border-radius: 3px; background: var(--pc, var(--violet)); box-shadow: 0 0 12px var(--pc, var(--violet)); }
+.da .stack.tight { gap: 6px; }
+.da .pcard-foot { align-items: center; gap: 8px; margin-top: 2px; }
+.da .grow { flex: 1; }
+.da .menu { position: relative; }
+.da .menu > summary { list-style: none; cursor: pointer; font-size: 18px; line-height: 1; padding: 4px 12px 8px; color: var(--text-1); }
+.da .menu > summary::-webkit-details-marker { display: none; }
+.da .menu-list { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 240px; padding: 6px; border-radius: 14px;
+  background: linear-gradient(180deg, rgba(40, 34, 92, .98), rgba(18, 16, 40, .99)); box-shadow: var(--glass-rim); display: flex; flex-direction: column; }
+.da .menu-item { text-align: left; border: 0; background: transparent; color: var(--text-1); font: 500 13px var(--font); padding: 8px 12px; border-radius: 9px; cursor: pointer; }
+.da .menu-item:hover { background: rgba(190, 180, 255, .10); color: var(--text-0); }
+.da .menu-item.danger { color: #ff9aae; }
+.da .pcard { overflow: visible; position: relative; }
+.da .pcard:has(.menu[open]) { z-index: 20; }
