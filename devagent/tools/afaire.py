@@ -18,7 +18,9 @@ def _pid(ctx, projet):
       "renouveler une cle, prendre une decision, lancer une commande avec sudo) : note-le ici pour qu'il le voie a "
       "l'ouverture de DevAgent. Donne le lien exact ou la commande dans « comment ». Si un outil de lecture peut "
       "constater que c'est fait, donne-le : DevAgent verifiera tout seul et rayera la ligne "
-      "(ex. verifier_outil « vercel_etat », verifier_attendu {\"git.relie\": true}).",
+      "(ex. verifier_outil « vercel_etat », verifier_attendu {\"git.relie\": true}). "
+      "SI C'EST UNE QUESTION OU UNE DECISION pour l'utilisateur, mets-la dans « question » : il repondra directement "
+      "dans la tache, et sa reponse te reviendra dans cette conversation pour que tu continues.",
       risk=RISK_WRITE, automation=False,
       params={"titre": {"type": "string", "description": "Court : « Relier Vercel a GitHub »"},
               "comment": {"type": "string", "description": "Les etapes, la page ou la commande exacte"},
@@ -26,12 +28,14 @@ def _pid(ctx, projet):
               "projet": PROJET,
               "verifier_outil": {"type": "string", "description": "Un outil de lecture qui peut constater que c'est fait"},
               "verifier_args": {"type": "object"},
-              "verifier_attendu": {"type": "object", "description": "chemin dans le resultat → valeur attendue"}},
+              "verifier_attendu": {"type": "object", "description": "chemin dans le resultat → valeur attendue"},
+              "question": {"type": "string", "description": "La question exacte quand il faut une reponse ou une decision "
+                           "(« Quelle IA veux-tu pour le chat : Claude ou OpenAI ? »)"}},
       required=("titre", "comment"))
 def a_faire_ajouter(ctx, titre, comment, pourquoi="", lien="", projet=None, verifier_outil="", verifier_args=None,
-                    verifier_attendu=None):
+                    verifier_attendu=None, question=""):
     return todos.add(titre, comment, pourquoi, lien, _pid(ctx, projet), ctx.get("actor", "agent"),
-                     verifier_outil, verifier_args, verifier_attendu)
+                     verifier_outil, verifier_args, verifier_attendu, question=question, chat_id=ctx.get("chat_id"))
 
 
 @tool("a_faire_lister", "Ce que l'utilisateur doit encore faire lui-meme (la liste « A faire par toi »). Lance d'abord "

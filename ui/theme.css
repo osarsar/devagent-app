@@ -472,3 +472,39 @@ select.fs-native { position: absolute !important; width: 1px !important; height:
 .da .chat2 .md-table th { text-align: left; font-weight: 500; color: var(--text-0); padding: 6px 10px; border-bottom: 1px solid var(--border-2); }
 .da .chat2 .md-table td { padding: 6px 10px; border-bottom: 1px solid var(--border-0); vertical-align: top; }
 @media (prefers-reduced-motion: reduce) { .da .working .spark, .da .working::after { animation: none; } }
+
+/* ── Actions in progress ── */
+.da .actw { align-self: stretch; display: flex; flex-direction: column; }
+.da .act.run .act-dot { background: #8e80ff; animation: act-pulse 1.1s ease-in-out infinite; }
+.da .act.run .act-state { color: #b3a8ff; }
+.da .act.off .act-dot { background: var(--text-4); }
+@keyframes act-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(142, 128, 255, .55); } 50% { box-shadow: 0 0 0 5px rgba(142, 128, 255, 0); } }
+.da .act-live { margin: 2px 0 4px 24px; display: flex; flex-direction: column; gap: 2px; }
+.da .act-live[hidden] { display: none; }
+.da .act-live-line { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: fs-in .2s ease-out; }
+.da .act-live-line::before { content: "⎿ "; color: var(--text-4); }
+.da .act-live-line:last-child { color: var(--text-1); }
+.da .act-steps { display: flex; flex-direction: column; gap: 2px; margin: 4px 0; font-size: 12px; color: var(--text-2); }
+.da .act-steps > div::before { content: "· "; color: var(--text-4); }
+.da .act-steps:empty, .da .act-msg:empty { display: none; }
+@media (prefers-reduced-motion: reduce) { .da .act.run .act-dot { animation: none; } }
+
+/* ── Questions in « A faire » ── */
+.st-card.todo.question { box-shadow: inset 0 0 0 1px rgba(142, 128, 255, .35), var(--glass-rim); }
+.todo-q { flex: none; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700;
+  color: #fff; background: var(--lit); box-shadow: var(--lit-rim); }
+.todo-ask { padding-left: 28px; font-size: 13.5px; color: var(--text-0); line-height: 1.5; }
+.st-card.todo.question .todo-why, .st-card.todo.question .todo-how, .st-card.todo.question .todo-actions { padding-left: 28px; }
+.todo-reply { display: flex; align-items: flex-end; gap: 8px; margin-left: 28px; padding: 6px 6px 6px 12px; border-radius: 14px;
+  background: rgba(8, 7, 18, .6); box-shadow: inset 0 0 0 1px rgba(190, 180, 255, .18); }
+.todo-reply:focus-within { box-shadow: inset 0 0 0 1.5px var(--border-focus), 0 0 0 4px rgba(133, 115, 255, .12); }
+.todo-reply textarea { flex: 1; resize: vertical; min-height: 40px; max-height: 200px; border: 0; outline: none; background: transparent;
+  color: var(--text-0); font: 13.5px/1.5 var(--font); padding: 4px 0; }
+.send-mini { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center;
+  color: #fff; background: var(--lit); box-shadow: var(--lit-rim); }
+.send-mini:disabled { opacity: .5; }
+.todo-checked { padding-left: 18px; font-size: 11px; }
+.da .question-card { box-shadow: inset 0 0 0 1px rgba(142, 128, 255, .35), var(--glass-rim); }
+.da .question-card .todo-reply, .da .question-card .todo-ask { margin-left: 0; padding-left: 12px; }
+.da .question-card .todo-ask { padding-left: 0; }
+.da h3 .todo-q { display: inline-grid; vertical-align: -3px; margin-right: 4px; }

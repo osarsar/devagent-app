@@ -119,3 +119,27 @@ def test_construire_un_outil_reste_dans_le_dossier_d_essai(cc, tmp_path, monkeyp
         (app / "devagent" / "tools_essai" / "bonjour.py").unlink(missing_ok=True)
         registry.load_trial()
         sys.modules.pop("devagent.tools_essai.bonjour", None)
+
+
+def test_les_etapes_de_claude_code_se_voient_en_direct(cc):
+    """What Claude Code does is reported while it runs (the chat shows it live)."""
+    from devagent import guard, progress
+    seen = []
+    progress.set_callback(seen.append)
+    try:
+        out = guard.call("claude_code", {"tache": "Change le titre", "projet": "site"}, actor="chat")
+    finally:
+        progress.set_callback(None)
+    assert out["statut"] == "ok"
+    assert seen == ["modifie un fichier · en cours"]         # the fake's « assistant » line, in words
+
+
+def test_lignes_de_progression():
+    import json as j
+    from devagent.connectors.claude_code import progress_line as p
+    line = lambda *c: j.dumps({"type": "assistant", "message": {"content": list(c)}})
+    assert p(line({"type": "tool_use", "name": "Read", "input": {"file_path": "/r/site/a.tsx"}}), "/r") == "lit site/a.tsx"
+    assert p(line({"type": "tool_use", "name": "Edit", "input": {"file_path": "/r/b.py"}}), "/r") == "modifie b.py"
+    assert p(line({"type": "tool_use", "name": "Bash", "input": {"command": "npm   run build"}}), "/r") == "lance « npm run build »"
+    assert p(line({"type": "tool_use", "name": "TodoWrite", "input": {"todos": [{"status": "in_progress", "activeForm": "Corrige le menu"}]}}), "/r") == "etape : Corrige le menu"
+    assert p(j.dumps({"type": "result"}), "/r") is None and p("pas du json", "/r") is None

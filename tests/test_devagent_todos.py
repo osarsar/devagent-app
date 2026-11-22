@@ -80,3 +80,70 @@ def test_routes(t, P):
     assert data["open"] == [] and data["done"][0]["done_by"] == "utilisateur"
     assert c.post(f"/api/agent/todos/{n}", json={"action": "autre"}).status_code == 400
     assert "/agent/assets/pages/05-afaire.js" in c.get("/").get_data(as_text=True)
+
+
+# ── Questions answered in the task, checks done by DevAgent or the agent ────
+
+def _fake_send(monkeypatch):
+    from devagent import chat
+    sent = []
+
+    def send(cid, text, client=None, wait=False, read_only=False, shown=None):
+        sent.append({"cid": cid, "text": text, "read_only": read_only, "shown": shown})
+        return {"ok": True}
+    monkeypatch.setattr(chat, "send", send)
+    return sent
+
+
+def test_une_question_se_repond_dans_la_tache_et_revient_a_l_agent(t, P, monkeypatch):
+    from devagent import chat, guard
+    p = P.create("site")
+    c = chat.start(p["id"])
+    out = guard.call("a_faire_ajouter", {"titre": "Decider quelle IA utiliser", "comment": "Claude ou OpenAI",
+                                         "question": "Quelle IA veux-tu pour le chat : Claude ou OpenAI ?", "projet": "site"},
+                     actor="chat", ctx={"project_id": p["id"], "chat_id": c["id"]})
+    n = out["resultat"]["numero"]
+    item = t.get(n)
+    assert item["est_question"] and item["chat_id"] == c["id"]
+    sent = _fake_send(monkeypatch)
+    r = t.answer(n, "Claude, avec ma cle")
+    assert r == {"chat": c["id"]}                                            # the conversation that asked
+    assert "Quelle IA veux-tu" in sent[0]["text"] and "Claude, avec ma cle" in sent[0]["text"]
+    assert sent[0]["shown"].startswith("Reponse a « Decider")
+    done = t.get(n)
+    assert done["status"] == "faite" and done["done_by"] == "reponse" and done["answer"] == "Claude, avec ma cle"
+    with pytest.raises(Exception):
+        t.answer(n, "   ")
+
+
+def test_la_reponse_va_dans_une_nouvelle_conversation_si_l_autre_travaille(t, P, monkeypatch):
+    from devagent import chat
+    p = P.create("site")
+    c = chat.start(p["id"])
+    chat._save(c["id"], status="en_cours")
+    n = t.add("Choisir le nom de domaine ?", "", project_id=p["id"], chat_id=c["id"])["numero"]
+    assert t.get(n)["est_question"]                                         # a « ? » makes it a question
+    _fake_send(monkeypatch)
+    r = t.answer(n, "monsite.ma")
+    assert r["chat"] != c["id"] and chat._load(r["chat"])["project_id"] == p["id"]
+
+
+def test_verifier_automatique_ou_par_l_agent(t, P, monkeypatch):
+    from devagent import registry
+    p = P.create("site")
+    monkeypatch.setattr(registry.get("vercel_etat"), "fn", lambda ctx, projet=None: {"git": {"relie": True}})
+    auto = t.add("Relier Vercel a GitHub", "x", project_id=p["id"], check_tool="vercel_etat",
+                 check_expect={"git.relie": True})["numero"]
+    r = t.verify(auto)
+    assert r["auto"] and r["closed"][0]["numero"] == auto and t.get(auto)["status"] == "faite"
+    sent = _fake_send(monkeypatch)
+    manual = t.add("Renouveler le token Vercel", "Sur vercel.com/account/tokens", project_id=p["id"])["numero"]
+    assert not t.get(manual)["est_question"]
+    r = t.verify(manual)
+    assert not r["auto"] and r["chat"] and sent[0]["read_only"] is True          # the agent looks, changes nothing
+    assert f"a_faire_terminer (numero {manual})" in sent[0]["text"] and t.get(manual)["last_check"]
+
+
+def test_l_agent_peut_rayer_pendant_une_verification(t):
+    from devagent import chat
+    assert "a_faire_terminer" in chat.NOTE_TOOLS                              # allowed in a read-only turn

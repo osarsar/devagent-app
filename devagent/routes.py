@@ -558,6 +558,13 @@ def api_todo(tid):
         return jsonify({"ok": todos.reopen(tid)})
     if action == "check":
         return jsonify({"ok": True, "closed": todos.check(tid)})
+    try:
+        if action == "answer":                         # a question answered: back to the agent, who goes on
+            return jsonify({"ok": True, **todos.answer(tid, _body().get("text"))})
+        if action == "verify":                         # automatic check, or the agent looks
+            return jsonify({"ok": True, **todos.verify(tid)})
+    except Exception as e:
+        return jsonify({"ok": False, "message": getattr(e, "message", None) or str(e)}), 400
     return jsonify({"ok": False, "message": "action inconnue"}), 400
 
 

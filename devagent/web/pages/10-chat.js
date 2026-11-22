@@ -68,29 +68,59 @@ DA.page({
       const e = Object.entries(a || {}).filter(([, v]) => v !== '' && v !== null && v !== undefined);
       return e.length ? e.slice(0, 3).map(([k, v]) => `${k}: ${short(v)}`).join(' · ') : '';
     }
-    const STATE = { ok: ['ok', ''], erreur: ['bad', 'erreur'], confirmation_requise: ['wait', 'attend ta reponse'],
+    const STATE = { en_cours: ['run', 'en cours…'], ok: ['ok', ''], erreur: ['bad', 'erreur'], confirmation_requise: ['wait', 'attend ta reponse'],
       fait: ['ok', 'autorise · fait'], refuse: ['off', 'refuse'], echec: ['bad', 'autorise · a echoue'] };
     function toolLine(e) {
       const [cls, label] = STATE[e.statut] || ['off', e.statut];
-      const row = h('details', { class: 'act ' + cls, 'data-confirmation': e.confirmation || null },
+      const row = h('details', { class: 'act ' + cls, 'data-confirmation': e.confirmation || null, 'data-tid': e.tid || null },
         h('summary', {}, h('span', { class: 'act-dot' }), h('span', { class: 'act-name' }, e.name),
           h('span', { class: 'act-args' }, argsText(e.args)), h('span', { class: 'act-state' }, label)),
         h('div', { class: 'act-more' },
-          e.message ? h('div', { class: 'act-msg' }, '⎿ ', e.message) : null,
+          h('div', { class: 'act-msg' }, e.message ? '⎿ ' + e.message : ''),
+          h('div', { class: 'act-steps' }),
           h('pre', {}, DA.json(e.args) || '(sans argument)')));
-      return row;
+      return h('div', { class: 'actw' }, row, h('div', { class: 'act-live', hidden: e.statut !== 'en_cours' }));
+    }
+    const rowOf = tid => tid ? msgs.querySelector(`.act[data-tid="${CSS.escape(tid)}"]`) : null;
+    function setState(row, statut, extra) {
+      const [cls, label] = STATE[statut] || ['off', statut];
+      row.className = 'act ' + cls;
+      const n = row.querySelectorAll('.act-steps > div').length;
+      row.querySelector('.act-state').textContent = label + (n && statut !== 'en_cours' ? `${label ? ' · ' : ''}${n} etape${n > 1 ? 's' : ''}` : '') + (extra || '');
+    }
+    function finished(e) {                      // the end of an action: its result, its steps folded
+      const row = rowOf(e.tid);
+      if (!row) return null;
+      if (e.confirmation) row.dataset.confirmation = e.confirmation;
+      if (e.message) row.querySelector('.act-msg').textContent = '⎿ ' + e.message;
+      setState(row, e.statut);
+      const live = row.parentNode.querySelector('.act-live');
+      if (live) live.hidden = true;
+      return null;
+    }
+    function step(e) {                          // what the running action reports: last 3 shown live, all kept
+      const row = rowOf(e.tid);
+      if (!row) return null;
+      row.querySelector('.act-steps').append(h('div', {}, e.text));
+      const live = row.parentNode.querySelector('.act-live');
+      if (live && row.classList.contains('run')) {
+        live.hidden = false;
+        live.append(h('div', { class: 'act-live-line' }, e.text));
+        while (live.children.length > 3) live.firstChild.remove();
+      }
+      return null;
     }
     function decided(e) {                       // the tool line of a confirmation takes its final state
       const row = msgs.querySelector(`.act[data-confirmation="${e.confirmation}"]`);
       if (!row) return null;
-      const [cls, label] = STATE[e.statut] || ['off', e.statut];
-      row.className = 'act ' + cls;
-      row.querySelector('.act-state').textContent = label;
+      setState(row, e.statut);
       return null;
     }
     function eventNode(e) {
       if (e.type === 'tool') return toolLine(e);
       if (e.type === 'decision') return decided(e);
+      if (e.type === 'maj') return finished(e);
+      if (e.type === 'etape') return step(e);
       if (e.type === 'assistant') return md(e.text || '');
       return h('div', { class: 'msg ' + e.type }, e.text || '');
     }
