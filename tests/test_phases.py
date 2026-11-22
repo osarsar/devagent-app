@@ -218,3 +218,29 @@ def test_summary_for_lists(P, PH, home):
     model.set_model(p["id"], profile="vitrine")
     s = PH.summary(p["id"])
     assert s["current"] == "prepare" and s["next"] == "Lier le projet a GitHub" and s["total"] > 5
+
+
+# ── The phase is the furthest reached; facts tick what they prove ───────────
+
+def test_a_live_site_is_in_production_even_with_an_old_step_left(P, PH, home):
+    import model, connections, db
+    p = P.create("site")
+    model.set_model(p["id"], profile="vitrine")
+    connections.set_domain(p["id"], {"domain": "monsite.ma"})
+    c = (db.get_project_component(p["id"], "domain") or {}).get("config") or {}
+    c.update(dns_verified=True, dns_checked_at="x", site_ok=True, site_checked_at="x", site_result={"https": True})
+    db.set_project_component(p["id"], "domain", c) if hasattr(db, "set_project_component") else connections.save(p["id"], "domain", c)
+    r = PH.roadmap(p["id"])
+    s = steps(r)
+    assert s["https"]["state"] == "done"
+    assert s["deployed"]["state"] == "done" and s["deployed"].get("inferred")        # online over HTTPS: it was deployed
+    assert r["current"] != "prepare"                                                 # not pinned by the missing brief
+    assert any(b["key"] == "brief" for b in r["behind"])                             # listed as « a rattraper »
+
+
+def test_a_readme_counts_as_the_brief(P, PH, home):
+    p = P.create("site")
+    assert steps(PH.roadmap(p["id"]))["brief"]["state"] == "todo"
+    (home / "devpilot" / "projects" / "site" / "README.md").write_text("Ce projet " * 40)
+    s = steps(PH.roadmap(p["id"]))["brief"]
+    assert s["state"] == "done" and "README.md" in s["detail"]

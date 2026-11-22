@@ -239,3 +239,73 @@ def test_point_du_matin_et_alerte_expliquee(chat, P, monkeypatch):
     automations.run(p, "sans-cle")
     assert len(sent) == 1 and "ne repond plus" in sent[0][1]
     assert guard.call("guide_point", actor="mcp")["statut"] == "erreur"         # no key: says so, does not crash
+
+
+def _wait_status(chat, cid, status, seconds=5):
+    import time
+    end = time.time() + seconds
+    while time.time() < end:
+        if chat.get(cid)["status"] == status:
+            return True
+        time.sleep(0.05)
+    return False
+
+
+def test_arreter_pendant_l_appel_au_modele(chat, P):
+    import threading
+    gate = threading.Event()
+
+    class Slow(FakeClient):
+        def _create(self, **params):
+            gate.wait(10)                                   # a long answer from the API
+            return resp("end_turn", {"type": "text", "text": "trop tard"})
+    c = chat.start()
+    assert chat.send(c["id"], "fais quelque chose de long", client=Slow([]))["ok"]
+    assert _wait_status(chat, c["id"], "en_cours", 1)
+    assert chat.stop(c["id"])["ok"]
+    assert _wait_status(chat, c["id"], "pret", 2)                       # stops at once, without waiting for the API
+    gate.set()
+    d = chat._load(c["id"])
+    assert [m["role"] for m in d["messages"]] == ["user", "assistant"]
+    assert d["messages"][-1]["content"][0]["text"] == chat.STOPPED_TEXT
+    assert d["events"][-1] == {**d["events"][-1], "type": "note", "text": "Arrete."}
+    assert "trop tard" not in json.dumps(d["events"])                    # the late answer is dropped
+
+
+def test_arreter_pendant_une_action(chat, P, monkeypatch):
+    import threading, time
+    from devagent import guard
+    p = P.create("site")
+    real, started = guard.call, threading.Event()
+
+    def slow(name, *a, **kw):
+        if name == "projet_etat":
+            started.set()
+            time.sleep(3)
+        return real(name, *a, **kw)
+    monkeypatch.setattr(guard, "call", slow)
+    c = chat.start(p["id"])
+    client = FakeClient([resp("tool_use", {"type": "tool_use", "id": "t1", "name": "projet_etat", "input": {}},
+                              {"type": "tool_use", "id": "t2", "name": "projet_lister", "input": {}})])
+    assert chat.send(c["id"], "regarde", client=client)["ok"]
+    assert started.wait(2)
+    chat.stop(c["id"])
+    assert _wait_status(chat, c["id"], "pret", 2)
+    m = chat._load(c["id"])["messages"]
+    assert [x["role"] for x in m] == ["user", "assistant", "user", "assistant"]
+    assert sorted(r["tool_use_id"] for r in m[2]["content"]) == ["t1", "t2"] and all(r["is_error"] for r in m[2]["content"])
+    assert m[3]["content"][0]["text"] == chat.STOPPED_TEXT
+
+
+def test_arreter_pendant_une_confirmation(chat, P):
+    from devagent import journal
+    p, c, client = _waiting_turn(chat, P)
+    aid = chat.get(c["id"])["waiting"][0]["confirmation"]
+    assert chat.stop(c["id"])["ok"]
+    assert journal.approval(aid)["status"] == "refuse" and P.get(p["id"])
+    d = chat._load(c["id"])
+    assert d["status"] == "pret" and d["messages"][-1]["role"] == "assistant"
+    assert chat.get(c["id"])["waiting"] == []
+    client.script.append(resp("end_turn", {"type": "text", "text": "D'accord."}))
+    assert chat.send(c["id"], "on reprend", client=client, wait=True)["ok"]     # the conversation goes on normally
+    assert chat.get(c["id"])["status"] == "pret"

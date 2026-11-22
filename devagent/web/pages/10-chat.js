@@ -36,7 +36,22 @@ DA.page({
     /* ── a few markdown marks, on escaped text ── */
     const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     function md(text) {
-      const lines = esc(text).split('\n').map(l => l
+      const inline = l => l.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+      const raw = esc(text).split('\n'), out = [];
+      for (let i = 0; i < raw.length; i++) {                // a markdown table: | a | b | then |---|---|
+        if (/^\s*\|.*\|\s*$/.test(raw[i]) && i + 1 < raw.length && /^\s*\|[\s:|-]+\|\s*$/.test(raw[i + 1])) {
+          const cells = l => l.trim().replace(/^\||\|$/g, '').split('|').map(c => inline(c.trim()));
+          const head = cells(raw[i]); i += 2;
+          const rows = [];
+          while (i < raw.length && /^\s*\|.*\|\s*$/.test(raw[i])) rows.push(cells(raw[i++]));
+          i--;
+          out.push(`<table class="md-table"><thead><tr>${head.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>`
+            + rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') + '</tbody></table>');
+          continue;
+        }
+        out.push(raw[i]);
+      }
+      const lines = out.map(l => l.startsWith('<table') ? l : l
         .replace(/`([^`]+)`/g, '<code>$1</code>')
         .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
         .replace(/^#{1,4} (.*)$/, '<span class="md-h">$1</span>')
@@ -123,7 +138,7 @@ DA.page({
       seen = c.total;
       status = c.status;
       working.hidden = status !== 'en_cours';
-      sendBtn.disabled = status === 'en_cours';
+      setBusy(status === 'en_cours');
       await showAsk(c.waiting || []);
       if (atBottom || c.events.length) msgs.scrollTop = msgs.scrollHeight;
       clearTimeout(timer);
@@ -156,9 +171,28 @@ DA.page({
       input.focus();
     }
 
+    /* while the agent works, the send button becomes « Arreter » (also Echap, or Ctrl+C with nothing selected) */
+    function setBusy(on) {
+      sendBtn.classList.toggle('stop', on);
+      sendBtn.title = on ? 'Arreter (Echap ou Ctrl+C)' : 'Envoyer (Entree)';
+      sendBtn.innerHTML = on ? '<svg width="14" height="14" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="3" fill="currentColor"/></svg>' : uiIcon('up', 18);
+      sendBtn.disabled = false;
+      working.querySelector('.stop-hint') || working.append(h('span', { class: 'stop-hint' }, 'Echap pour arreter'));
+    }
+    async function stopTurn() {
+      if (!chatId || (status !== 'en_cours' && status !== 'attente')) return false;
+      await act(sendBtn, async () => {
+        await api(`/api/agent/chats/${chatId}/stop`, {});
+        asked = ''; ask.hidden = true;
+        await poll();
+      });
+      return true;
+    }
+
     async function send() {
+      if (status === 'en_cours') return stopTurn();
       const text = input.value.trim();
-      if (!text || status === 'en_cours') return;
+      if (!text) return;
       await act(sendBtn, async () => {
         if (!chatId) {
           chatId = (await api('/api/agent/chats', { project_id: ctx.project })).id;
@@ -175,6 +209,16 @@ DA.page({
     const grow = () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 180) + 'px'; };
     input.addEventListener('input', grow);
     input.addEventListener('keydown', ev => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); send(); } });
+    const onKey = ev => {                                    // like Claude Code: Echap stops; Ctrl+C too if nothing is selected
+      if (!root.isConnected || !root.offsetParent) return;
+      const stopKey = ev.key === 'Escape' || ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'c' && !String(window.getSelection()) &&
+        !(ev.target === input && input.selectionStart !== input.selectionEnd));
+      if (!stopKey || (status !== 'en_cours' && status !== 'attente')) return;
+      if (document.querySelector('.fs-menu, .modal.visible')) return;     // Echap closes a menu or a window first
+      ev.preventDefault();
+      stopTurn();
+    };
+    document.addEventListener('keydown', onKey);
     sendBtn.addEventListener('click', send);
     pick.addEventListener('change', () => open(Number(pick.value) || null));
     newBtn.addEventListener('click', () => open(null));
@@ -188,6 +232,6 @@ DA.page({
     const wanted = DA.state.chat; DA.state.chat = null;                             // a conversation asked for by another screen
     await open(wanted || null);
     if (DA.state.draft) { input.value = DA.state.draft; DA.state.draft = null; grow(); input.focus(); }   // prepared by a button: you read, then send
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); document.removeEventListener('keydown', onKey); };
   }
 });

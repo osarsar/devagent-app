@@ -78,23 +78,72 @@ function stepRow(s) {
             ${s.custom ? `<button class="btn btn-xs btn-danger" onclick="stepRemove('${hx(s.key)}')" title="Supprimer cette etape">×</button>` : ''}</div></div>`;
 }
 
+let wsRoadmapOpen = false;
+
 function renderPhaseLine(r) {
     const line = document.getElementById('ws-phase-line');
     if (!line) return;
     if (!r.phases.length) { line.style.display = 'none'; return; }
+    window._wsRoadmap = r;
     line.style.display = 'flex';
-    line.className = 'phase2';
+    line.className = 'phase2' + (wsRoadmapOpen ? ' open' : '');
     const seg = r.phases.map(p => {
         const pct = p.state === 'done' ? 100 : p.total ? Math.round(p.done * 100 / p.total) : 0;
         return `<div class="ph ${hx(p.state)}" title="${hx(p.desc)} — ${p.done}/${p.total}">
             <div class="ph-bar"><i style="width:${pct}%"></i></div>
             <span>${p.state === 'done' ? '✓ ' : ''}${hx(p.label)}</span></div>`;
     }).join('');
-    line.innerHTML = `<div class="ph-steps">${seg}</div>
+    const behind = (r.behind || []).length;
+    line.innerHTML = `<div class="ph-steps" onclick="wsRoadmapToggle()" title="Voir chaque etape et sur quoi elle se base">${seg}</div>
         <div class="ph-next">${r.next
-            ? `<span class="eyebrow">Prochaine etape</span><b>${hx(r.next.label)}</b>`
-            : '<b style="color:var(--emerald)">En production</b>'}</div>
-        <button class="btn btn-xs" onclick="wsAsk('Montre-moi la feuille de route de ce projet et ce qui reste a faire.')">${uiIcon('spark', 11)} Feuille de route</button>`;
+            ? `<span class="eyebrow">Prochaine etape${behind ? ` · ${behind} a rattraper` : ''}</span><b>${hx(r.next.label)}</b>`
+            : '<b style="color:var(--emerald)">Tout est fait</b>'}</div>
+        <button class="btn btn-xs" onclick="wsRoadmapToggle()">${wsRoadmapOpen ? 'Fermer' : 'Detail'}</button>`;
+    renderRoadmapPanel(r);
+}
+
+function wsRoadmapToggle() {
+    wsRoadmapOpen = !wsRoadmapOpen;
+    if (window._wsRoadmap) renderPhaseLine(window._wsRoadmap);
+}
+
+/* the steps, phase by phase: what each one is based on, and what to do */
+function renderRoadmapPanel(r) {
+    let box = document.getElementById('ws-roadmap-pop');
+    const line = document.getElementById('ws-phase-line');
+    if (!wsRoadmapOpen) { if (box) box.remove(); return; }
+    if (!box) { box = document.createElement('div'); box.id = 'ws-roadmap-pop'; line.after(box); }
+    const q = t => hx(JSON.stringify(t));
+    const icon = x => x.skipped ? '<span class="rs-ico later">↷</span>'
+        : x.state === 'done' || x.state === 'delegated' ? '<span class="rs-ico ok">✓</span>'
+        : x.state === 'partial' ? '<span class="rs-ico part">◐</span>' : '<span class="rs-ico todo"></span>';
+    const how = x => x.state === 'delegated' ? 'gere ailleurs' : x.inferred ? 'deduit des faits'
+        : x.manual || x.custom ? 'coche par toi' : 'verifie par DevAgent';
+    const actions = x => {
+        if (x.state === 'done' || x.state === 'delegated') return x.manual && !x.inferred ? `<button class="btn btn-xs btn-ghost" onclick="wsStep('mark', ${q(x.key)}, false)">Decocher</button>` : '';
+        if (x.skipped) return `<button class="btn btn-xs btn-ghost" onclick="wsStep('skip', ${q(x.key)}, false)">Reprendre</button>`;
+        return (x.manual || x.custom ? `<button class="btn btn-xs btn-primary" onclick="wsStep('mark', ${q(x.key)}, true)">C'est fait</button>`
+                : `<button class="btn btn-xs" onclick="wsRoadmapOpen=false;renderPhaseLine(window._wsRoadmap);wsAsk(${q(`Aide-moi pour l'etape « ${x.label} » de la feuille de route (${x.detail || x.hint}).`)})">${uiIcon('spark', 11)} Demander</button>`)
+            + `<button class="btn btn-xs btn-ghost" onclick="wsStep('skip', ${q(x.key)}, true)" title="Ne compte plus pour la prochaine etape">Plus tard</button>`;
+    };
+    box.className = 'roadmap-pop';
+    box.innerHTML = `<div class="rp-intro"><b>Les etapes d'un projet, de la preparation a la production.</b>
+        DevAgent coche tout seul ce qu'il peut verifier (GitHub, domaine, DNS, site en ligne…) ; les etapes « a cocher » sont pour toi.
+        La phase du projet est la plus avancee atteinte ; ce qui a ete oublie avant apparait « a rattraper ».</div>
+        <div class="rp-cols">${r.phases.map(p => `<div class="rp-col ${hx(p.state)}">
+            <div class="rp-head"><b>${hx(p.label)}</b><span>${p.done}/${p.total}</span></div>
+            <div class="st-sub rp-desc">${hx(p.desc)}</div>
+            ${p.steps.map(x => `<div class="rp-step${x.skipped ? ' skipped' : ''}">${icon(x)}
+                <div class="rp-main"><div class="rp-label">${hx(x.label)}</div>
+                  <div class="st-sub">${hx(x.detail || x.hint || '')} <span class="rp-how">· ${how(x)}</span></div>
+                  <div class="rp-actions">${actions(x)}</div></div></div>`).join('')}
+        </div>`).join('')}</div>`;
+}
+
+async function wsStep(what, key, on) {
+    const r = await apiJson('POST', `projects/${wsProjectId}/roadmap/${what}`, what === 'mark' ? { key, done: on } : { key, later: on });
+    if (r && r.success === false) toast(r.message, 'error');
+    await refreshPhaseLine();
 }
 
 async function refreshPhaseLine() {

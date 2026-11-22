@@ -119,6 +119,7 @@ def _git_facts(project):
         rc, up, _ = P.git(["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], cwd=repo, timeout=10)
         if rc != 0:
             out["pushed"] = False
+            out["no_upstream"] = True                # this branch was never sent to GitHub
             return out
         rc, cnt, _ = P.git(["rev-list", "--left-right", "--count", "HEAD...@{u}"], cwd=repo, timeout=10)
         if rc == 0 and cnt:
@@ -128,6 +129,24 @@ def _git_facts(project):
     except Exception:
         pass
     return out
+
+
+BRIEF_FILES = (".devpilot/prompt.md", "README.md", "ARCHITECTURE.md", "BRIEF.md", "docs/README.md")
+
+
+def _brief_file(project):
+    """A file that really describes the project (not an empty or template one)."""
+    path = project.get("path")
+    if not path or not os.path.isdir(path):
+        return None
+    for name in BRIEF_FILES:
+        f = os.path.join(path, name)
+        try:
+            if os.path.isfile(f) and os.path.getsize(f) >= 300:
+                return name
+        except OSError:
+            pass
+    return None
 
 
 def _has_compose(project):
@@ -168,7 +187,10 @@ def _auto_state(pid, project, step, needs, m):
             return ("done", n["detail"]) if n and n["state"] == "ok" else ("todo", "pas encore lie")
         if k == "brief":
             specs = db.get_project_specs(pid) or {}
-            return ("done", "brief present") if (specs.get("prompt") or "").strip() else ("todo", "pas de brief")
+            if (specs.get("prompt") or "").strip():
+                return "done", "brief ecrit dans DevAgent"
+            doc = _brief_file(project)
+            return ("done", f"{doc} decrit le projet") if doc else ("todo", "aucun README ni brief qui decrive le projet")
         if k == "first_commit":
             g = _git_facts(project)
             return ("done", "au moins un commit") if g["commits"] else ("todo", "aucun commit" if g["repo"] else "pas de depot")
@@ -178,7 +200,11 @@ def _auto_state(pid, project, step, needs, m):
                 return "todo", "rien a pousser encore"
             if g["pushed"] is None:
                 return "todo", "etat inconnu"
-            return ("done", "a jour avec GitHub") if g["pushed"] else ("partial", f"{g['ahead']} commit(s) a envoyer")
+            if g["pushed"]:
+                return "done", "a jour avec GitHub"
+            if g.get("no_upstream"):
+                return "partial", "la branche actuelle n'a jamais ete envoyee sur GitHub"
+            return "partial", f"{g['ahead']} commit(s) a envoyer"
         if k == "docker_dev":
             return ("done", "docker-compose present") if _has_compose(project) else ("todo", "pas de docker-compose")
         if k == "hosting":
@@ -257,6 +283,7 @@ def roadmap(pid):
     m = {"profile": status["profile"], "label": status["label"]}
 
     phases = []
+    phase_steps = {}
     for ph in PHASES:
         steps = []
         for s in [x for x in STEPS if x["phase"] == ph["key"]]:
@@ -281,25 +308,57 @@ def roadmap(pid):
                               "state": "done" if c.get("done") else "todo", "detail": ("fait le " + c["done"][:10]) if c.get("done") else ""})
         if not steps:
             continue                                # a phase with nothing to do is not shown
+        phase_steps[ph["key"]] = steps
         open_steps = [x for x in steps if x["state"] in ("todo", "partial") and not x["skipped"]]
         done = sum(1 for x in steps if x["state"] in ("done", "delegated") or x["skipped"])
         phases.append({"key": ph["key"], "label": ph["label"], "desc": ph["desc"], "steps": steps,
                        "done": done, "total": len(steps), "open": len(open_steps),
                        "state": "done" if not open_steps else "upcoming"})
 
-    current = next((p for p in phases if p["open"]), None)
+    # what the facts prove: a site online over HTTPS has been deployed, so it was ready to be
+    live = any(x["key"] == "https" and x["state"] == "done" for ph in phases for x in ph["steps"])
+    if live:
+        for ph in phases:
+            for x in ph["steps"]:
+                if x["key"] in ("dev_done", "deployed") and x["state"] == "todo":
+                    x.update(state="done", detail="constate : le site est en ligne", inferred=True)
+        for ph in phases:
+            ph["done"] = sum(1 for x in ph["steps"] if x["state"] in ("done", "delegated") or x["skipped"])
+            ph["open"] = sum(1 for x in ph["steps"] if x["state"] in ("todo", "partial") and not x["skipped"])
+            ph["state"] = "done" if not ph["open"] else "upcoming"
+
+    # the phase of the project: the furthest one with real progress (an old forgotten step in an
+    # earlier phase does not pin the whole project there; it is listed as « a rattraper »)
+    reached = -1
+    for i, ph in enumerate(phases):
+        if any(x["state"] in ("done", "delegated") and not x.get("inferred") and not x["manual"] for x in ph["steps"]):
+            reached = i
+    if reached >= 0 and not phases[reached]["open"] and reached + 1 < len(phases):
+        reached += 1                                 # that phase is complete: the project is in the next one
+    current = phases[reached] if reached >= 0 else next((p for p in phases if p["open"]), None)
+    if current and not current["open"]:
+        later_open = next((p for p in phases[phases.index(current):] if p["open"]), None)
+        current = later_open or current
     for p in phases:
         if current and p["key"] == current["key"]:
             p["state"] = "current"
     next_step = None
+    behind = []
     if current:
+        idx = phases.index(current)
         next_step = next((x for x in current["steps"] if x["state"] in ("todo", "partial") and not x["skipped"]), None)
+        behind = [dict(x, phase=p["label"]) for p in phases[:idx] for x in p["steps"]
+                  if x["state"] in ("todo", "partial") and not x["skipped"]]
+        if not next_step and behind:
+            next_step = behind[0]
+        if not current["open"] and not behind:
+            current = None                           # everything is done
     total = sum(p["total"] for p in phases)
     done = sum(p["done"] for p in phases)
     return {"profile": status["profile"], "label": status["label"], "phases": phases,
             "current": current["key"] if current else ("prod" if phases else None),
             "current_label": current["label"] if current else ("Production" if phases else ""),
-            "next": next_step, "done": done, "total": total, "complete": bool(phases) and current is None}
+            "next": next_step, "behind": behind, "done": done, "total": total, "complete": bool(phases) and current is None}
 
 
 # ── Acting on steps ─────────────────────────────────────────────────────────
