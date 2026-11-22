@@ -41,7 +41,7 @@
         <div class="form-group">
             <label>Emplacement</label>
             <div class="flex gap-8" style="align-items:center;flex-wrap:wrap">
-                <span class="mono" id="add-loc-default" style="font-size:12px;color:var(--text-2)">~/devpilot/projects/…</span>
+                <span class="mono" id="add-loc-default" style="font-size:12px;color:var(--text-2)">{{ projects_dir }}/…</span>
                 <button class="btn btn-xs" id="add-loc-toggle" onclick="addToggleCustom()">Choisir un autre emplacement</button>
             </div>
             <input class="form-input mono mt-8" id="add-loc-custom" placeholder="~/chemin/choisi/mon-projet" style="display:none">
@@ -74,8 +74,8 @@
         <div class="form-group">
             <label>Que faire du dossier ?</label>
             <div style="display:grid;gap:6px;font-size:12px;color:var(--text-2)">
-                <label style="cursor:pointer"><input type="radio" name="add-mode" value="move" checked style="accent-color:var(--violet)"> Le deplacer dans ~/devpilot/projects (recommande)</label>
-                <label style="cursor:pointer"><input type="radio" name="add-mode" value="copy" style="accent-color:var(--violet)"> Le copier dans ~/devpilot/projects (l'original reste)</label>
+                <label style="cursor:pointer"><input type="radio" name="add-mode" value="move" checked style="accent-color:var(--violet)"> Le deplacer dans {{ projects_dir }} (recommande)</label>
+                <label style="cursor:pointer"><input type="radio" name="add-mode" value="copy" style="accent-color:var(--violet)"> Le copier dans {{ projects_dir }} (l'original reste)</label>
                 <label style="cursor:pointer"><input type="radio" name="add-mode" value="link" style="accent-color:var(--violet)"> Le garder a sa place actuelle</label>
             </div>
         </div>
@@ -461,34 +461,15 @@
 <div class="modal" id="help-modal">
     <h3>Raccourcis clavier</h3>
     <div style="display:grid;grid-template-columns:1fr auto;gap:6px 24px;font-size:12px;color:var(--text-2)">
-        <span>Dashboard</span><span class="hotkey" style="background:var(--bg-3)">1</span>
+        <span>Accueil</span><span class="hotkey" style="background:var(--bg-3)">1</span>
         <span>Projets</span><span class="hotkey" style="background:var(--bg-3)">2</span>
-        <span>Stockage</span><span class="hotkey" style="background:var(--bg-3)">3</span>
-        <span>Caches</span><span class="hotkey" style="background:var(--bg-3)">4</span>
-        <span>Docker</span><span class="hotkey" style="background:var(--bg-3)">5</span>
-        <span>Reseau</span><span class="hotkey" style="background:var(--bg-3)">6</span>
-        <span>Timeline</span><span class="hotkey" style="background:var(--bg-3)">7</span>
-        <span>Parametres</span><span class="hotkey" style="background:var(--bg-3)">8</span>
+        <span>Chat avec l'agent</span><span class="hotkey" style="background:var(--bg-3)">3</span>
+        <span>A faire par toi</span><span class="hotkey" style="background:var(--bg-3)">4</span>
+        <span>Automatisations</span><span class="hotkey" style="background:var(--bg-3)">5</span>
+        <span>Acces et cles</span><span class="hotkey" style="background:var(--bg-3)">6</span>
+        <span>En cours</span><span class="hotkey" style="background:var(--bg-3)">7</span>
+        <span>Preferences</span><span class="hotkey" style="background:var(--bg-3)">8</span>
         <span>Rafraichir</span><span class="hotkey" style="background:var(--bg-3)">R</span>
-        <span>Fermer modal</span><span class="hotkey" style="background:var(--bg-3)">Esc</span>
+        <span>Fermer une fenetre</span><span class="hotkey" style="background:var(--bg-3)">Esc</span>
     </div>
 </div>
-
-<!-- ═══ GUIDE OVERLAY ═══ -->
-<div class="guide-overlay" id="guide-overlay">
-    <button class="guide-close" onclick="closeGuide()">&times;</button>
-    <div class="guide-container">
-        <div class="guide-header">
-            <h2>DevAgent — Guide</h2>
-            <p>Suis ces etapes pour prendre le controle total de ton espace disque, tes caches, tes containers et tes ressources projet.</p>
-        </div>
-        <div id="guide-steps"></div>
-        <div style="text-align:center;margin-top:20px">
-            <button class="btn btn-sm" onclick="closeGuide()">Fermer le guide</button>
-        </div>
-    </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════
-     JAVASCRIPT
-     ═══════════════════════════════════════════════════════════ -->

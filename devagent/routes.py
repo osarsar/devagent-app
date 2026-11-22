@@ -355,10 +355,9 @@ def api_agent_pages():
 
 @agent_bp.route("/agent")
 def agent_page():
-    html = (WEB / "agent.html").read_text(encoding="utf-8")
-    pages = sorted(f.name for f in (WEB / "pages").glob("*.js"))
-    tags = "\n".join(f'<script src="/agent/assets/pages/{n}"></script>' for n in pages)
-    return Response(html.replace("<!--PAGES-->", tags), mimetype="text/html")
+    """The agent is the app: its old separate page now lives inside it."""
+    from flask import redirect
+    return redirect("/#agent:accueil")
 
 
 @agent_bp.route("/agent/assets/<path:name>")
@@ -585,3 +584,24 @@ def api_trial_do(filename):
         journal.record(guard.HUMAN, "outil_ecarter", "ecriture", {"fichier": filename}, "ok", None)
         return jsonify({"ok": True})
     return jsonify({"ok": False, "message": "action inconnue"}), 400
+
+
+# ── Home ────────────────────────────────────────────────────────────────────
+
+@agent_bp.route("/api/agent/home")
+def api_home():
+    from . import home
+    return jsonify(home.build())
+
+
+@agent_bp.route("/api/agent/station/<int:pid>")
+def api_station(pid):
+    from . import home
+    s = home.station(pid)
+    return jsonify(s) if s else (jsonify({"message": "Projet introuvable"}), 404)
+
+
+@agent_bp.route("/api/agent/station/<int:pid>/en-ligne")
+def api_station_online(pid):
+    from . import home
+    return jsonify(home.online(pid))

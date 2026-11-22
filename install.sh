@@ -126,16 +126,18 @@ PYTHONPATH="$APP_DIR" "$APP_DIR/.venv/bin/python" -c "import db; db.init_db(); p
 
 # Desktop shortcut (uses launch.sh for clean port handling)
 chmod +x "$APP_DIR/launch.sh"
-cat > "$HOME/.local/share/applications/devpilot.desktop" << EOF
+rm -f "$HOME/.local/share/applications/devpilot.desktop"      # the old name of the shortcut
+cat > "$HOME/.local/share/applications/devagent.desktop" << EOF
 [Desktop Entry]
 Name=DevAgent
-Comment=Projets, agent et automatisations
+GenericName=Agent de projets
+Comment=Ton agent : projets, acces, automatisations
 Exec=$APP_DIR/launch.sh
 Icon=$APP_DIR/icon.svg
 Terminal=false
 Type=Application
 Categories=Development;
-Keywords=dev;project;manager;devpilot;agent;
+Keywords=dev;projet;agent;devagent;devpilot;
 EOF
 update-desktop-database "$HOME/.local/share/applications" 2>/dev/null
 

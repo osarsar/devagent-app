@@ -389,7 +389,7 @@ def inventaire():
                                 chemins=[racine], risque=risque, defaut=not risque, action=action_processus(racine)))
     # DevAgent lui-même
     appli = [ESPACE, HOME / ".config" / "devpilot", HOME / ".local" / "bin" / "devpilot", HOME / ".local" / "bin" / "devpilot-watcher",
-             HOME / ".local" / "share" / "applications" / "devpilot.desktop",
+             HOME / ".local" / "share" / "applications" / "devpilot.desktop", HOME / ".local" / "share" / "applications" / "devagent.desktop",
              HOME / ".config" / "systemd" / "user" / "devpilot-watcher.service", HOME / ".config" / "autostart" / "devpilot.desktop"]
     appli = [p for p in appli if p.exists() or p.is_symlink()]
     if appli:

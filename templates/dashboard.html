@@ -4,13 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DevAgent</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='b' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%237c3aed'/%3E%3Cstop offset='100%25' style='stop-color:%23a78bfa'/%3E%3C/linearGradient%3E%3ClinearGradient id='a' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2338bdf8'/%3E%3Cstop offset='100%25' style='stop-color:%2306b6d4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='108' fill='url(%23b)'/%3E%3Cpath d='M155 170L105 256L155 342' stroke='white' stroke-width='32' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cpath d='M357 170L407 256L357 342' stroke='white' stroke-width='32' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cpolygon points='256,185 290,310 256,280 222,310' fill='url(%23a)'/%3E%3Ccircle cx='256' cy='175' r='14' fill='url(%23a)'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ui/dashboard.css">
+<link rel="stylesheet" href="/ui/agent.css">
+<link rel="stylesheet" href="/ui/theme.css">
 </head>
 <body>
 {# The dashboard is assembled from parts — nothing lives in this file:
@@ -28,6 +31,7 @@
 
 {% for e in extensions %}{{ e.modals|safe }}{% endfor %}
 {% include "dash/modals.html" %}
+<script>const PROJECTS_DIR = {{ projects_dir|tojson }};</script>
 {% for s in scripts %}<script src="{{ s }}"></script>
 {% endfor %}</body>
 </html>

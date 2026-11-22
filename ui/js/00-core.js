@@ -9,9 +9,9 @@ let projectsCache = [];
 let charts = {};
 
 const PAGE_TITLES = {
-    dashboard: 'Dashboard', projects: 'Projets', storage: 'Stockage',
+    dashboard: 'Ce PC', projects: 'Projets', storage: 'Stockage',
     caches: 'Caches', docker: 'Docker', network: 'Reseau', running: 'En cours',
-    timeline: 'Timeline', settings: 'Parametres', cloud: 'Cloud Sync', sessions: 'Sessions'
+    settings: 'Preferences', sessions: 'Terminaux ouverts'
 };   // an extension adds its own page here (ex. extensions/proniver)
 
 const COLORS = ['#6d5cff','#06b6d4','#22d3a7','#f472b6','#f59e0b','#f43f5e','#60a5fa','#fb923c','#2dd4bf'];
@@ -90,22 +90,35 @@ async function deleteFile(path, name) {
 /* ═══ NAVIGATION ═══ */
 function go(page) {
     document.body.classList.remove('nav-open');          // narrow window: the menu folds after a choice
+    const base = page.split(':')[0];                     // 'agent:chat' lives in the #page-agent container
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
-    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('page-' + base).classList.add('active');
     const navItem = document.querySelector(`.sidebar-item[data-page="${page}"]`);
     if (navItem) navItem.classList.add('active');
     document.getElementById('page-title').textContent = PAGE_TITLES[page] || page;
     currentPage = page;
-    window.location.hash = page;
+    if (window.location.hash.slice(1) !== page) window.location.hash = page;
     loadPage(page);
 }
 
+/* a link written as href="#agent:chat" (or the browser's back button) changes the page too */
+window.addEventListener('hashchange', () => {
+    const hash = window.location.hash.slice(1);
+    if (!hash || hash === currentPage || hash.startsWith('workspace')) return;
+    if (hash.startsWith('agent:') || PAGE_TITLES[hash]) go(hash);
+});
+
 function loadPage(p) {
+    if (p.startsWith('agent:')) {                        // one of the agent's screens (devagent/web/pages/)
+        const title = DA.open(p.split(':')[1]);
+        if (title) document.getElementById('page-title').textContent = title;
+        return;
+    }
     const loaders = {
         dashboard: loadDashboard, projects: loadProjects, storage: loadStorage,
         caches: loadCaches, docker: loadDocker, network: loadNetwork, running: loadRunning,
-        timeline: () => loadTimeline(24), settings: () => { loadSettings(); loadDevTools(); }, cloud: loadCloudOverview,
+        settings: () => { loadSettings(); loadDevTools(); }, 
         sessions: loadSessionsPage
     };
     (loaders[p] || (() => {}))();
@@ -128,16 +141,6 @@ async function updateTopbar() {
     } catch (e) {}
 }
 
-/* ═══ WATCHER ═══ */
-async function checkWatcher() {
-    try {
-        const r = await api('watcher/status');
-        document.getElementById('watcher-dot').className = 'watcher-dot ' + (r.running ? 'on' : 'off');
-        document.getElementById('watcher-label').textContent = r.running ? 'Watcher actif' : 'Watcher inactif';
-    } catch (e) {}
-}
-
-setInterval(checkWatcher, 15000); checkWatcher();
 setInterval(updateTopbar, 8000); updateTopbar();
 
 // Poll events
@@ -147,7 +150,6 @@ setInterval(async () => {
         if (ev.length > 0) {
             toast(ev[0].resource_name + ' — ' + ev[0].type, 'info');
             if (currentPage === 'dashboard') loadDashboard();
-            if (currentPage === 'timeline') loadTimeline(24);
         }
     } catch (e) {}
 }, 5000);

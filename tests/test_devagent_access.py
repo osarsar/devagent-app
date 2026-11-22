@@ -253,4 +253,4 @@ def test_routes_acces(acc):
     h = next(e for e in data["access"] if e["key"] == "hostinger_dns")
     assert h["state"] == "a_tester" and h["fields"][0]["set"] is True and h["explain"]
     assert c.post("/api/agent/access/test", json={"key": "nexiste"}).status_code == 400
-    assert "/agent/assets/pages/25-acces.js" in c.get("/agent").get_data(as_text=True)
+    assert "/agent/assets/pages/25-acces.js" in c.get("/").get_data(as_text=True)

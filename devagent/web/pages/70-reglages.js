@@ -35,7 +35,7 @@ DA.page({
     });
     root.append(h('div', { class: 'card stack' },
       h('div', { class: 'spread' }, h('h2', {}, 'Chat integre'), DA.pill(chat.configured ? 'pret' : 'sans cle', chat.configured ? 'ok' : 'warn')),
-      h('p', { class: 'muted' }, 'La cle API se saisit dans la page ', h('a', { href: '#acces' }, 'Acces'),
+      h('p', { class: 'muted' }, 'La cle API se saisit dans la page ', h('a', { href: '#agent:acces' }, 'Acces'),
         '. Si le modele refuse une demande, l\'API peut la confier a un autre modele (repli active par defaut).'),
       h('div', { class: 'grid' }, field('Modele', model), field('Effort de reflexion', effort)),
       h('div', {}, saveChat)));
@@ -51,7 +51,7 @@ DA.page({
       h('div', { class: 'spread' }, h('h2', {}, 'Notifications'),
         h('span', {}, DA.pill('Telegram', notif.channels.telegram ? 'ok' : ''), ' ', DA.pill('Email', notif.channels.email ? 'ok' : ''))),
       h('p', { class: 'muted' }, 'Ou l\'agent et les automatisations te previennent. Les canaux (Telegram, email) et tous les ',
-        'autres acces — DNS, stockage, hebergeurs — se reglent dans la page ', h('a', { href: '#acces' }, 'Acces'), '.'),
+        'autres acces — DNS, stockage, hebergeurs — se reglent dans la page ', h('a', { href: '#agent:acces' }, 'Acces'), '.'),
       h('div', {}, testN)));
 
     /* Sync between PCs */

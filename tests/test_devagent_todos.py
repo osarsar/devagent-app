@@ -79,4 +79,4 @@ def test_routes(t, P):
     data = c.get("/api/agent/todos").get_json()
     assert data["open"] == [] and data["done"][0]["done_by"] == "utilisateur"
     assert c.post(f"/api/agent/todos/{n}", json={"action": "autre"}).status_code == 400
-    assert "/agent/assets/pages/05-afaire.js" in c.get("/agent").get_data(as_text=True)
+    assert "/agent/assets/pages/05-afaire.js" in c.get("/").get_data(as_text=True)

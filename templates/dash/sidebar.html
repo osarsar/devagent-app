@@ -1,83 +1,83 @@
 <aside class="sidebar">
     <div class="sidebar-header">
-        <div class="sidebar-logo" style="padding:4px">
-            <svg viewBox="0 0 512 512" width="26" height="26">
-                <defs><linearGradient id="acc" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#38bdf8"/><stop offset="100%" style="stop-color:#06b6d4"/></linearGradient></defs>
-                <path d="M155 170 L105 256 L155 342" stroke="white" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                <path d="M357 170 L407 256 L357 342" stroke="white" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                <polygon points="256,185 290,310 256,280 222,310" fill="url(#acc)"/>
-                <circle cx="256" cy="175" r="16" fill="url(#acc)"/>
-            </svg>
-        </div>
+        <img class="sidebar-logo" src="/icon.svg" alt="" width="38" height="38">
         <div>
             <h1>DevAgent</h1>
-            <div class="version">Projets · agent · automatisations</div>
+            <div class="version">Ton agent de projets</div>
         </div>
     </div>
 
     <div class="sidebar-group">
-        <div class="sidebar-label">Monitoring</div>
-        <div class="sidebar-item active" data-page="dashboard" onclick="go('dashboard')">
-            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="11" width="7" height="10" rx="1"/></svg></span> Dashboard <span class="hotkey">1</span>
+        <div class="sidebar-item" data-page="agent:accueil" onclick="go('agent:accueil')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></span> Accueil
         </div>
         <div class="sidebar-item" data-page="projects" onclick="go('projects')">
-            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg></span> Projets <span class="hotkey">2</span>
-        </div>
-        <div class="sidebar-item" data-page="storage" onclick="go('storage')">
-            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg></span> Stockage <span class="hotkey">3</span>
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span> Projets
         </div>
     </div>
 
-    <div class="sidebar-group" id="agent-nav">
+    <div class="sidebar-group">
         <div class="sidebar-label">Agent</div>
-    </div>
-
-    <div class="sidebar-group">
-        <div class="sidebar-label">Dev Resources</div>
-        <div class="sidebar-item" data-page="caches" onclick="go('caches')">
-            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span> Caches <span class="hotkey">4</span>
+        <div class="sidebar-item" data-page="agent:chat" onclick="go('agent:chat')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.4A8 8 0 1 1 21 12z"/></svg></span> Chat
         </div>
-        <div class="sidebar-item" data-page="docker" onclick="go('docker')">
-            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12.5a4.4 4.4 0 0 0-2.5-3c-.4-1-1.2-1.7-2.3-2"/><rect x="14" y="6" width="3" height="3" rx=".5"/><rect x="10" y="6" width="3" height="3" rx=".5"/><rect x="6" y="6" width="3" height="3" rx=".5"/><rect x="10" y="2" width="3" height="3" rx=".5"/><rect x="6" y="10" width="3" height="3" rx=".5"/><rect x="10" y="10" width="3" height="3" rx=".5"/><rect x="14" y="10" width="3" height="3" rx=".5"/><rect x="2" y="10" width="3" height="3" rx=".5"/></svg></span> Docker <span class="hotkey">5</span>
+        <div class="sidebar-item" data-page="agent:afaire" onclick="go('agent:afaire')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span> A faire par toi <span class="nav-badge" data-da-badge="afaire" hidden></span>
         </div>
-        <div class="sidebar-item" data-page="network" onclick="go('network')">
-            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg></span> Reseau <span class="hotkey">6</span>
+        <div class="sidebar-item" data-page="agent:confirmations" onclick="go('agent:confirmations')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4"/><path d="M12 17h.01"/></svg></span> Confirmations <span class="nav-badge" data-da-badge="confirmations" hidden></span>
         </div>
-    </div>
-
-    <div class="sidebar-group">
-        <div class="sidebar-label">Cloud</div>
-        <div class="sidebar-item" data-page="cloud" onclick="go('cloud')">
-            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></span> Cloud Sync <span class="hotkey">C</span>
+        <div class="sidebar-item" data-page="agent:automatisations" onclick="go('agent:automatisations')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9 2h6"/></svg></span> Automatisations
+        </div>
+        <div class="sidebar-item" data-page="agent:journal" onclick="go('agent:journal')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z"/><path d="M9 8h7M9 12h7M9 16h4"/></svg></span> Journal
         </div>
     </div>
 
 {% for e in extensions %}{{ e.nav|safe }}{% endfor %}
-
     <div class="sidebar-group">
-        <div class="sidebar-label">Status</div>
-        <div class="sidebar-item" data-page="sessions" onclick="go('sessions')">
-            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></span> Sessions
+        <div class="sidebar-label">Ce PC</div>
+        <div class="sidebar-item" data-page="dashboard" onclick="go('dashboard')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span> Vue d'ensemble
         </div>
         <div class="sidebar-item" data-page="running" onclick="go('running')">
-            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></span> En cours <span class="hotkey">9</span>
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 4 20 12 6 20 6 4"/></svg></span> En cours
+        </div>
+        <div class="sidebar-item" data-page="sessions" onclick="go('sessions')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l6-5-6-5"/><path d="M12 19h8"/></svg></span> Terminaux
+        </div>
+        <div class="sidebar-item" data-page="storage" onclick="go('storage')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></span> Stockage
+        </div>
+        <div class="sidebar-item" data-page="caches" onclick="go('caches')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></span> Caches
+        </div>
+        <div class="sidebar-item" data-page="docker" onclick="go('docker')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="8" rx="2"/><path d="M7 11V7h4v4M11 7V3h4v8"/></svg></span> Docker
+        </div>
+        <div class="sidebar-item" data-page="network" onclick="go('network')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M12 7v5M12 12l-6 5M12 12l6 5"/></svg></span> Reseau
         </div>
     </div>
 
     <div class="sidebar-group">
-        <div class="sidebar-label">System</div>
-        <div class="sidebar-item" data-page="timeline" onclick="go('timeline')">
-            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Timeline <span class="hotkey">7</span>
+        <div class="sidebar-label">Reglages</div>
+        <div class="sidebar-item" data-page="agent:acces" onclick="go('agent:acces')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9"/><path d="M16 7l3 3"/></svg></span> Acces et cles
+        </div>
+        <div class="sidebar-item" data-page="agent:outils" onclick="go('agent:outils')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-2.4z"/></svg></span> Outils de l'agent
+        </div>
+        <div class="sidebar-item" data-page="agent:reglages" onclick="go('agent:reglages')">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 2.9-1.2V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span> Agent et synchro
         </div>
         <div class="sidebar-item" data-page="settings" onclick="go('settings')">
-            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span> Parametres <span class="hotkey">8</span>
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 2.9-1.2V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span> Preferences
         </div>
     </div>
 
     <div class="sidebar-footer">
-        <div class="watcher-pill" id="watcher-pill">
-            <span class="watcher-dot off" id="watcher-dot"></span>
-            <span id="watcher-label">Watcher</span>
-        </div>
+        <div class="agent-state" title="L'agent et les automatisations"><span class="agent-dot"></span><span class="agent-on">Agent actif</span><span class="agent-off">Agent en pause</span></div>
     </div>
 </aside>

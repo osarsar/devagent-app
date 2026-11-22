@@ -1,0 +1,89 @@
+/* The agent's screens (devagent/web/pages/), inside the app: every rule is scoped to .da */
+.da a {color:var(--violet)}
+.da h1, .da h2, .da h3 {color:var(--text-0);margin:0;font-weight:600}
+.da h2 {font-size:15px;margin-bottom:10px}
+.da h3 {font-size:13px}
+.da code, .da pre, .da .mono {font-family:var(--mono);font-size:12px}
+.da pre {margin:0;white-space:pre-wrap;word-break:break-word}
+.da :focus-visible {outline:2px solid var(--violet);outline-offset:2px}
+.da .card {background:var(--bg-2);border:1px solid var(--border-1);border-radius:12px;padding:16px;margin-bottom:14px}
+.da .grid {display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+.da .row {display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.da .spread {display:flex;gap:10px;align-items:center;justify-content:space-between}
+.da .muted {color:var(--text-2)}
+.da .small {font-size:12px}
+.da .empty {color:var(--text-3);padding:28px;text-align:center}
+.da .stack {display:flex;flex-direction:column;gap:10px}
+.da .btn {font:inherit;font-weight:500;border-radius:8px;border:1px solid var(--border-2);background:var(--bg-3);
+  color:var(--text-0);padding:7px 12px;cursor:pointer}
+.da .btn:hover {background:var(--bg-4)}
+.da .btn:disabled {opacity:.5;cursor:default}
+.da .btn.primary {background:var(--violet);border-color:var(--violet);color:#fff}
+.da .btn.primary:hover {filter:brightness(1.1)}
+.da .btn.danger {background:var(--rose-dim);border-color:rgba(244,63,94,.4);color:#ffc2cc}
+.da .btn.ghost {background:transparent}
+.da .btn.sm {padding:4px 9px;font-size:12px}
+.da .input, .da textarea, .da select {font:inherit;color:var(--text-0);background:var(--bg-1);border:1px solid var(--border-2);
+  border-radius:8px;padding:8px 10px;width:100%}
+.da textarea {font-family:var(--mono);font-size:12px;resize:vertical;min-height:120px}
+.da label.field {display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-2)}
+.da .pill {display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:1px 9px;font-size:11px;
+  font-weight:600;background:var(--bg-4);color:var(--text-1);white-space:nowrap}
+.da .pill.ok {background:var(--emerald-dim);color:var(--emerald)}
+.da .pill.warn {background:var(--amber-dim);color:var(--amber)}
+.da .pill.bad {background:var(--rose-dim);color:#ff8fa3}
+.da .pill.info {background:var(--violet-dim);color:#b3a9ff}
+.da table {width:100%;border-collapse:collapse}
+.da th {font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);text-align:left;font-weight:600}
+.da th, .da td {padding:8px 10px;border-bottom:1px solid var(--border-1);vertical-align:top}
+.da td.mono {color:var(--text-2);word-break:break-word}
+.da .chat {display:grid;grid-template-columns:220px 1fr;gap:14px;height:100%}
+.da .chat-list {overflow:auto;display:flex;flex-direction:column;gap:4px}
+.da .chat-list button {text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.da .chat-list button.on {background:var(--violet-dim);border-color:transparent}
+.da .chat-main {display:flex;flex-direction:column;min-height:0;background:var(--bg-2);border:1px solid var(--border-1);border-radius:12px}
+.da .msgs {flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.da .msg {max-width:78%;padding:10px 13px;border-radius:12px;white-space:pre-wrap;word-break:break-word}
+.da .msg.user {align-self:flex-end;background:var(--violet);color:#fff}
+.da .msg.assistant {align-self:flex-start;background:var(--bg-3);color:var(--text-0)}
+.da .msg.note, .da .msg.error {align-self:center;font-size:12px;background:transparent;color:var(--text-2)}
+.da .msg.error {color:#ff8fa3}
+.da .toolcall {align-self:flex-start;max-width:78%;background:var(--bg-1);border:1px solid var(--border-1);
+  border-radius:10px;padding:7px 11px;font-size:12px}
+.da .toolcall summary {cursor:pointer;display:flex;gap:8px;align-items:center}
+.da .toolcall .confirm {margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.da .composer {display:flex;gap:8px;padding:12px;border-top:1px solid var(--border-1)}
+.da .composer textarea {min-height:44px;height:44px;font-family:inherit;font-size:14px}
+.da .typing {align-self:flex-start;color:var(--text-3);font-size:12px}
+.da .map-wrap {overflow:auto;background:var(--bg-2);border:1px solid var(--border-1);border-radius:12px}
+.da .map-wrap svg {display:block}
+.da .map-node rect {fill:var(--bg-3);stroke:var(--border-2);rx:8}
+.da .map-node.ok rect {stroke:rgba(34,211,167,.55)}
+.da .map-node.warn rect {stroke:rgba(245,158,11,.6)}
+.da .map-node.bad rect {stroke:rgba(244,63,94,.65)}
+.da .map-node text {fill:var(--text-0);font-size:12px;font-weight:600}
+.da .map-node text.sub {fill:var(--text-2);font-size:10px;font-weight:400}
+.da .map-col {fill:var(--text-3);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.da .map-edge {fill:none;stroke:rgba(140,140,170,.35);stroke-width:1.3}
+.da .map-edge.dashed {stroke-dasharray:4 4}
+.da .map-edge.hl {stroke:var(--violet);stroke-width:2}
+.da .map-node.dim {opacity:.25}
+.da .map-node {cursor:pointer}
+.da a.btn {text-decoration:none;display:inline-block}
+.da.dialog-back {position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:60}
+.da .dialog {width:min(440px,92vw);margin:0}
+.da-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.da-head[hidden] { display: none; }
+.da-head .da-project { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); }
+.da-head .da-project select { width: 220px; }
+.da-head .actions, .da-actions .actions { display: flex; gap: 8px; margin-left: auto; }
+.da-actions { display: flex; margin-bottom: 10px; }
+.da-actions:empty, .da-actions .actions:empty { display: none; }
+.da .chat { height: calc(100vh - 190px); min-height: 380px; }
+/* inside a project the pane is narrow: conversations become a row above the messages */
+.ws-panel.da .chat { height: calc(100vh - 290px); min-height: 340px; grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+.ws-panel.da .chat > .stack { flex-direction: row; align-items: center; overflow-x: auto; gap: 8px; padding-bottom: 2px; }
+.ws-panel.da .chat > .stack > * { flex: none; }
+.ws-panel.da .chat-list { flex-direction: row; overflow: visible; }
+.ws-panel.da .chat-list button { max-width: 180px; }
+

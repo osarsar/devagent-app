@@ -11,7 +11,7 @@ DA.page({
         h('h2', {}, 'Le chat a besoin d\'une cle API Anthropic'),
         h('p', { class: 'muted' }, 'Le chat integre appelle Claude avec ta propre cle, payee a l\'usage. ',
           'Sans cle, l\'agent reste utilisable gratuitement depuis Claude Code (page Reglages → Claude Code).'),
-        h('div', {}, h('a', { class: 'btn primary', href: '#reglages' }, 'Ouvrir les reglages'))));
+        h('div', {}, h('a', { class: 'btn primary', href: '#agent:reglages' }, 'Ouvrir les reglages'))));
       return;
     }
 
@@ -128,7 +128,9 @@ DA.page({
       if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); send(); }
     });
     await loadList();
-    await open(Number(new URLSearchParams(location.search).get('chat')) || null);   // /agent?chat=12#chat
+    const wanted = DA.state.chat; DA.state.chat = null;                             // a conversation asked for by another screen
+    await open(wanted || null);
+    if (DA.state.draft) { input.value = DA.state.draft; DA.state.draft = null; input.focus(); }   // prepared by a button: you read, then send
     return () => clearTimeout(timer);
   }
 });

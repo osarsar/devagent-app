@@ -17,19 +17,18 @@ let wsComponents = [];
 
 function buildWsTabs(components) {
     // Determine which tabs to show based on active components
-    const tabs = ['dev', 'roadmap', 'checklist', 'sessions', 'connections'];
-    if (!components || components.length === 0) {
-        tabs.push('git', 'cloud', 'info', 'prompt');
-    } else {
-        if (components.includes('git')) tabs.push('git');
-        if (components.includes('storage') || components.includes('backup') || components.includes('database')) tabs.push('cloud');
-        tabs.push('info', 'prompt');
-    }
+    // work first (code, agent, steps), then what the project is connected to, then the rest
+    const tabs = ['agent', 'dev', 'roadmap', 'connections', 'automatisations', 'carte'];
+    if (!components || components.length === 0 || components.includes('git')) tabs.push('git');
+    if (components && (components.includes('storage') || components.includes('backup') || components.includes('database'))) tabs.push('cloud');
+    tabs.push('sessions');
+    if (wsSpecs && wsSpecs.checklist && wsSpecs.checklist.length) tabs.push('checklist');   // only projects made by the wizard have one
+    tabs.push('prompt', 'info');
     wsActiveTabs = tabs;
 
     const container = document.getElementById('ws-tabs-container');
     container.innerHTML = tabs.map((t, i) =>
-        `<div class="ws-tab${i===0?' active':''}" data-tab="${t}" onclick="wsTab('${t}')" title="${hx(WS_TAB_TITLES[t] || t)}">${WS_TAB_ICONS[t] || ''}<span>${WS_TAB_LABELS[t] || t}</span><span class="ws-tab-badge" id="ws-badge-${t}" style="display:none"></span></div>`
+        `<div class="ws-tab${t==='dev'?' active':''}" data-tab="${t}" onclick="wsTab('${t}')" title="${hx(WS_TAB_TITLES[t] || t)}">${WS_TAB_ICONS[t] || ''}<span>${WS_TAB_LABELS[t] || t}</span><span class="ws-tab-badge" id="ws-badge-${t}" style="display:none"></span></div>`
     ).join('');
     wsTabsOverflow();
 
@@ -47,7 +46,7 @@ async function openWorkspace(pid) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
     document.getElementById('page-workspace').classList.add('active');
-    document.getElementById('page-title').textContent = 'Workspace';
+    document.getElementById('page-title').textContent = 'Projet';
     currentPage = 'workspace';
     window.location.hash = 'workspace:' + pid;
 
@@ -111,10 +110,13 @@ async function openWorkspace(pid) {
     loadWsPrompt();
 }
 
-const WS_TAB_LABELS = { dev: 'Développer', roadmap: 'Etapes', checklist: 'Checklist', sessions: 'Notes', connections: 'Connexions', git: 'Git', cloud: 'Cloud', info: 'Infos', prompt: 'Prompt' };
-const WS_TAB_TITLES = { dev: 'Dépôts, branches : où travailler, avec Claude, VS Code ou un terminal', roadmap: 'Feuille de route : phases et prochaine etape', checklist: 'Taches du projet', sessions: 'Notes de session', connections: 'GitHub, serveurs, domaine, email...', git: 'Depots, synchronisation', cloud: 'Sauvegardes et stockage', info: 'Informations du projet', prompt: 'Brief / prompt pour Claude' };
+const WS_TAB_LABELS = { agent: 'Agent', automatisations: 'Automatisations', carte: 'Carte', dev: 'Développer', roadmap: 'Etapes', checklist: 'Checklist', sessions: 'Notes', connections: 'Connexions', git: 'Git', cloud: 'Cloud', info: 'Infos', prompt: 'Prompt' };
+const WS_TAB_TITLES = { agent: 'Demander a l\'agent, sur ce projet', automatisations: 'Ce qui tourne tout seul pour ce projet', carte: 'Ce que contient le projet et comment les parties sont liees', dev: 'Dépôts, branches : où travailler, avec Claude, VS Code ou un terminal', roadmap: 'Feuille de route : phases et prochaine etape', checklist: 'Taches du projet', sessions: 'Notes de session', connections: 'GitHub, serveurs, domaine, email...', git: 'Depots, synchronisation', cloud: 'Sauvegardes et stockage', info: 'Informations du projet', prompt: 'Brief / prompt pour Claude' };
 const _svg = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const WS_TAB_ICONS = {
+    agent: _svg('<path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/>'),
+    automatisations: _svg('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9 2h6"/>'),
+    carte: _svg('<path d="M9 4l-6 2v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>'),
     dev: _svg('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><path d="M14 4l-4 16"/>'),
     roadmap: _svg('<path d="M4 4h16v4H4z"/><path d="M4 12h10"/><path d="M4 18h7"/><circle cx="18" cy="16" r="3"/>'),
     checklist: _svg('<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'),
@@ -151,6 +153,9 @@ function wsTab(tab) {
     if (btn) { btn.classList.add('active'); btn.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
     const panel = document.getElementById('ws-' + tab);
     if (panel) panel.classList.add('active');
+    // the agent's screens, on THIS project (devagent/web/pages/)
+    const agentScreen = { agent: 'chat', automatisations: 'automatisations', carte: 'carte' }[tab];
+    if (agentScreen) { DA.setProject(wsProjectId); DA.mount(panel, agentScreen, { project: wsProjectId, embedded: true }); }
     if (tab === 'dev') loadWsDev();
     if (tab === 'roadmap') loadWsRoadmap();
     if (tab === 'sessions') loadWsSessions();

@@ -113,8 +113,21 @@ def index():
     pages = sorted(f"dash/pages/{f.name}" for f in (APP_DIR / "templates" / "dash" / "pages").glob("*.html"))
     core = sorted(f.name for f in (APP_DIR / "ui" / "js").glob("*.js"))
     last = [n for n in core if n.startswith("99-")]                  # the init runs after everything
-    scripts = [f"/ui/js/{n}" for n in core if n not in last] + extensions.scripts() + [f"/ui/js/{n}" for n in last]
-    return render_template("dashboard.html", pages=pages, scripts=scripts, extensions=extensions.context())
+    agent = APP_DIR / "devagent" / "web"                             # the agent's screens are part of the app
+    scripts = ([f"/ui/js/{n}" for n in core if n not in last] + ["/agent/assets/agent.js"]
+               + [f"/agent/assets/pages/{f.name}" for f in sorted((agent / "pages").glob("*.js"))]
+               + extensions.scripts() + [f"/ui/js/{n}" for n in last])
+    import paths
+    projects_dir = "~/" + paths.root().name + "/projects"            # ~/devagent/projects (or the old ~/devpilot/projects)
+    return render_template("dashboard.html", pages=pages, scripts=scripts, extensions=extensions.context(),
+                           projects_dir=projects_dir)
+
+
+@app.route("/icon.svg")
+def app_icon():
+    """The logo: one file, used by the page, the browser tab and the desktop shortcut."""
+    from flask import send_from_directory
+    return send_from_directory(str(APP_DIR), "icon.svg", mimetype="image/svg+xml")
 
 
 @app.route("/ui/<path:name>")

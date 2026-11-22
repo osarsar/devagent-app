@@ -3,7 +3,7 @@ import dev
 
 from .. import RISK_WRITE
 from ..connectors import claude_code
-from ..registry import DEPOT, PROJET, tool
+from ..registry import ToolError, DEPOT, PROJET, tool
 from ._common import resolve_project
 
 
@@ -17,8 +17,16 @@ from ._common import resolve_project
               "suite": {"type": "string", "description": "La « session » rendue par un appel precedent, pour continuer"}},
       required=("tache",))
 def claude_code_tool(ctx, tache, projet=None, depot=".", suite=None):
-    pid = resolve_project(ctx, projet)["id"]
-    return claude_code.run(dev.repo_path(pid, depot or "."), tache, resume=suite or None)
+    proj = resolve_project(ctx, projet)
+    depot = depot or "."
+    if depot == ".":                                   # no repository named: the only one, or say which exist
+        import projects as P
+        dirs = [r["dir"] for r in P.find_repos(proj["path"])]
+        if dirs and "." not in dirs:
+            if len(dirs) > 1:
+                raise ToolError(f"Ce projet a plusieurs depots : precise « depot » ({', '.join(dirs)}).")
+            depot = dirs[0]
+    return claude_code.run(dev.repo_path(proj["id"], depot), tache, resume=suite or None)
 
 
 @tool("outil_construire", "Fait ecrire par Claude Code un outil qui manque a DevAgent (decris le besoin, et ce qui a "

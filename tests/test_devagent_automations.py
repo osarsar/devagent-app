@@ -121,9 +121,12 @@ def test_planificateur(auto, P):
     assert auto.tick() == []                                               # nothing active
     for n in ("nuit", "souvent", "main"):
         auto.set_active(p, n, True)
-    names = sorted(r["nom"] for r in auto.tick(datetime.now().replace(hour=3, minute=5)))
+    # yesterday's 03:05, always in the past: the runs are recorded at the real time (after it),
+    # so the test does not depend on the hour it runs at (03:05 « today » is the future before 03:05)
+    slot = (datetime.now() - timedelta(days=1)).replace(hour=3, minute=5, second=0, microsecond=0)
+    names = sorted(r["nom"] for r in auto.tick(slot))
     assert names == ["nuit", "souvent"]
-    assert auto.tick(datetime.now().replace(hour=3, minute=6)) == []       # already done for this slot / interval
+    assert auto.tick(slot + timedelta(minutes=1)) == []                    # already done for this slot / interval
     a = {x["nom"]: x for x in auto.load(p)}
     assert auto.due(a["souvent"], datetime.now() + timedelta(minutes=11)) is True
     assert auto.due(a["nuit"], datetime.now().replace(hour=3, minute=5) + timedelta(days=1)) is True

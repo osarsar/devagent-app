@@ -67,7 +67,7 @@ def _others(src):
 def _files_outside(home):
     """Small text files outside the folder that hold its path."""
     c = [home / ".local/bin/devpilot", home / ".local/bin/devagent", home / ".local/bin/devpilot-watcher",
-         home / ".local/share/applications/devpilot.desktop",
+         home / ".local/share/applications/devpilot.desktop", home / ".local/share/applications/devagent.desktop",
          home / ".config/systemd/user/devpilot-watcher.service"]
     return [f for f in c if f.is_file() and not f.is_symlink()]
 
