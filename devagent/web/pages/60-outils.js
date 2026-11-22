@@ -32,7 +32,7 @@ DA.page({
           });
           return h('div', { class: 'stack', style: 'border-top:1px solid var(--border-1);padding-top:10px' },
             h('div', {}, h('b', { class: 'mono' }, f.file)),
-            f.error ? h('div', { style: 'color:#ff8fa3' }, 'Non charge : ', f.error) : null,
+            f.error ? h('div', { style: 'color:var(--rose-ink)' }, 'Non charge : ', f.error) : null,
             ...f.tools.map(t => h('div', { class: 'small' }, h('span', { class: 'mono' }, t.name), ' ', DA.riskPill(t.risk), ' ', t.description)),
             h('details', { class: 'small' }, h('summary', { style: 'cursor:pointer' }, 'Voir le code'), h('pre', { class: 'muted' }, f.source)),
             h('div', { class: 'row' }, f.error ? null : ok, del));

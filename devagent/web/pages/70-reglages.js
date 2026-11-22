@@ -21,7 +21,7 @@ DA.page({
       h('div', { class: 'spread' }, h('h2', {}, 'Claude Code'), DA.pill(mcp.installed ? 'branche' : 'non branche', mcp.installed ? 'ok' : 'warn')),
       h('p', { class: 'muted' }, 'Donne les outils de DevAgent a chaque session Claude Code, dans tous tes projets. ',
         'Aucun cout en plus : c\'est ton abonnement Claude Code.'),
-      mcp.claude ? null : h('div', { style: 'color:#ff8fa3' }, 'Claude Code est introuvable sur ce PC.'),
+      mcp.claude ? null : h('div', { style: 'color:var(--rose-ink)' }, 'Claude Code est introuvable sur ce PC.'),
       h('div', { class: 'mono muted' }, mcp.command), h('div', { class: 'row' }, mcpBtn, mcpOff)));
 
     /* Chat */
@@ -61,7 +61,7 @@ DA.page({
       const parts = [h('div', {}, r.resume)];
       if (r.ailleurs.length) parts.push(h('div', {}, h('b', {}, 'Projets presents sur un autre PC, absents ici : '),
         r.ailleurs.map(a => a.projet + (a.git ? ` (${a.git})` : '')).join(', '), '. Clone-les (tableau de bord → Ajouter un projet), puis resynchronise.'));
-      if (r.conflits.length) parts.push(h('div', { style: 'color:#ffb454' }, h('b', {}, 'Modifies sur deux PC : '),
+      if (r.conflits.length) parts.push(h('div', { style: 'color:var(--amber-ink)' }, h('b', {}, 'Modifies sur deux PC : '),
         r.conflits.map(c => c.fichier).join(', '), '. Ce PC garde sa version ; l\'autre est a cote (fichier .autre-pc).'));
       if (r.non_envoyes.length) parts.push(h('div', { class: 'muted' }, 'Non envoyes car ils semblent contenir une cle : ', r.non_envoyes.join(', ')));
       syncOut.replaceChildren(...parts);
@@ -98,6 +98,6 @@ DA.page({
         'garde-en une copie avec tes autres cles. Sans elle, les secrets doivent etre saisis a nouveau.'),
       h('div', { class: 'mono' }, vault.cle, vault.cle_presente ? '' : ' (pas encore creee)'),
       h('div', { class: 'small muted' }, `${vault.reglages_secrets} reglage(s) secret(s) · ${vault.connexions_avec_secret_chiffre} connexion(s) avec un secret chiffre`),
-      clear.length ? h('div', { style: 'color:#ff8fa3' }, 'Encore en clair : ', clear.join(', '), ' — relance DevAgent, ou « devagent coffre sceller ».') : null));
+      clear.length ? h('div', { style: 'color:var(--rose-ink)' }, 'Encore en clair : ', clear.join(', '), ' — relance DevAgent, ou « devagent coffre sceller ».') : null));
   }
 });
