@@ -127,23 +127,92 @@ _running = {}                 # thread ident → Popen of the Claude Code starte
 _running_lock = threading.Lock()
 
 
-def _launch(argv, cwd, timeout):
-    """subprocess.run, but registered so that stop_for(thread) can kill it (and its children)."""
+def _launch(argv, cwd, timeout, on_line=None):
+    """subprocess.run, but registered so that stop_for(thread) can kill it (and its children),
+    and read line by line so that its progress can be shown while it runs (on_line)."""
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                            text=True, start_new_session=True)
+                            text=True, bufsize=1, start_new_session=True)
     me = threading.get_ident()
     with _running_lock:
         _running[me] = proc
+    err, out, late = [], [], []
+    reader = threading.Thread(target=lambda: err.append(proc.stderr.read()), daemon=True)
+    reader.start()
+    timer = threading.Timer(timeout, lambda: (late.append(1), _kill(proc)))
+    timer.daemon = True
+    timer.start()
     try:
-        out, err = proc.communicate(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        _kill(proc)
-        out, err = proc.communicate()
-        raise subprocess.TimeoutExpired(argv, timeout, output=out, stderr=err)
+        for line in proc.stdout:
+            out.append(line)
+            if on_line:
+                try:
+                    on_line(line)
+                except Exception:
+                    pass
+        proc.wait()
     finally:
+        timer.cancel()
+        reader.join(5)
         with _running_lock:
             _running.pop(me, None)
-    return subprocess.CompletedProcess(argv, proc.returncode, out, err)
+    if late:
+        raise subprocess.TimeoutExpired(argv, timeout, output="".join(out), stderr="".join(err))
+    return subprocess.CompletedProcess(argv, proc.returncode, "".join(out), "".join(err))
+
+
+# ── What Claude Code is doing, in words, while it runs ──────────────────────
+
+def _short(path, repo):
+    try:
+        return os.path.relpath(path, repo) if os.path.isabs(path) else path
+    except ValueError:
+        return path
+
+
+def progress_line(line, repo):
+    """One line of Claude Code's stream-json output → what to show (or None)."""
+    try:
+        d = json.loads(line)
+    except ValueError:
+        return None
+    if d.get("type") != "assistant":
+        return None
+    out = []
+    for b in (d.get("message") or {}).get("content") or []:
+        if b.get("type") == "tool_use":
+            name, inp = b.get("name", ""), b.get("input") or {}
+            f = _short(inp.get("file_path") or inp.get("path") or inp.get("notebook_path") or "", str(repo)) or "un fichier"
+            if name == "Read":
+                out.append(f"lit {f}")
+            elif name in ("Edit", "MultiEdit", "NotebookEdit"):
+                out.append(f"modifie {f}")
+            elif name == "Write":
+                out.append(f"ecrit {f}")
+            elif name == "Bash":
+                cmd = " ".join((inp.get("command") or "").split())
+                out.append(f"lance « {cmd[:90]}{'…' if len(cmd) > 90 else ''} »")
+            elif name in ("Grep", "Glob"):
+                out.append(f"cherche « {(inp.get('pattern') or '')[:60]} »")
+            elif name == "TodoWrite":
+                todo = next((t for t in inp.get("todos") or [] if t.get("status") == "in_progress"), None)
+                if todo:
+                    out.append(f"etape : {(todo.get('activeForm') or todo.get('content') or '')[:90]}")
+            elif name:
+                out.append(name)
+        elif b.get("type") == "text" and (b.get("text") or "").strip():
+            t = " ".join(b["text"].split())
+            out.append(t[:140] + ("…" if len(t) > 140 else ""))
+    return " · ".join(out) if out else None
+
+
+def _reporter(repo):
+    from .. import progress
+
+    def on_line(line):
+        text = progress_line(line, repo)
+        if text:
+            progress.emit(text)
+    return on_line
 
 
 def _kill(proc):
@@ -180,7 +249,7 @@ def run(repo, task, resume=None, rules=None, allowed=None, timeout=TIMEOUT):
     if resume:
         argv += ["--resume", resume]
     try:
-        r = _launch(argv, str(repo), timeout)
+        r = _launch(argv, str(repo), timeout, on_line=_reporter(repo))
         parsed, err = _parse(r.stdout), (r.stderr or "").strip()
         if r.returncode in (-signal.SIGTERM, -signal.SIGKILL) and not parsed["text"]:
             parsed["is_error"] = True
@@ -228,7 +297,7 @@ def build_tool(need, example=""):
             "--max-turns", str(MAX_TURNS), "--strict-mcp-config", "--append-system-prompt", TOOL_RULES,
             "--allowedTools", *argv_allowed, "--disallowedTools", *DENIED]
     try:
-        r = _launch(argv, str(APP), TIMEOUT)
+        r = _launch(argv, str(APP), TIMEOUT, on_line=_reporter(APP))
         parsed = _parse(r.stdout)
     except subprocess.TimeoutExpired:
         parsed = {"text": "Arrete : trop long.", "is_error": True, "denials": [], "session": None}

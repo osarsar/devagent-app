@@ -50,6 +50,10 @@ l'utilisateur). Pour une action ponctuelle, `commande_proposer` suffit.
 - S'il te manque un outil pour faire ce qui est demande, ne t'arrete pas la : propose la commande exacte avec \
 `commande_proposer` (l'utilisateur la confirme, tu lis ensuite sa sortie avec `confirmation_etat`), puis note le \
 manque avec `outil_demander`. Ne renvoie l'utilisateur vers un site que si aucune commande ne peut le faire.
+- Pour que l'utilisateur te suive : quand tu commences a travailler sur sa demande, ecris d'abord UNE phrase courte \
+(dans la meme reponse que tes premiers outils) qui dit ce que tu vas faire, ex. « Je regarde l'etat du projet et du \
+site, puis je te resume. » Ensuite, une phrase seulement quand tu passes a une etape importante (modifier le code, \
+deployer, corriger). Jamais de longue explication : tes actions s'affichent deja en direct.
 - Reponds en francais simple, court. Commence par le resultat. Dis ce que tu as fait, ce qui a echoue, \
 et la prochaine etape quand il y en a une."""
 
@@ -247,12 +251,44 @@ def _start_flag(cid):
     _stops[cid] = threading.Event()
 
 
-def _wait(cid, fn, *args, **kw):
-    """Run fn in a helper thread and wait; a stop abandons it at once (a Claude Code run is killed)."""
+MAX_STEPS_SHOWN = 60          # steps kept per action (a long Claude Code run reports many)
+
+
+class _reporter:
+    """What the running action reports, added to the conversation. Saved at most twice a second
+    here; the waiting loop (_wait) saves what is left, so the last step never waits for the end."""
+
+    def __init__(self, cid, events, tid):
+        self.cid, self.events, self.tid = cid, events, tid
+        self.n, self.saved, self.dirty = 0, 0.0, False
+
+    def __call__(self, text):
+        import time as _t
+        if self.n >= MAX_STEPS_SHOWN:
+            return
+        self.n += 1
+        with _lock:
+            self.events.append({"type": "etape", "tid": self.tid, "text": text, "at": _now()})
+            self.dirty = True
+            if _t.time() - self.saved > 0.5:
+                self.flush()
+
+    def flush(self):
+        import time as _t
+        if self.dirty:
+            self.saved, self.dirty = _t.time(), False
+            _save(self.cid, events=self.events)
+
+
+def _wait(cid, fn, *args, _progress=None, **kw):
+    """Run fn in a helper thread and wait; a stop abandons it at once (a Claude Code run is killed).
+    _progress receives what the action reports while it runs."""
     flag = _stops.get(cid)
     box = {}
 
     def go():
+        from . import progress
+        progress.set_callback(_progress)
         try:
             box["v"] = fn(*args, **kw)
         except BaseException as e:            # noqa: BLE001 — re-raised below
@@ -261,6 +297,9 @@ def _wait(cid, fn, *args, **kw):
     t.start()
     while t.is_alive():
         t.join(0.2)
+        if _progress is not None and _progress.dirty:
+            with _lock:
+                _progress.flush()
         if flag is not None and flag.is_set() and t.is_alive():
             from .connectors import claude_code
             claude_code.stop_for(t.ident)
@@ -363,13 +402,19 @@ def _turn(cid, client=None, read_only=False):
                 for b in content:
                     if b.get("type") != "tool_use":
                         continue
+                    ev = {"type": "tool", "tid": b["id"], "name": b["name"], "args": b.get("input") or {},
+                          "statut": "en_cours", "message": "", "confirmation": None, "at": _now()}
+                    events.append(ev)                                       # shown at once: « en cours »
+                    _save(cid, events=events)
                     if read_only and registry.get(b["name"]).risk != "lecture" and b["name"] not in NOTE_TOOLS:
                         answer = {"statut": "erreur", "message": "Ce tour ne fait que regarder : aucune modification."}
                     else:
-                        answer = _wait(cid, guard.call, b["name"], b.get("input") or {}, actor="chat", ctx=ctx)
-                    events.append({"type": "tool", "name": b["name"], "args": b.get("input") or {},
-                                   "statut": answer["statut"], "message": answer.get("message", ""),
+                        answer = _wait(cid, guard.call, b["name"], b.get("input") or {}, actor="chat", ctx=ctx,
+                                       _progress=_reporter(cid, events, b["id"]))
+                    ev.update(statut=answer["statut"], message=answer.get("message", ""), confirmation=answer.get("confirmation"))
+                    events.append({"type": "maj", "tid": b["id"], "statut": answer["statut"], "message": answer.get("message", ""),
                                    "confirmation": answer.get("confirmation"), "at": _now()})
+                    _save(cid, events=events)
                     if answer["statut"] == "confirmation_requise" and answer.get("confirmation"):
                         waiting.append({"tool_use_id": b["id"], "confirmation": answer["confirmation"], "name": b["name"]})
                         results.append({"type": "tool_result", "tool_use_id": b["id"], "content": ""})   # filled on decision

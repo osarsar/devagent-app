@@ -64,11 +64,13 @@ def test_un_tour_avec_outils(chat, P):
     p, c, client = _waiting_turn(chat, P)
     got = chat.get(c["id"])
     assert got["status"] == "attente" and got["title"].startswith("ajoute une etape")
-    kinds = [(e["type"], e.get("name"), e.get("statut")) for e in got["events"]]
+    shown = [e for e in got["events"] if e["type"] != "maj"]            # « maj » = the end of an action, for the live view
+    kinds = [(e["type"], e.get("name"), e.get("statut")) for e in shown]
     assert kinds == [("user", None, None), ("assistant", None, None),
                      ("tool", "projet_etat", "ok"), ("tool", "projet_etape_ajouter", "ok"),
                      ("tool", "projet_supprimer", "confirmation_requise")]
-    aid = got["events"][4]["confirmation"]
+    assert [e["tid"] for e in got["events"] if e["type"] == "maj"] == ["t1", "t2", "t3"]
+    aid = shown[4]["confirmation"]
     assert got["waiting"] == [{"confirmation": aid, "tool": "projet_supprimer"}]   # shown at the bottom of the chat
     assert P.get(p["id"]) and len(client.calls) == 2                               # not deleted, the model waits
 
@@ -309,3 +311,36 @@ def test_arreter_pendant_une_confirmation(chat, P):
     client.script.append(resp("end_turn", {"type": "text", "text": "D'accord."}))
     assert chat.send(c["id"], "on reprend", client=client, wait=True)["ok"]     # the conversation goes on normally
     assert chat.get(c["id"])["status"] == "pret"
+
+
+def test_une_action_se_voit_pendant_qu_elle_tourne(chat, P, monkeypatch):
+    import threading
+    from devagent import guard, progress
+    p = P.create("site")
+    real, inside, release = guard.call, threading.Event(), threading.Event()
+
+    def slow(name, *a, **kw):
+        if name == "projet_etat":
+            progress.emit("lit site/app/page.tsx")                 # what a connector reports while it works
+            progress.emit("lance « npm run build »")
+            inside.set()
+            release.wait(5)
+        return real(name, *a, **kw)
+    monkeypatch.setattr(guard, "call", slow)
+    c = chat.start(p["id"])
+    client = FakeClient([resp("tool_use", {"type": "text", "text": "Je regarde l'etat du projet."},
+                              {"type": "tool_use", "id": "t1", "name": "projet_etat", "input": {}}),
+                         resp("end_turn", {"type": "text", "text": "Fini."})])
+    assert chat.send(c["id"], "regarde", client=client)["ok"]
+    assert inside.wait(3)
+    import time
+    time.sleep(0.6)
+    ev = chat.get(c["id"])["events"]
+    tool = next(e for e in ev if e["type"] == "tool")
+    assert tool["statut"] == "en_cours" and tool["tid"] == "t1"                # visible while it runs
+    assert [e["text"] for e in ev if e["type"] == "etape"] == ["lit site/app/page.tsx", "lance « npm run build »"]
+    release.set()
+    assert _wait_status(chat, c["id"], "pret", 3)
+    ev = chat.get(c["id"])["events"]
+    assert next(e for e in ev if e["type"] == "maj")["statut"] == "ok"
+    assert progress.emit("hors du chat") is None                               # outside a chat: nothing happens
